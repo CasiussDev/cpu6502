@@ -1,4 +1,4 @@
-pub mod register_file;
+pub mod registers;
 
 #[cfg(test)]
 mod tests {

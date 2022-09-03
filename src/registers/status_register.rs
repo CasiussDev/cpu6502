@@ -31,6 +31,7 @@ impl StatusReg {
     }
 
     pub fn set_u8(&mut self, value: u8) {
+        // All combinations are accepted, even if some flags could be ignored
         self.flags = unsafe { StatusRegFlags::from_bits_unchecked(value) };
     }
 
@@ -79,7 +80,7 @@ impl fmt::Debug for StatusReg {
 
 #[cfg(test)]
 mod tests {
-    use crate::register_file::status_register::{StatusReg, StatusRegFlags};
+    use crate::registers::status_register::{StatusReg, StatusRegFlags};
 
     #[test]
     fn debug() {

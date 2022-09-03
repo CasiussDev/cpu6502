@@ -1,3 +1,12 @@
+pub mod register_file;
+pub mod status_register;
+
+pub use register_file::*;
+pub use status_register::*;
+
+use std::fmt;
+use std::fmt::Formatter;
+
 #[derive(Clone, Copy, Default)]
 pub struct Reg8 {
     value: u8,
@@ -85,5 +94,17 @@ impl Reg16 {
     pub fn set_high_i8(&mut self, value: i8) {
         self.value &= 0x00FF;
         self.value |= (value as u16) << 8;
+    }
+}
+
+impl fmt::Debug for Reg8 {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{:#04X}", self.value)
+    }
+}
+
+impl fmt::Debug for Reg16 {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{:#06X}", self.value)
     }
 }
