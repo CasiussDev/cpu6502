@@ -7,12 +7,12 @@ pub use status_register::*;
 use std::fmt;
 use std::fmt::Formatter;
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub struct Reg8 {
     value: u8,
 }
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub struct Reg16 {
     value: u16,
 }

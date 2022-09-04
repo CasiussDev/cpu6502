@@ -1,20 +1,20 @@
-use core::fmt;
-use std::fmt::Formatter;
-use crate::registers::StatusRegFlags;
-use super::{Reg8, Reg16};
 use super::StatusReg;
+use super::{Reg16, Reg8};
+use crate::registers::StatusRegFlags;
+use std::fmt;
 use rand::distributions::Distribution;
 use rand::distributions::Uniform;
 use rand::rngs::ThreadRng;
+use std::fmt::Formatter;
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub struct RegisterFile {
     pub a: Reg8,
     pub x: Reg8,
     pub y: Reg8,
     pub sp: Reg8,
     pub pc: Reg16,
-    pub status: StatusReg
+    pub status: StatusReg,
 }
 
 impl RegisterFile {
@@ -57,18 +57,46 @@ impl fmt::Debug for RegisterFile {
 #[cfg(test)]
 mod tests {
     use rand::distributions::Uniform;
-    use crate::registers::RegisterFile;
+    use crate::registers::{Reg8, Reg16, RegisterFile, StatusReg, StatusRegFlags};
 
     #[test]
-    fn debug() {
+    fn registerfiles_reset_resultscorrect() {
+        // GIVEN
+        let mut zero_file = RegisterFile::default();
+
+        // WHEN
+        zero_file.reset();
+
+        // THEN
+        let mut status = StatusReg::new_from_u8(0);
+        status.set_flags(StatusRegFlags::IRQ_DISABLE);
+        assert_eq!(
+            zero_file,
+            RegisterFile {
+                a: Reg8 { value: 0 },
+                x: Reg8 { value: 0 },
+                y: Reg8 { value: 0 },
+                sp: Reg8 { value: 0 },
+                pc: Reg16 { value: 0 },
+                status,
+            }
+        )
+    }
+
+    #[test]
+    fn registerfiles_resetrandom_irqdisabled() {
         let mut rng = rand::thread_rng();
         let uniform = Uniform::new_inclusive( 0_u16, u16::MAX);
 
-        let mut zero_file = RegisterFile::default();
-        zero_file.reset();
+        // GIVEN
         let mut random_file = RegisterFile::default();
-        random_file.reset_random(&mut rng, &uniform);
 
-        println!("{:?} {:?}", zero_file, random_file);
+        for _ in 0..50 {
+            // WHEN
+            random_file.reset_random(&mut rng, &uniform);
+
+            // THEN
+            assert!( random_file.status.are_flags_set(StatusRegFlags::IRQ_DISABLE));
+        }
     }
 }

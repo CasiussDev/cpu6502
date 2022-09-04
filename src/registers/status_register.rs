@@ -16,12 +16,18 @@ bitflags! {
     }
 }
 
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone, PartialEq, Eq, Default)]
 pub struct StatusReg {
     flags: StatusRegFlags,
 }
 
 impl StatusReg {
+    pub fn new_from_u8(flags: u8) -> Self {
+        Self{
+            flags: unsafe{ StatusRegFlags::from_bits_unchecked(flags) },
+        }
+    }
+
     pub fn reset(&mut self) {
         self.flags.bits = 0;
     }
@@ -43,8 +49,8 @@ impl StatusReg {
         self.flags.remove(flags_to_reset);
     }
 
-    pub fn are_flags_set(&self, flags_to_check: StatusRegFlags) {
-        self.flags.contains(flags_to_check);
+    pub fn are_flags_set(&self, flags_to_check: StatusRegFlags) -> bool {
+        self.flags.contains(flags_to_check)
     }
 }
 
