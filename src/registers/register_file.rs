@@ -1,10 +1,10 @@
 use super::StatusReg;
 use super::{Reg16, Reg8};
 use crate::registers::StatusRegFlags;
-use std::fmt;
 use rand::distributions::Distribution;
 use rand::distributions::Uniform;
 use rand::rngs::ThreadRng;
+use std::fmt;
 use std::fmt::Formatter;
 
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
@@ -43,21 +43,21 @@ impl fmt::Debug for RegisterFile {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "\nRegister File\n")?;
         write!(f, "\tA: {:?}", self.a)?;
-        write!(f, "\t\tX: {:?}", self.x)?;
-        write!(f, "\t\tY: {:?}", self.y)?;
+        write!(f, "\tX: {:?}", self.x)?;
+        write!(f, "\tY: {:?}", self.y)?;
         writeln!(f, "")?;
         write!(f, "\tSP: {:?}", self.sp)?;
         write!(f, "\tPC: {:?}", self.pc)?;
         writeln!(f, "")?;
-        write!(f, "\tSR: {:?}", self.status)?;
+        write!(f, "\tStatus: {:?}", self.status)?;
         writeln!(f, "")
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::registers::{Reg16, Reg8, RegisterFile, StatusReg, StatusRegFlags};
     use rand::distributions::Uniform;
-    use crate::registers::{Reg8, Reg16, RegisterFile, StatusReg, StatusRegFlags};
 
     #[test]
     fn registerfiles_reset_resultscorrect() {
@@ -86,7 +86,7 @@ mod tests {
     #[test]
     fn registerfiles_resetrandom_irqdisabled() {
         let mut rng = rand::thread_rng();
-        let uniform = Uniform::new_inclusive( 0_u16, u16::MAX);
+        let uniform = Uniform::new_inclusive(0_u16, u16::MAX);
 
         // GIVEN
         let mut random_file = RegisterFile::default();
@@ -96,7 +96,9 @@ mod tests {
             random_file.reset_random(&mut rng, &uniform);
 
             // THEN
-            assert!( random_file.status.are_flags_set(StatusRegFlags::IRQ_DISABLE));
+            assert!(random_file
+                .status
+                .are_flags_set(StatusRegFlags::IRQ_DISABLE));
         }
     }
 }

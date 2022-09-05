@@ -23,8 +23,8 @@ pub struct StatusReg {
 
 impl StatusReg {
     pub fn new_from_u8(flags: u8) -> Self {
-        Self{
-            flags: unsafe{ StatusRegFlags::from_bits_unchecked(flags) },
+        Self {
+            flags: unsafe { StatusRegFlags::from_bits_unchecked(flags) },
         }
     }
 
