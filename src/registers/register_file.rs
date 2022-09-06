@@ -98,7 +98,7 @@ mod tests {
             // THEN
             assert!(random_file
                 .status
-                .are_flags_set(StatusRegFlags::IRQ_DISABLE));
+                .are_all_flags_set(StatusRegFlags::IRQ_DISABLE));
         }
     }
 }

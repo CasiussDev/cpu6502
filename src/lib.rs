@@ -1,4 +1,5 @@
-pub mod registers;
+mod alu;
+mod registers;
 
 #[cfg(test)]
 mod tests {

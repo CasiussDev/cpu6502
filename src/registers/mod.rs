@@ -22,6 +22,16 @@ impl Reg8 {
         self.value = 0;
     }
 
+    pub fn new(value: u8) -> Self {
+        Self { value }
+    }
+
+    pub fn new_i8(value: i8) -> Self {
+        Self {
+            value: (value as u8),
+        }
+    }
+
     pub fn get_u8(&self) -> u8 {
         self.value as u8
     }
@@ -42,6 +52,16 @@ impl Reg8 {
 impl Reg16 {
     pub fn reset(&mut self) {
         self.value = 0;
+    }
+
+    pub fn new(value: u16) -> Self {
+        Self { value }
+    }
+
+    pub fn new_i16(value: i16) -> Self {
+        Self {
+            value: (value as u16),
+        }
     }
 
     pub fn get_u16(&self) -> u16 {
@@ -99,21 +119,29 @@ impl Reg16 {
 
 impl fmt::Debug for Reg8 {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{:#04X} ( {}, {} )", self.value, self.value as u8, self.value as i8)
+        write!(
+            f,
+            "{:#04X} ( {}, {} )",
+            self.value, self.value as u8, self.value as i8
+        )
     }
 }
 
 impl fmt::Debug for Reg16 {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{:#06X} ( {}, {} )", self.value, self.value as u16, self.value as i16)
+        write!(
+            f,
+            "{:#06X} ( {}, {} )",
+            self.value, self.value as u16, self.value as i16
+        )
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::registers::{Reg16, Reg8};
     use rand::distributions::Uniform;
     use rand::prelude::*;
-    use crate::registers::{Reg8, Reg16};
 
     #[test]
     fn reg8_setvalue_getvaluecorrect() {

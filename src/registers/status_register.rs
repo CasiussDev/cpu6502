@@ -49,8 +49,12 @@ impl StatusReg {
         self.flags.remove(flags_to_reset);
     }
 
-    pub fn are_flags_set(&self, flags_to_check: StatusRegFlags) -> bool {
+    pub fn are_all_flags_set(&self, flags_to_check: StatusRegFlags) -> bool {
         self.flags.contains(flags_to_check)
+    }
+
+    pub fn are_any_flags_set(&self, flags_to_check: StatusRegFlags) -> bool {
+        self.flags.intersects(flags_to_check)
     }
 }
 
