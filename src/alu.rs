@@ -3,6 +3,7 @@ use crate::registers::{Reg8, StatusReg, StatusRegFlags};
 pub fn update_status_nz(result: i8, status_register: &mut StatusReg) {
     if result < 0 {
         status_register.set_flags(StatusRegFlags::NEGATIVE);
+        status_register.reset_flags(StatusRegFlags::ZERO);
     } else {
         status_register.reset_flags(StatusRegFlags::NEGATIVE);
 
@@ -14,24 +15,24 @@ pub fn update_status_nz(result: i8, status_register: &mut StatusReg) {
     }
 }
 
-pub fn update_status_carry_add(op1: u8, result: u8, status_register: &mut StatusReg) {
-    if op1 > result {
+pub fn update_status_carry_add(carry: bool, status_register: &mut StatusReg) {
+    if carry {
         status_register.set_flags(StatusRegFlags::CARRY);
     } else {
         status_register.reset_flags(StatusRegFlags::CARRY);
     }
 }
 
-pub fn update_status_carry_sub(op1: u8, result: u8, status_register: &mut StatusReg) {
-    if op1 < result {
+pub fn update_status_carry_sub(carry: bool, status_register: &mut StatusReg) {
+    if carry {
         status_register.reset_flags(StatusRegFlags::CARRY);
     } else {
         status_register.set_flags(StatusRegFlags::CARRY);
     }
 }
 
-pub fn update_status_v(op1: i8, op2: i8, result: i8, status_register: &mut StatusReg) {
-    if (op1.is_negative() == op2.is_negative()) && (op1.is_negative() != result.is_negative()) {
+pub fn update_status_v(overflow: bool, status_register: &mut StatusReg) {
+    if overflow {
         status_register.set_flags(StatusRegFlags::OVERFLOW);
     } else {
         status_register.reset_flags(StatusRegFlags::OVERFLOW);
@@ -39,38 +40,39 @@ pub fn update_status_v(op1: i8, op2: i8, result: i8, status_register: &mut Statu
 }
 
 pub fn add(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusReg) {
-    let mut result = accumulator.get_u8().wrapping_add(operand.get_u8());
+    // Compilers are smart enough to do a single addition!
+    let (mut result, mut carry) = accumulator.get_u8().overflowing_add(operand.get_u8());
+    let (_, mut overflow) = accumulator.get_i8().overflowing_add(operand.get_i8());
 
     if status_register.are_all_flags_set(StatusRegFlags::CARRY) {
-        result = result.wrapping_add(1);
+        let (_, inc_overflow) = (result as i8).overflowing_add(1);
+        let (new_result, inc_carry) = result.overflowing_add(1);
+        result = new_result;
+        carry |= inc_carry;
+        overflow |= inc_overflow;
     }
 
-    update_status_v(
-        accumulator.get_i8(),
-        operand.get_i8(),
-        result as i8,
-        status_register,
-    );
-    update_status_carry_add(accumulator.get_u8(), result, status_register);
+    update_status_v(overflow, status_register);
+    update_status_carry_add(carry, status_register);
     update_status_nz(result as i8, status_register);
 
     accumulator.set_u8(result);
 }
 
 pub fn sub(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusReg) {
-    let mut result = accumulator.get_i8().wrapping_sub(operand.get_i8());
+    let (mut result, mut overflow) = accumulator.get_i8().overflowing_sub(operand.get_i8());
+    let (_, mut carry) = accumulator.get_u8().overflowing_sub(operand.get_u8());
 
     if status_register.are_all_flags_set(StatusRegFlags::CARRY) == false {
-        result = result.wrapping_sub(1);
+        let (_, dec_carry) = (result as u8).overflowing_sub(1);
+        let (new_result, dec_overflow) = result.overflowing_sub(1);
+        result = new_result;
+        overflow |= dec_overflow;
+        carry |= dec_carry;
     }
 
-    update_status_v(
-        accumulator.get_i8(),
-        operand.get_i8(),
-        result,
-        status_register,
-    );
-    update_status_carry_sub(accumulator.get_u8(), result as u8, status_register);
+    update_status_v(overflow, status_register);
+    update_status_carry_sub(carry, status_register);
     update_status_nz(result, status_register);
 
     accumulator.set_i8(result);
@@ -322,11 +324,7 @@ mod tests {
         }
     }
 
-    fn perform_signedpositiveoperands_add_overflowflagcorrect(
-        mut op1: Reg8,
-        op2: Reg8,
-        expect_overflow: bool,
-    ) {
+    fn perform_operands_add_overflowflagcorrect(mut op1: Reg8, op2: Reg8, expect_overflow: bool) {
         let mut status_register = StatusReg::default();
         super::add(&mut op1, &op2, &mut status_register);
 
@@ -343,7 +341,7 @@ mod tests {
                 let accumulator = Reg8::new_i8(op1);
                 let operand = Reg8::new_i8(op2);
 
-                perform_signedpositiveoperands_add_overflowflagcorrect(accumulator, operand, false);
+                perform_operands_add_overflowflagcorrect(accumulator, operand, false);
             }
         }
 
@@ -352,7 +350,7 @@ mod tests {
                 let accumulator = Reg8::new_i8(op1);
                 let operand = Reg8::new_i8(op2);
 
-                perform_signedpositiveoperands_add_overflowflagcorrect(accumulator, operand, true);
+                perform_operands_add_overflowflagcorrect(accumulator, operand, true);
             }
         }
     }
@@ -364,7 +362,7 @@ mod tests {
                 let accumulator = Reg8::new_i8(op1);
                 let operand = Reg8::new_i8(op2);
 
-                perform_signedpositiveoperands_add_overflowflagcorrect(accumulator, operand, false);
+                perform_operands_add_overflowflagcorrect(accumulator, operand, false);
             }
         }
 
@@ -373,7 +371,7 @@ mod tests {
                 let accumulator = Reg8::new_i8(op1);
                 let operand = Reg8::new_i8(op2);
 
-                perform_signedpositiveoperands_add_overflowflagcorrect(accumulator, operand, true);
+                perform_operands_add_overflowflagcorrect(accumulator, operand, true);
             }
         }
     }
@@ -385,8 +383,210 @@ mod tests {
                 let accumulator = Reg8::new_i8(op1);
                 let operand = Reg8::new_i8(op2);
 
-                perform_signedpositiveoperands_add_overflowflagcorrect(accumulator, operand, false);
-                perform_signedpositiveoperands_add_overflowflagcorrect(operand, accumulator, false);
+                perform_operands_add_overflowflagcorrect(accumulator, operand, false);
+                perform_operands_add_overflowflagcorrect(operand, accumulator, false);
+            }
+        }
+    }
+
+    fn perform_operands_sub_overflowflagcorrect(mut op1: Reg8, op2: Reg8, expect_overflow: bool) {
+        let mut status_register = StatusReg::default();
+        status_register.set_flags(StatusRegFlags::CARRY);
+        super::sub(&mut op1, &op2, &mut status_register);
+
+        assert_eq!(
+            status_register.are_all_flags_set(StatusRegFlags::OVERFLOW),
+            expect_overflow
+        );
+    }
+
+    #[test]
+    fn signedpositiveoperands_sub_overflowflagcorrect() {
+        for op1 in 0..=i8::MAX {
+            for op2 in 0..=i8::MAX {
+                let accumulator = Reg8::new_i8(op1);
+                let operand = Reg8::new_i8(op2);
+
+                perform_operands_sub_overflowflagcorrect(accumulator, operand, false);
+            }
+        }
+    }
+
+    #[test]
+    fn signednegativeoperands_sub_overflowflagcorrect() {
+        for op1 in i8::MIN..=-1 {
+            for op2 in i8::MIN..=-1 {
+                let accumulator = Reg8::new_i8(op1);
+                let operand = Reg8::new_i8(op2);
+
+                perform_operands_sub_overflowflagcorrect(accumulator, operand, false);
+            }
+        }
+    }
+
+    #[test]
+    fn differentsignoperands_sub_overflowflagcorrect() {
+        for op1 in 0..i8::MAX {
+            for op2 in (i8::MIN + op1 + 1)..=-1 {
+                let accumulator = Reg8::new_i8(op1);
+                let operand = Reg8::new_i8(op2);
+
+                perform_operands_sub_overflowflagcorrect(accumulator, operand, false);
+            }
+        }
+
+        for op1 in i8::MIN..=-1 {
+            for op2 in 0..=(i8::MAX + op1 + 1) {
+                let accumulator = Reg8::new_i8(op1);
+                let operand = Reg8::new_i8(op2);
+
+                perform_operands_sub_overflowflagcorrect(accumulator, operand, false);
+            }
+        }
+    }
+
+    #[test]
+    fn operand_inc_resultscorrect() {
+        for op1 in 0..u8::MAX {
+            // GIVEN
+            let mut accumulator = Reg8::new(op1);
+            let mut status_register = StatusReg::default();
+
+            // random garbage to check the value only changes in n and z
+            status_register.set_u8(op1);
+            let old_status_register = status_register;
+
+            //WHEN
+            super::inc(&mut accumulator, &mut status_register);
+
+            // THEN
+            assert_eq!(accumulator.get_u8(), op1.wrapping_add(1));
+            assert_eq!(
+                status_register.get_u8() & 0x7D,
+                old_status_register.get_u8() & 0x7D
+            );
+            assert_eq!(
+                status_register.are_all_flags_set(StatusRegFlags::ZERO),
+                accumulator.get_u8() == 0
+            );
+            assert_eq!(
+                status_register.are_all_flags_set(StatusRegFlags::NEGATIVE),
+                accumulator.get_i8().is_negative() == true
+            );
+        }
+    }
+
+    #[test]
+    fn operand_dec_resultscorrect() {
+        for op1 in 0..u8::MAX {
+            // GIVEN
+            let mut accumulator = Reg8::new(op1);
+            let mut status_register = StatusReg::default();
+
+            // random garbage to check the value only changes in n and z
+            status_register.set_u8(op1);
+            let old_status_register = status_register;
+
+            //WHEN
+            super::dec(&mut accumulator, &mut status_register);
+
+            // THEN
+            assert_eq!(accumulator.get_u8(), op1.wrapping_sub(1));
+            assert_eq!(
+                status_register.get_u8() & 0x7D,
+                old_status_register.get_u8() & 0x7D
+            );
+            assert_eq!(
+                status_register.are_all_flags_set(StatusRegFlags::ZERO),
+                accumulator.get_u8() == 0
+            );
+            assert_eq!(
+                status_register.are_all_flags_set(StatusRegFlags::NEGATIVE),
+                accumulator.get_i8().is_negative() == true
+            );
+        }
+    }
+
+    #[test]
+    fn operands_and_resultscorrect() {
+        for op1 in 0..u8::MAX {
+            for op2 in 0..u8::MAX {
+                // GIVEN
+                let mut status_register = StatusReg::default();
+
+                let mut accumulator = Reg8::new(op1);
+
+                let operand = Reg8::new(op2);
+
+                // WHEN
+                super::and(&mut accumulator, &operand, &mut status_register);
+
+                // THEN
+                assert_eq!(accumulator.get_u8(), op1 & op2);
+                assert_eq!(
+                    status_register.are_all_flags_set(StatusRegFlags::ZERO),
+                    accumulator.get_u8() == 0
+                );
+                assert_eq!(
+                    status_register.are_all_flags_set(StatusRegFlags::NEGATIVE),
+                    accumulator.get_i8().is_negative() == true
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn operands_or_resultscorrect() {
+        for op1 in 0..u8::MAX {
+            for op2 in 0..u8::MAX {
+                // GIVEN
+                let mut status_register = StatusReg::default();
+
+                let mut accumulator = Reg8::new(op1);
+
+                let operand = Reg8::new(op2);
+
+                // WHEN
+                super::or(&mut accumulator, &operand, &mut status_register);
+
+                // THEN
+                assert_eq!(accumulator.get_u8(), op1 | op2);
+                assert_eq!(
+                    status_register.are_all_flags_set(StatusRegFlags::ZERO),
+                    accumulator.get_u8() == 0
+                );
+                assert_eq!(
+                    status_register.are_all_flags_set(StatusRegFlags::NEGATIVE),
+                    accumulator.get_i8().is_negative() == true
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn operands_xor_resultscorrect() {
+        for op1 in 0..u8::MAX {
+            for op2 in 0..u8::MAX {
+                // GIVEN
+                let mut status_register = StatusReg::default();
+
+                let mut accumulator = Reg8::new(op1);
+
+                let operand = Reg8::new(op2);
+
+                // WHEN
+                super::xor(&mut accumulator, &operand, &mut status_register);
+
+                // THEN
+                assert_eq!(accumulator.get_u8(), op1 ^ op2);
+                assert_eq!(
+                    status_register.are_all_flags_set(StatusRegFlags::ZERO),
+                    accumulator.get_u8() == 0
+                );
+                assert_eq!(
+                    status_register.are_all_flags_set(StatusRegFlags::NEGATIVE),
+                    accumulator.get_i8().is_negative() == true
+                );
             }
         }
     }
