@@ -13,6 +13,7 @@ bitflags! {
         const UNUSED =      0b00100000;
         const OVERFLOW =    0b01000000;
         const NEGATIVE =    0b10000000;
+        const STARTUP =     Self::UNUSED.bits | Self::BREAK.bits | Self::IRQ_DISABLE.bits;
     }
 }
 

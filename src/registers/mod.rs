@@ -47,6 +47,15 @@ impl Reg8 {
     pub fn set_i8(&mut self, value: i8) {
         self.value = value as u8;
     }
+
+    pub fn inc(&mut self) {
+        self.value = self.value.wrapping_add(1);
+    }
+
+    pub fn dec(&mut self) {
+        self.value = self.value.wrapping_sub(1);
+    }
+
 }
 
 impl Reg16 {
@@ -114,6 +123,14 @@ impl Reg16 {
     pub fn set_high_i8(&mut self, value: i8) {
         self.value &= 0x00FF;
         self.value |= (value as u16) << 8;
+    }
+
+    pub fn inc(&mut self) {
+        self.value = self.value.wrapping_add(1);
+    }
+
+    pub fn dec(&mut self) {
+        self.value = self.value.wrapping_sub(1);
     }
 }
 

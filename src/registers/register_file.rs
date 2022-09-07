@@ -18,14 +18,21 @@ pub struct RegisterFile {
 }
 
 impl RegisterFile {
-    pub fn reset(&mut self) {
+    // TO DO: NES specific?
+    pub fn powerup(&mut self){
+        self.status.set_u8(StatusRegFlags::STARTUP.bits());
         self.a.reset();
         self.x.reset();
         self.y.reset();
-        self.sp.reset();
-        self.pc.reset();
-        self.status.reset();
+        self.sp.set_u8(0xFD); // Stack init at 0xFF, then decremented by 3
+    }
+
+    pub fn reset(&mut self) {
         self.status.set_flags(StatusRegFlags::IRQ_DISABLE);
+
+        self.sp.dec();
+        self.sp.dec();
+        self.sp.dec();
     }
 
     pub fn reset_random(&mut self, rng: &mut ThreadRng, uniform: &Uniform<u16>) {
