@@ -1,0 +1,52 @@
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum DataDirectionMode {
+    Read,
+    Write,
+}
+
+#[derive(Clone, Copy, Default)]
+pub struct Pinout {
+    data: u8,
+    address: u16,
+    mode: DataDirectionMode,
+}
+
+impl Default for DataDirectionMode {
+    fn default() -> Self {
+        Self::Read
+    }
+}
+
+impl Pinout {
+    pub fn set_address_output(&mut self, address: u16) {
+        self.address = address;
+    }
+
+    pub fn set_data_direction(&mut self, direction: DataDirectionMode) {
+        self.mode = direction;
+    }
+
+    pub fn set_data_output(&mut self, data: u8) {
+        assert!(self.mode == DataDirectionMode::Write, "CPU attempting to set data pins value while reading mode");
+
+        self.data = data;
+    }
+
+    pub fn set_data_input(&mut self, data: u8) {
+        assert!(self.mode == DataDirectionMode::Read, "CPU attempting to set data pins value while writing mode");
+
+        self.data = data;
+    }
+
+    pub fn get_data(&self) -> u8 {
+        self.data
+    }
+
+    pub fn get_address(&self) -> u16 {
+        self.address
+    }
+
+    pub fn get_data_direction(&self) -> DataDirectionMode {
+        self.mode
+    }
+}
