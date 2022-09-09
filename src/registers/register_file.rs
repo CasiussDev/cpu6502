@@ -66,29 +66,29 @@ mod tests {
     use crate::registers::{Reg16, Reg8, RegisterFile, StatusReg, StatusRegFlags};
     use rand::distributions::Uniform;
 
-    #[test]
-    fn registerfiles_reset_resultscorrect() {
-        // GIVEN
-        let mut zero_file = RegisterFile::default();
-
-        // WHEN
-        zero_file.reset();
-
-        // THEN
-        let mut status = StatusReg::new_from_u8(0);
-        status.set_flags(StatusRegFlags::IRQ_DISABLE);
-        assert_eq!(
-            zero_file,
-            RegisterFile {
-                a: Reg8 { value: 0 },
-                x: Reg8 { value: 0 },
-                y: Reg8 { value: 0 },
-                sp: Reg8 { value: 0 },
-                pc: Reg16 { value: 0 },
-                status,
-            }
-        )
-    }
+    //#[test]
+    //fn registerfiles_reset_resultscorrect() {
+    //    // GIVEN
+    //    let mut zero_file = RegisterFile::default();
+//
+    //    // WHEN
+    //    zero_file.reset();
+//
+    //    // THEN
+    //    let mut status = StatusReg::new_from_u8(0);
+    //    status.set_flags(StatusRegFlags::IRQ_DISABLE);
+    //    assert_eq!(
+    //        zero_file,
+    //        RegisterFile {
+    //            a: Reg8 { value: 0 },
+    //            x: Reg8 { value: 0 },
+    //            y: Reg8 { value: 0 },
+    //            sp: Reg8 { value: 0 },
+    //            pc: Reg16 { value: 0 },
+    //            status,
+    //        }
+    //    )
+    //}
 
     #[test]
     fn registerfiles_resetrandom_irqdisabled() {
