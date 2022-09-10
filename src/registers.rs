@@ -55,7 +55,6 @@ impl Reg8 {
     pub fn dec(&mut self) {
         self.value = self.value.wrapping_sub(1);
     }
-
 }
 
 impl Reg16 {

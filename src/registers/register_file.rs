@@ -19,7 +19,7 @@ pub struct RegisterFile {
 
 impl RegisterFile {
     // TO DO: NES specific?
-    pub fn powerup(&mut self){
+    pub fn powerup(&mut self) {
         self.status.set_u8(StatusRegFlags::STARTUP.bits());
         self.a.reset();
         self.x.reset();
@@ -70,10 +70,10 @@ mod tests {
     //fn registerfiles_reset_resultscorrect() {
     //    // GIVEN
     //    let mut zero_file = RegisterFile::default();
-//
+    //
     //    // WHEN
     //    zero_file.reset();
-//
+    //
     //    // THEN
     //    let mut status = StatusReg::new_from_u8(0);
     //    status.set_flags(StatusRegFlags::IRQ_DISABLE);

@@ -27,13 +27,19 @@ impl Pinout {
     }
 
     pub fn set_data_output(&mut self, data: u8) {
-        assert!(self.mode == DataDirectionMode::Write, "CPU attempting to set data pins value while reading mode");
+        assert!(
+            self.mode == DataDirectionMode::Write,
+            "CPU attempting to set data pins value while reading mode"
+        );
 
         self.data = data;
     }
 
     pub fn set_data_input(&mut self, data: u8) {
-        assert!(self.mode == DataDirectionMode::Read, "CPU attempting to set data pins value while writing mode");
+        assert!(
+            self.mode == DataDirectionMode::Read,
+            "CPU attempting to set data pins value while writing mode"
+        );
 
         self.data = data;
     }
