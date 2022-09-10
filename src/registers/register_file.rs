@@ -7,6 +7,22 @@ use rand::rngs::ThreadRng;
 use std::fmt;
 use std::fmt::Formatter;
 
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+pub enum SelectedRegister {
+    A,
+    X,
+    Y,
+    SP,
+    Status,
+    IR,
+    Tmp,
+    PCHigh,
+    PCLow,
+    AddrHigh,
+    AddrLow,
+    Discard,
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub struct RegisterFile {
     pub a: Reg8,
@@ -15,6 +31,11 @@ pub struct RegisterFile {
     pub sp: Reg8,
     pub pc: Reg16,
     pub status: StatusReg,
+
+    // implementation non-visible registers
+    pub ir: Reg8,
+    pub tmp: Reg8,
+    pub addr: Reg16,
 }
 
 impl RegisterFile {
