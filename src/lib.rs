@@ -1,6 +1,7 @@
 mod alu;
-mod registers;
+mod instructions;
 mod pinout;
+mod registers;
 
 #[cfg(test)]
 mod tests {
