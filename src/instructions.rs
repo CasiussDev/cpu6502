@@ -28,9 +28,11 @@ pub enum MicroInstructions {
         dst: SelectedRegister,
         src: SelectedRegister,
     },
-    AddIndexToAddress {
-        index: SelectedRegister,
-    },
+    //AddIndexToAddress {
+    //    index: SelectedRegister,
+    //},
+    AddIndexToAddress,
+    FixAddress,
     RunOperation,
 
     YieldClock,
@@ -57,8 +59,9 @@ pub enum InstructionSequenceMode {
     ZeroPageIndx,
     ZeroPageIdxReadModifyWrite,
 
-    AbsoluteIdx,
+    AbsoluteIdxRead,
     AbsoluteIdxReadModifyWrite,
+    AbsoluteIdxWrite,
 
     Relative,
 
@@ -177,6 +180,7 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                     increment: true,
                 },
                 MicroInstructions::YieldClock,
+                // Next clock
                 MicroInstructions::RunOperation,
                 MicroInstructions::YieldClock,
             ],
@@ -208,6 +212,90 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                     src: SelectedRegister::Tmp,
                 },
                 MicroInstructions::YieldClock,
+            ],
+        ),
+        (
+            InstructionSequenceMode::ZeroPageIndx,
+            vec![
+                MicroInstructions::ZeroRegister {
+                    dst: SelectedRegister::AddrHigh,
+                },
+                MicroInstructions::ReadPC {
+                    dst: SelectedRegister::AddrLow,
+                    increment: true,
+                },
+                MicroInstructions::YieldClock,
+                // Next clock
+                MicroInstructions::ReadAddress {
+                    dst: SelectedRegister::Discard,
+                },
+                MicroInstructions::AddIndexToAddress,
+                MicroInstructions::YieldClock,
+                // Next clock
+                MicroInstructions::RunOperation,
+                MicroInstructions::YieldClock,
+            ],
+        ),
+        (
+            InstructionSequenceMode::ZeroPageReadModifyWrite,
+            vec![
+                MicroInstructions::ZeroRegister {
+                    dst: SelectedRegister::AddrHigh,
+                },
+                MicroInstructions::ReadPC {
+                    dst: SelectedRegister::AddrLow,
+                    increment: true,
+                },
+                MicroInstructions::YieldClock,
+                // Next clock
+                MicroInstructions::ReadAddress {
+                    dst: SelectedRegister::Discard,
+                },
+                MicroInstructions::AddIndexToAddress,
+                MicroInstructions::YieldClock,
+                // Next clock
+                MicroInstructions::ReadAddress {
+                    dst: SelectedRegister::Tmp,
+                },
+                MicroInstructions::YieldClock,
+                // Next clock
+                MicroInstructions::WriteAddress {
+                    src: SelectedRegister::Tmp,
+                },
+                MicroInstructions::RunOperation,
+                MicroInstructions::YieldClock,
+                // Next clock
+                MicroInstructions::WriteAddress {
+                    src: SelectedRegister::Tmp,
+                },
+                MicroInstructions::YieldClock,
+            ],
+        ),
+        (
+            InstructionSequenceMode::AbsoluteIdxWrite,
+            vec![
+                MicroInstructions::ReadPC {
+                    dst: SelectedRegister::AddrLow,
+                    increment: true,
+                },
+                MicroInstructions::YieldClock,
+                // Next clock
+                MicroInstructions::ReadPC {
+                    dst: SelectedRegister::AddrHigh,
+                    increment: true,
+                },
+                MicroInstructions::YieldClock,
+                // Next clock
+                MicroInstructions::AddIndexToAddress,
+                MicroInstructions::ReadAddress {
+                    dst: SelectedRegister::Tmp,
+                },
+                MicroInstructions::YieldClock,
+                // Next clock
+                MicroInstructions::FixAddress,
+                MicroInstructions::RunOperation,
+                MicroInstructions::YieldClock,
+                // Next clock
             ],
         ),
     ]);
