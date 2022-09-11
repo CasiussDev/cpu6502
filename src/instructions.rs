@@ -103,6 +103,7 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                     increment: true,
                 },
                 MicroInstructions::YieldClock,
+                // Next clock
                 MicroInstructions::ReadPC {
                     dst: SelectedRegister::PCHigh,
                     increment: true,
@@ -122,11 +123,13 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                     increment: true,
                 },
                 MicroInstructions::YieldClock,
+                // Next clock
                 MicroInstructions::ReadPC {
                     dst: SelectedRegister::AddrHigh,
                     increment: true,
                 },
                 MicroInstructions::YieldClock,
+                // Next clock
                 MicroInstructions::RunOperation,
                 MicroInstructions::YieldClock,
             ],
@@ -139,20 +142,24 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                     increment: true,
                 },
                 MicroInstructions::YieldClock,
+                // Next clock
                 MicroInstructions::ReadPC {
                     dst: SelectedRegister::AddrHigh,
                     increment: true,
                 },
                 MicroInstructions::YieldClock,
+                // Next clock
                 MicroInstructions::ReadAddress {
                     dst: SelectedRegister::Tmp,
                 },
                 MicroInstructions::YieldClock,
+                // Next clock
                 MicroInstructions::WriteAddress {
                     src: SelectedRegister::Tmp,
                 },
                 MicroInstructions::RunOperation,
                 MicroInstructions::YieldClock,
+                // Next clock
                 MicroInstructions::WriteAddress {
                     src: SelectedRegister::Tmp,
                 },
@@ -185,15 +192,18 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                     increment: true,
                 },
                 MicroInstructions::YieldClock,
+                // Next clock
                 MicroInstructions::ReadAddress {
                     dst: SelectedRegister::Tmp,
                 },
                 MicroInstructions::YieldClock,
+                // Next clock
                 MicroInstructions::WriteAddress {
                     src: SelectedRegister::Tmp,
                 },
                 MicroInstructions::RunOperation,
                 MicroInstructions::YieldClock,
+                // Next clock
                 MicroInstructions::WriteAddress {
                     src: SelectedRegister::Tmp,
                 },
