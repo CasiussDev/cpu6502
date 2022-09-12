@@ -23,14 +23,14 @@ pub enum AluBinaryOp {
 pub fn update_status_nz(result: i8, status_register: &mut StatusReg) {
     if result < 0 {
         status_register.set_flags(StatusRegFlags::NEGATIVE);
-        status_register.reset_flags(StatusRegFlags::ZERO);
+        status_register.clear_flags(StatusRegFlags::ZERO);
     } else {
-        status_register.reset_flags(StatusRegFlags::NEGATIVE);
+        status_register.clear_flags(StatusRegFlags::NEGATIVE);
 
         if result == 0 {
             status_register.set_flags(StatusRegFlags::ZERO);
         } else {
-            status_register.reset_flags(StatusRegFlags::ZERO);
+            status_register.clear_flags(StatusRegFlags::ZERO);
         }
     }
 }
@@ -40,14 +40,14 @@ pub fn update_status_carry_add(carry: bool, status_register: &mut StatusReg) {
     if carry {
         status_register.set_flags(StatusRegFlags::CARRY);
     } else {
-        status_register.reset_flags(StatusRegFlags::CARRY);
+        status_register.clear_flags(StatusRegFlags::CARRY);
     }
 }
 
 #[allow(dead_code)]
 pub fn update_status_carry_sub(carry: bool, status_register: &mut StatusReg) {
     if carry {
-        status_register.reset_flags(StatusRegFlags::CARRY);
+        status_register.clear_flags(StatusRegFlags::CARRY);
     } else {
         status_register.set_flags(StatusRegFlags::CARRY);
     }
@@ -58,7 +58,7 @@ pub fn update_status_v(overflow: bool, status_register: &mut StatusReg) {
     if overflow {
         status_register.set_flags(StatusRegFlags::OVERFLOW);
     } else {
-        status_register.reset_flags(StatusRegFlags::OVERFLOW);
+        status_register.clear_flags(StatusRegFlags::OVERFLOW);
     }
 }
 

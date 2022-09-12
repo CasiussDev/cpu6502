@@ -47,8 +47,8 @@ impl StatusReg {
         self.flags.insert(flags_to_set);
     }
 
-    pub fn reset_flags(&mut self, flags_to_reset: StatusRegFlags) {
-        self.flags.remove(flags_to_reset);
+    pub fn clear_flags(&mut self, flags_to_clear: StatusRegFlags) {
+        self.flags.remove(flags_to_clear);
     }
 
     pub fn are_all_flags_set(&self, flags_to_check: StatusRegFlags) -> bool {

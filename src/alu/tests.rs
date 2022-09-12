@@ -110,7 +110,7 @@ mod tests {
             for op2 in 0..op1 {
                 // GIVEN
                 let mut status_register = StatusReg::default();
-                status_register.reset_flags(StatusRegFlags::CARRY); // bit reset for borrow in sub
+                status_register.clear_flags(StatusRegFlags::CARRY); // bit reset for borrow in sub
 
                 let mut accumulator = Reg8::new(op1);
                 let old_accumulator_value = op1;
