@@ -17,6 +17,7 @@ pub struct Reg16 {
     value: u16,
 }
 
+#[allow(dead_code)]
 impl Reg8 {
     pub fn reset(&mut self) {
         self.value = 0;
@@ -57,6 +58,7 @@ impl Reg8 {
     }
 }
 
+#[allow(dead_code)]
 impl Reg16 {
     pub fn reset(&mut self) {
         self.value = 0;

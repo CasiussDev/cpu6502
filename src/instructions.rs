@@ -1,6 +1,9 @@
 use crate::registers::register_file::SelectedRegister;
 use std::collections::HashMap;
+use crate::alu::{AluBinaryOp, AluUnaryOp};
+use crate::registers::StatusRegFlags;
 
+#[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum MicroInstruction {
     Fetch,
@@ -22,11 +25,19 @@ pub enum MicroInstruction {
         dst: SelectedRegister,
     },
     AluUnaryOp {
+        op: AluUnaryOp,
         reg: SelectedRegister,
     },
     AluBinaryOp {
+        op: AluBinaryOp,
         dst: SelectedRegister,
         src: SelectedRegister,
+    },
+    SetStatusFlag {
+        flag: StatusRegFlags,
+    },
+    ClearStatusFlag {
+        flag: StatusRegFlags,
     },
     //AddIndexToAddress {
     //    index: SelectedRegister,
@@ -40,6 +51,16 @@ pub enum MicroInstruction {
     FinishOrFixAddress,
 }
 
+#[allow(dead_code)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+pub enum InstructionOp {
+    INX,
+    INY,
+    DEX,
+    DEY,
+}
+
+#[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum InstructionSequenceMode {
     Break,
@@ -79,6 +100,7 @@ pub enum InstructionSequenceMode {
 type MicroInstructionsVector = std::vec::Vec<MicroInstruction>;
 type SequenceMap = std::collections::HashMap<InstructionSequenceMode, MicroInstructionsVector>;
 
+#[allow(dead_code)]
 pub fn create_instruction_mode_sequences() -> SequenceMap {
     //let sequences = SequenceMap::new();
     let sequences = HashMap::from([
@@ -354,6 +376,44 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
     ]);
 
     sequences
+}
+
+type OpsMap = std::collections::HashMap<InstructionOp, MicroInstructionsVector>;
+
+#[allow(dead_code)]
+pub fn create_instructionops_sequences() -> OpsMap {
+    let ops = HashMap::from([
+        (
+            InstructionOp::INX,
+            vec![MicroInstruction::AluUnaryOp {
+                op: AluUnaryOp::Inc,
+                reg: SelectedRegister::X,
+            }],
+        ),
+        (
+            InstructionOp::INY,
+            vec![MicroInstruction::AluUnaryOp {
+                op: AluUnaryOp::Inc,
+                reg: SelectedRegister::Y,
+            }],
+        ),
+        (
+            InstructionOp::DEX,
+            vec![MicroInstruction::AluUnaryOp {
+                op: AluUnaryOp::Dec,
+                reg: SelectedRegister::X,
+            }],
+        ),
+        (
+            InstructionOp::DEY,
+            vec![MicroInstruction::AluUnaryOp {
+                op: AluUnaryOp::Dec,
+                reg: SelectedRegister::Y,
+            }],
+        ),
+    ]);
+
+    ops
 }
 
 #[cfg(test)]

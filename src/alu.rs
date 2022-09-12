@@ -2,6 +2,24 @@ mod tests;
 
 use crate::registers::{Reg8, StatusReg, StatusRegFlags};
 
+#[allow(dead_code)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+pub enum AluUnaryOp {
+    Inc,
+    Dec,
+}
+
+#[allow(dead_code)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+pub enum AluBinaryOp {
+    Add,
+    Sub,
+    And,
+    Or,
+    Xor,
+}
+
+#[allow(dead_code)]
 pub fn update_status_nz(result: i8, status_register: &mut StatusReg) {
     if result < 0 {
         status_register.set_flags(StatusRegFlags::NEGATIVE);
@@ -17,6 +35,7 @@ pub fn update_status_nz(result: i8, status_register: &mut StatusReg) {
     }
 }
 
+#[allow(dead_code)]
 pub fn update_status_carry_add(carry: bool, status_register: &mut StatusReg) {
     if carry {
         status_register.set_flags(StatusRegFlags::CARRY);
@@ -25,6 +44,7 @@ pub fn update_status_carry_add(carry: bool, status_register: &mut StatusReg) {
     }
 }
 
+#[allow(dead_code)]
 pub fn update_status_carry_sub(carry: bool, status_register: &mut StatusReg) {
     if carry {
         status_register.reset_flags(StatusRegFlags::CARRY);
@@ -33,6 +53,7 @@ pub fn update_status_carry_sub(carry: bool, status_register: &mut StatusReg) {
     }
 }
 
+#[allow(dead_code)]
 pub fn update_status_v(overflow: bool, status_register: &mut StatusReg) {
     if overflow {
         status_register.set_flags(StatusRegFlags::OVERFLOW);
@@ -41,6 +62,7 @@ pub fn update_status_v(overflow: bool, status_register: &mut StatusReg) {
     }
 }
 
+#[allow(dead_code)]
 pub fn add(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusReg) {
     // Compilers are smart enough to do a single addition!
     let (mut result, mut carry) = accumulator.get_u8().overflowing_add(operand.get_u8());
@@ -61,6 +83,7 @@ pub fn add(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusR
     accumulator.set_u8(result);
 }
 
+#[allow(dead_code)]
 pub fn cmp(accumulator: &Reg8, operand: &Reg8, status_register: &mut StatusReg) -> i8 {
     let (mut result, mut overflow) = accumulator.get_i8().overflowing_sub(operand.get_i8());
     let (_, mut carry) = accumulator.get_u8().overflowing_sub(operand.get_u8());
@@ -80,11 +103,13 @@ pub fn cmp(accumulator: &Reg8, operand: &Reg8, status_register: &mut StatusReg) 
     result
 }
 
+#[allow(dead_code)]
 pub fn sub(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusReg) {
     let result = cmp(accumulator, operand, status_register);
     accumulator.set_i8(result);
 }
 
+#[allow(dead_code)]
 pub fn inc(src_dst: &mut Reg8, status_register: &mut StatusReg) {
     let result = src_dst.get_u8().wrapping_add(1);
 
@@ -93,6 +118,7 @@ pub fn inc(src_dst: &mut Reg8, status_register: &mut StatusReg) {
     src_dst.set_u8(result);
 }
 
+#[allow(dead_code)]
 pub fn dec(src_dst: &mut Reg8, status_register: &mut StatusReg) {
     let result = src_dst.get_i8().wrapping_sub(1);
 
@@ -101,6 +127,7 @@ pub fn dec(src_dst: &mut Reg8, status_register: &mut StatusReg) {
     src_dst.set_i8(result);
 }
 
+#[allow(dead_code)]
 pub fn and(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusReg) {
     let result = accumulator.get_u8() & operand.get_u8();
 
@@ -109,6 +136,7 @@ pub fn and(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusR
     accumulator.set_u8(result);
 }
 
+#[allow(dead_code)]
 pub fn or(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusReg) {
     let result = accumulator.get_u8() | operand.get_u8();
 
@@ -117,6 +145,7 @@ pub fn or(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusRe
     accumulator.set_u8(result);
 }
 
+#[allow(dead_code)]
 pub fn xor(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusReg) {
     let result = accumulator.get_u8() ^ operand.get_u8();
 

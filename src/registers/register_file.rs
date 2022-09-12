@@ -7,6 +7,7 @@ use rand::rngs::ThreadRng;
 use std::fmt;
 use std::fmt::Formatter;
 
+#[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum SelectedRegister {
     A,
@@ -38,6 +39,7 @@ pub struct RegisterFile {
     pub addr: Reg16,
 }
 
+#[allow(dead_code)]
 impl RegisterFile {
     // TO DO: NES specific?
     pub fn powerup(&mut self) {
@@ -84,7 +86,7 @@ impl fmt::Debug for RegisterFile {
 
 #[cfg(test)]
 mod tests {
-    use crate::registers::{Reg16, Reg8, RegisterFile, StatusReg, StatusRegFlags};
+    use crate::registers::{RegisterFile, StatusRegFlags};
     use rand::distributions::Uniform;
 
     //#[test]
