@@ -1,7 +1,7 @@
 use crate::registers::register_file::SelectedRegister;
 use std::collections::HashMap;
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum MicroInstruction {
     Fetch,
     ReadPC {
@@ -40,7 +40,7 @@ pub enum MicroInstruction {
     FinishOrFixAddress,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum InstructionSequenceMode {
     Break,
     ReturnInterrupt,
@@ -95,10 +95,7 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
         ),
         (
             InstructionSequenceMode::Immediate,
-            vec![
-                MicroInstruction::RunOperation,
-                MicroInstruction::YieldClock,
-            ],
+            vec![MicroInstruction::RunOperation, MicroInstruction::YieldClock],
         ),
         (
             InstructionSequenceMode::AbsoluteJump,
@@ -295,7 +292,6 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 MicroInstruction::FinishOrFixAddress,
                 MicroInstruction::YieldClock,
                 // Next clock
-
                 MicroInstruction::RunOperation,
                 MicroInstruction::YieldClock,
                 // Next clock
@@ -323,7 +319,6 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 MicroInstruction::FixAddress,
                 MicroInstruction::YieldClock,
                 // Next clock
-
                 MicroInstruction::RunOperation,
                 MicroInstruction::YieldClock,
                 // Next clock
@@ -359,4 +354,26 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
     ]);
 
     sequences
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn instructionsequences_checklastmicroinstruction_yieldclock() {
+        for (mode, sequence) in create_instruction_mode_sequences() {
+            let last_microinstruction = sequence.last().unwrap_or_else(|| {
+                panic!(
+                    "Sequence mode {:?} does not have any microinstruction",
+                    mode
+                )
+            });
+            assert!(
+                *last_microinstruction == MicroInstruction::YieldClock,
+                "Sequence mode {:?} does not finish with YieldClock",
+                mode
+            );
+        }
+    }
 }

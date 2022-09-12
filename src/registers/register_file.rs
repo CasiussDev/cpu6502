@@ -7,7 +7,7 @@ use rand::rngs::ThreadRng;
 use std::fmt;
 use std::fmt::Formatter;
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum SelectedRegister {
     A,
     X,
