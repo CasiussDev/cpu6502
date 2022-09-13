@@ -67,6 +67,60 @@ impl RegisterFile {
         self.status.set_u8(uniform.sample(rng) as u8);
         self.status.set_flags(StatusRegFlags::IRQ_DISABLE);
     }
+
+    pub fn get_copy_selected_register8(&self, selection: SelectedRegister) -> Reg8 {
+        assert_ne!(
+            selection,
+            SelectedRegister::Discard,
+            "trying to read from discard register"
+        );
+
+        match selection {
+            SelectedRegister::A => self.a,
+            SelectedRegister::X => self.x,
+            SelectedRegister::Y => self.y,
+            SelectedRegister::SP => self.sp,
+            SelectedRegister::Status => Reg8 {
+                value: self.status.get_u8(),
+            },
+            SelectedRegister::IR => self.ir,
+            SelectedRegister::Tmp => self.tmp,
+            SelectedRegister::PCHigh => Reg8 {
+                value: self.pc.get_high_u8(),
+            },
+            SelectedRegister::PCLow => Reg8 {
+                value: self.pc.get_low_u8(),
+            },
+            SelectedRegister::AddrHigh => Reg8 {
+                value: self.addr.get_high_u8(),
+            },
+            SelectedRegister::AddrLow => Reg8 {
+                value: self.addr.get_low_u8(),
+            },
+            SelectedRegister::Discard => Reg8::default(),
+        }
+    }
+
+    pub fn get_copy_status_register(&self) -> StatusReg {
+        self.status
+    }
+
+    pub fn set_selected_register8(&mut self, selection: SelectedRegister, reg: Reg8) {
+        match selection {
+            SelectedRegister::A => self.a = reg,
+            SelectedRegister::X => self.x = reg,
+            SelectedRegister::Y => self.y = reg,
+            SelectedRegister::SP => self.sp = reg,
+            SelectedRegister::Status => self.status.set_u8(reg.value),
+            SelectedRegister::IR => self.ir = reg,
+            SelectedRegister::Tmp => self.tmp = reg,
+            SelectedRegister::PCHigh => self.pc.set_high_u8(reg.value),
+            SelectedRegister::PCLow => self.pc.set_low_u8(reg.value),
+            SelectedRegister::AddrHigh => self.addr.set_high_u8(reg.value),
+            SelectedRegister::AddrLow => self.addr.set_low_u8(reg.value),
+            SelectedRegister::Discard => (),
+        };
+    }
 }
 
 impl fmt::Debug for RegisterFile {
@@ -86,7 +140,7 @@ impl fmt::Debug for RegisterFile {
 
 #[cfg(test)]
 mod tests {
-    use crate::registers::{RegisterFile, StatusRegFlags};
+    use crate::registers::{Reg8, RegisterFile, SelectedRegister, StatusRegFlags};
     use rand::distributions::Uniform;
 
     //#[test]
@@ -114,7 +168,7 @@ mod tests {
     //}
 
     #[test]
-    fn registerfiles_resetrandom_irqdisabled() {
+    fn registerfile_resetrandom_irqdisabled() {
         let mut rng = rand::thread_rng();
         let uniform = Uniform::new_inclusive(0_u16, u16::MAX);
 
@@ -130,5 +184,22 @@ mod tests {
                 .status
                 .are_all_flags_set(StatusRegFlags::IRQ_DISABLE));
         }
+    }
+
+    #[test]
+    fn registerfile_sethighlowbytes_pccontainscorrectaddress() {
+        // GIVEN
+        let mut register_file = RegisterFile::default();
+
+        // WHEN
+        register_file.set_selected_register8(SelectedRegister::PCHigh, Reg8 { value: 0xCA });
+        register_file.set_selected_register8(SelectedRegister::PCLow, Reg8 { value: 0xFE });
+
+        register_file.set_selected_register8(SelectedRegister::AddrHigh, Reg8 { value: 0xFA });
+        register_file.set_selected_register8(SelectedRegister::AddrLow, Reg8 { value: 0xCE });
+
+        // THEN
+        assert_eq!(register_file.pc.get_u16(), 0xCAFE);
+        assert_eq!(register_file.addr.get_u16(), 0xFACE);
     }
 }
