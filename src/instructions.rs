@@ -29,6 +29,12 @@ pub enum MicroInstruction {
     ZeroRegister {
         dst: SelectedRegister,
     },
+    IncrementRegister {
+        dst: SelectedRegister,
+    },
+    DecrementRegister {
+        dst: SelectedRegister,
+    },
     AluUnaryOp {
         op: AluUnaryOp,
         reg: SelectedRegister,
@@ -79,6 +85,10 @@ pub enum InstructionOp {
     TransferXToAccumulator,
     TransferYToAccumulator,
     TransferXToStackPtr,
+    PushA,
+    PushStatus,
+    PullA,
+    PullStatus,
 }
 
 #[allow(dead_code)]
@@ -126,6 +136,50 @@ type SequenceMap = std::collections::HashMap<InstructionSequenceMode, MicroInstr
 pub fn create_instruction_mode_sequences() -> SequenceMap {
     //let sequences = SequenceMap::new();
     let sequences = HashMap::from([
+        (
+            InstructionSequenceMode::Push,
+            vec![
+                MicroInstruction::ReadPC {
+                    dst: SelectedRegister::Discard,
+                    increment: false,
+                },
+                MicroInstruction::YieldClock,
+                // Next clock
+                MicroInstruction::ZeroRegister {
+                    dst: SelectedRegister::AddrHigh,
+                },
+                MicroInstruction::CopyRegister {
+                    dst: SelectedRegister::AddrLow,
+                    src: SelectedRegister::SP,
+                },
+                MicroInstruction::RunOperation,
+                MicroInstruction::DecrementRegister { dst: SelectedRegister::SP },
+                MicroInstruction::YieldClock,
+            ],
+        ),
+        (
+            InstructionSequenceMode::Pull,
+            vec![
+                MicroInstruction::ReadPC {
+                    dst: SelectedRegister::Discard,
+                    increment: false,
+                },
+                MicroInstruction::YieldClock,
+                // Next clock
+                MicroInstruction::IncrementRegister { dst: SelectedRegister::SP},
+                MicroInstruction::YieldClock,
+                // Next clock
+                MicroInstruction::ZeroRegister {
+                    dst: SelectedRegister::AddrHigh,
+                },
+                MicroInstruction::CopyRegister {
+                    dst: SelectedRegister::AddrLow,
+                    src: SelectedRegister::SP,
+                },
+                MicroInstruction::RunOperation,
+                MicroInstruction::YieldClock,
+            ],
+        ),
         (
             InstructionSequenceMode::Implied,
             vec![
@@ -405,10 +459,7 @@ type OpsMap = std::collections::HashMap<InstructionOp, MicroInstructionsVector>;
 #[allow(dead_code)]
 pub fn create_instructionops_sequences() -> OpsMap {
     let ops = HashMap::from([
-        (
-            InstructionOp::Nop,
-            vec![],
-        ),
+        (InstructionOp::Nop, vec![]),
         (
             InstructionOp::IncrementX,
             vec![MicroInstruction::AluUnaryOp {
