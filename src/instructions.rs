@@ -2,7 +2,10 @@ use crate::alu::{AluBinaryOp, AluUnaryOp};
 use crate::registers::register_file::SelectedRegister;
 use crate::registers::StatusRegFlags;
 use std::collections::HashMap;
+
+#[cfg(test)]
 use strum::IntoEnumIterator;
+#[cfg(test)]
 use strum_macros::EnumIter;
 
 #[allow(dead_code)]
@@ -54,7 +57,8 @@ pub enum MicroInstruction {
 }
 
 #[allow(dead_code)]
-#[derive(EnumIter, Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[cfg_attr(test, derive(EnumIter))]
 pub enum InstructionOp {
     Nop,
     IncrementX,
@@ -78,7 +82,8 @@ pub enum InstructionOp {
 }
 
 #[allow(dead_code)]
-#[derive(EnumIter, Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[cfg_attr(test, derive(EnumIter))]
 pub enum InstructionSequenceMode {
     Break,
     ReturnInterrupt,
