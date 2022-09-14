@@ -153,7 +153,9 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                     src: SelectedRegister::SP,
                 },
                 MicroInstruction::RunOperation,
-                MicroInstruction::DecrementRegister { dst: SelectedRegister::SP },
+                MicroInstruction::DecrementRegister {
+                    dst: SelectedRegister::SP,
+                },
                 MicroInstruction::YieldClock,
             ],
         ),
@@ -166,7 +168,9 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::IncrementRegister { dst: SelectedRegister::SP},
+                MicroInstruction::IncrementRegister {
+                    dst: SelectedRegister::SP,
+                },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::ZeroRegister {
