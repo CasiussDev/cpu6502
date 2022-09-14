@@ -42,6 +42,7 @@ mod tests {
             for op2 in 0..(u8::MAX - op1) {
                 // GIVEN
                 let mut status_register = StatusReg::default();
+                status_register.set_flags(StatusRegFlags::DECIMAL);
                 status_register.set_flags(StatusRegFlags::CARRY);
 
                 let mut accumulator = Reg8::new(op1);

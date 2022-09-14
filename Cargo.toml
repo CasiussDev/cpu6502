@@ -12,3 +12,6 @@ rand = "0.8"
 [dev-dependencies]
 strum = "0.24"
 strum_macros = "0.24"
+
+[features]
+decimal = []

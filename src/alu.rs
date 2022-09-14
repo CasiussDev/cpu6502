@@ -64,23 +64,27 @@ pub fn update_status_v(overflow: bool, status_register: &mut StatusReg) {
 
 #[allow(dead_code)]
 pub fn add(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusReg) {
-    // Compilers are smart enough to do a single addition!
-    let (mut result, mut carry) = accumulator.get_u8().overflowing_add(operand.get_u8());
-    let (_, mut overflow) = accumulator.get_i8().overflowing_add(operand.get_i8());
+    if cfg!(feature = "decimal") && status_register.are_all_flags_set(StatusRegFlags::DECIMAL) {
+        todo!();
+    } else {
+        // Compilers are smart enough to do a single addition!
+        let (mut result, mut carry) = accumulator.get_u8().overflowing_add(operand.get_u8());
+        let (_, mut overflow) = accumulator.get_i8().overflowing_add(operand.get_i8());
 
-    if status_register.are_all_flags_set(StatusRegFlags::CARRY) {
-        let (_, inc_overflow) = (result as i8).overflowing_add(1);
-        let (new_result, inc_carry) = result.overflowing_add(1);
-        result = new_result;
-        carry |= inc_carry;
-        overflow |= inc_overflow;
+        if status_register.are_all_flags_set(StatusRegFlags::CARRY) {
+            let (_, inc_overflow) = (result as i8).overflowing_add(1);
+            let (new_result, inc_carry) = result.overflowing_add(1);
+            result = new_result;
+            carry |= inc_carry;
+            overflow |= inc_overflow;
+        }
+
+        update_status_v(overflow, status_register);
+        update_status_carry_add(carry, status_register);
+        update_status_nz(result as i8, status_register);
+
+        accumulator.set_u8(result);
     }
-
-    update_status_v(overflow, status_register);
-    update_status_carry_add(carry, status_register);
-    update_status_nz(result as i8, status_register);
-
-    accumulator.set_u8(result);
 }
 
 #[allow(dead_code)]
@@ -105,26 +109,38 @@ pub fn cmp(accumulator: &Reg8, operand: &Reg8, status_register: &mut StatusReg) 
 
 #[allow(dead_code)]
 pub fn sub(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusReg) {
-    let result = cmp(accumulator, operand, status_register);
-    accumulator.set_i8(result);
+    if cfg!(feature = "decimal") && status_register.are_all_flags_set(StatusRegFlags::DECIMAL) {
+        todo!();
+    } else {
+        let result = cmp(accumulator, operand, status_register);
+        accumulator.set_i8(result);
+    }
 }
 
 #[allow(dead_code)]
 pub fn inc(src_dst: &mut Reg8, status_register: &mut StatusReg) {
-    let result = src_dst.get_u8().wrapping_add(1);
+    if cfg!(feature = "decimal") && status_register.are_all_flags_set(StatusRegFlags::DECIMAL) {
+        todo!();
+    } else {
+        let result = src_dst.get_u8().wrapping_add(1);
 
-    update_status_nz(result as i8, status_register);
+        update_status_nz(result as i8, status_register);
 
-    src_dst.set_u8(result);
+        src_dst.set_u8(result);
+    }
 }
 
 #[allow(dead_code)]
 pub fn dec(src_dst: &mut Reg8, status_register: &mut StatusReg) {
-    let result = src_dst.get_i8().wrapping_sub(1);
+    if cfg!(feature = "decimal") && status_register.are_all_flags_set(StatusRegFlags::DECIMAL) {
+        todo!();
+    } else {
+        let result = src_dst.get_i8().wrapping_sub(1);
 
-    update_status_nz(result as i8, status_register);
+        update_status_nz(result as i8, status_register);
 
-    src_dst.set_i8(result);
+        src_dst.set_i8(result);
+    }
 }
 
 #[allow(dead_code)]
