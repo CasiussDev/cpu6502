@@ -1,11 +1,13 @@
 use super::StatusReg;
 use super::{Reg16, Reg8};
 use crate::registers::StatusRegFlags;
-use rand::distributions::Distribution;
-use rand::distributions::Uniform;
-use rand::rngs::ThreadRng;
 use std::fmt;
 use std::fmt::Formatter;
+
+#[cfg(feature = "random")]
+use rand::distributions::{Distribution, Uniform};
+#[cfg(feature = "random")]
+use rand::rngs::ThreadRng;
 
 #[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -58,6 +60,7 @@ impl RegisterFile {
         self.sp.dec();
     }
 
+    #[cfg(feature = "random")]
     pub fn reset_random(&mut self, rng: &mut ThreadRng, uniform: &Uniform<u16>) {
         self.a.set_u8(uniform.sample(rng) as u8);
         self.x.set_u8(uniform.sample(rng) as u8);
@@ -140,8 +143,12 @@ impl fmt::Debug for RegisterFile {
 
 #[cfg(test)]
 mod tests {
-    use crate::registers::{Reg8, RegisterFile, SelectedRegister, StatusRegFlags};
+    use crate::registers::{Reg8, RegisterFile, SelectedRegister};
+
+    #[cfg(feature = "random")]
     use rand::distributions::Uniform;
+    #[cfg(feature = "random")]
+    use crate::registers::StatusRegFlags;
 
     //#[test]
     //fn registerfiles_reset_resultscorrect() {
@@ -168,6 +175,7 @@ mod tests {
     //}
 
     #[test]
+    #[cfg(feature = "random")]
     fn registerfile_resetrandom_irqdisabled() {
         let mut rng = rand::thread_rng();
         let uniform = Uniform::new_inclusive(0_u16, u16::MAX);
