@@ -582,6 +582,30 @@ pub fn create_instructionops_sequences() -> OpsMap {
                 dst: SelectedRegister::SP,
             }],
         ),
+        (
+            InstructionOp::PushA,
+            vec![MicroInstruction::WriteAddress {
+                src: SelectedRegister::A,
+            }],
+        ),
+        (
+            InstructionOp::PushStatus,
+            vec![MicroInstruction::WriteAddress {
+                src: SelectedRegister::Status,
+            }],
+        ),
+        (
+            InstructionOp::PullA,
+            vec![MicroInstruction::ReadAddress {
+                dst: SelectedRegister::A,
+            }],
+        ),
+        (
+            InstructionOp::PullStatus,
+            vec![MicroInstruction::ReadAddress {
+                dst: SelectedRegister::Status,
+            }],
+        ),
     ]);
 
     ops
