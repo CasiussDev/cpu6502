@@ -59,7 +59,7 @@ pub enum MicroInstruction {
 
     YieldClock,
 
-    FinishOrFixAddress,
+    FixAddressOrRunOpAndFinish,
 }
 
 #[allow(dead_code)]
@@ -120,8 +120,9 @@ pub enum InstructionSequenceMode {
 
     Relative,
 
-    IdxIndirect,
+    IdxIndirectRead,
     IdxIndirectReadModifyWrite,
+    IdxIndirectWrite,
 
     IndirectIdx,
     IndirectIdxReadModifyWrite,
@@ -187,17 +188,31 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
         (
             InstructionSequenceMode::Implied,
             vec![
-                MicroInstruction::RunOperation,
                 MicroInstruction::ReadPC {
                     dst: SelectedRegister::Discard,
                     increment: false,
                 },
+                MicroInstruction::RunOperation,
                 MicroInstruction::YieldClock,
             ],
         ),
         (
             InstructionSequenceMode::Immediate,
-            vec![MicroInstruction::RunOperation, MicroInstruction::YieldClock],
+            vec![
+                MicroInstruction::CopyRegister {
+                    dst: SelectedRegister::AddrLow,
+                    src: SelectedRegister::PCLow,
+                },
+                MicroInstruction::CopyRegister {
+                    dst: SelectedRegister::AddrHigh,
+                    src: SelectedRegister::PCHigh,
+                },
+                MicroInstruction::IncrementRegister {
+                    dst: SelectedRegister::PC,
+                },
+                MicroInstruction::RunOperation,
+                MicroInstruction::YieldClock,
+            ],
         ),
         (
             InstructionSequenceMode::AbsoluteJump,
@@ -391,7 +406,7 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 MicroInstruction::ReadAddress {
                     dst: SelectedRegister::Tmp,
                 },
-                MicroInstruction::FinishOrFixAddress,
+                MicroInstruction::FixAddressOrRunOpAndFinish,
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::RunOperation,
@@ -451,6 +466,45 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 MicroInstruction::RunOperation,
                 MicroInstruction::YieldClock,
                 // Next clock
+            ],
+        ),
+        (
+            InstructionSequenceMode::IdxIndirectWrite,
+            vec![
+                MicroInstruction::ZeroRegister {
+                    dst: SelectedRegister::AddrHigh,
+                },
+                MicroInstruction::ReadPC {
+                    dst: SelectedRegister::AddrLow,
+                    increment: true,
+                },
+                MicroInstruction::YieldClock,
+                // Next Clock
+                MicroInstruction::ReadAddress {
+                    dst: SelectedRegister::Discard,
+                },
+                MicroInstruction::AddIndexToAddress,
+                MicroInstruction::YieldClock,
+                // Next Clock
+                MicroInstruction::ReadAddress {
+                    dst: SelectedRegister::Tmp,
+                },
+                MicroInstruction::YieldClock,
+                // Next Clock
+                MicroInstruction::IncrementRegister {
+                    dst: SelectedRegister::Addr,
+                },
+                MicroInstruction::ReadAddress {
+                    dst: SelectedRegister::AddrHigh,
+                },
+                MicroInstruction::CopyRegister {
+                    dst: SelectedRegister::AddrLow,
+                    src: SelectedRegister::Tmp,
+                },
+                MicroInstruction::YieldClock,
+                // Next Clock
+                MicroInstruction::RunOperation,
+                MicroInstruction::YieldClock,
             ],
         ),
     ]);
