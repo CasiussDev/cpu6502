@@ -17,3 +17,4 @@ rand = "0.8"
 [features]
 decimal = []
 random = ["dep:rand"]
+undoc_opcodes = []
