@@ -137,4 +137,11 @@ mod tests {
             println!("{:#04X}\t{:?}", opcode, decoded);
         }
     }
+
+    #[test]
+    fn allopcodes_decoding_neverpanic() {
+        for opcode in 0..=u8::MAX {
+            super::decode(opcode);
+        }
+    }
 }
