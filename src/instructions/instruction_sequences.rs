@@ -36,14 +36,20 @@ pub enum InstructionSequenceMode {
 
     Relative,
 
-    IdxIndirectRead,
-    IdxIndirectReadModifyWrite,
-    IdxIndirectWrite,
+    ZeroPageIdxIndirectRead,
+    ZeroPageIdxIndirectReadModifyWrite,
+    ZeroPageIdxIndirectWrite,
 
-    IndirectIdx,
-    IndirectIdxReadModifyWrite,
+    ZeroPageIndirectIdx,
+    ZeroPageIndirectIdxReadModifyWrite,
 
     AbsoluteIndirect,
+}
+
+impl Default for InstructionSequenceMode {
+    fn default() -> Self {
+        InstructionSequenceMode::Implied
+    }
 }
 
 type SequenceMap = std::collections::HashMap<InstructionSequenceMode, MicroInstructionsVector>;
@@ -384,7 +390,7 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             ],
         ),
         (
-            InstructionSequenceMode::IdxIndirectWrite,
+            InstructionSequenceMode::ZeroPageIdxIndirectWrite,
             vec![
                 MicroInstruction::ZeroRegister {
                     dst: SelectedRegister::AddrHigh,
