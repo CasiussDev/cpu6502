@@ -1,13 +1,12 @@
-use std::collections::HashMap;
+use crate::alu::{AluBinaryOp, AluUnaryOp};
 use crate::instructions::microinstructions::{MicroInstruction, MicroInstructionsVector};
-use crate::alu::AluUnaryOp;
 use crate::registers::{SelectedRegister, StatusRegFlags};
+use std::collections::HashMap;
 
 #[cfg(test)]
 use strum::IntoEnumIterator;
 #[cfg(test)]
 use strum_macros::EnumIter;
-
 
 #[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -198,6 +197,90 @@ pub fn create_instructionops_sequences() -> OpsMap {
             InstructionOp::PullStatus,
             vec![MicroInstruction::ReadAddress {
                 dst: SelectedRegister::Status,
+            }],
+        ),
+        (
+            InstructionOp::Or,
+            vec![
+                MicroInstruction::ReadAddress {
+                    dst: SelectedRegister::Tmp,
+                },
+                MicroInstruction::AluBinaryOp {
+                    op: AluBinaryOp::Or,
+                    operand: SelectedRegister::Tmp,
+                },
+            ],
+        ),
+        (
+            InstructionOp::And,
+            vec![
+                MicroInstruction::ReadAddress {
+                    dst: SelectedRegister::Tmp,
+                },
+                MicroInstruction::AluBinaryOp {
+                    op: AluBinaryOp::And,
+                    operand: SelectedRegister::Tmp,
+                },
+            ],
+        ),
+        (
+            InstructionOp::Xor,
+            vec![
+                MicroInstruction::ReadAddress {
+                    dst: SelectedRegister::Tmp,
+                },
+                MicroInstruction::AluBinaryOp {
+                    op: AluBinaryOp::Xor,
+                    operand: SelectedRegister::Tmp,
+                },
+            ],
+        ),
+        (
+            InstructionOp::Add,
+            vec![
+                MicroInstruction::ReadAddress {
+                    dst: SelectedRegister::Tmp,
+                },
+                MicroInstruction::AluBinaryOp {
+                    op: AluBinaryOp::Add,
+                    operand: SelectedRegister::Tmp,
+                },
+            ],
+        ),
+        (
+            InstructionOp::Sub,
+            vec![
+                MicroInstruction::ReadAddress {
+                    dst: SelectedRegister::Tmp,
+                },
+                MicroInstruction::AluBinaryOp {
+                    op: AluBinaryOp::Sub,
+                    operand: SelectedRegister::Tmp,
+                },
+            ],
+        ),
+        (
+            InstructionOp::Cmp,
+            vec![
+                MicroInstruction::ReadAddress {
+                    dst: SelectedRegister::Tmp,
+                },
+                MicroInstruction::AluBinaryOp {
+                    op: AluBinaryOp::Cmp,
+                    operand: SelectedRegister::Tmp,
+                },
+            ],
+        ),
+        (
+            InstructionOp::StoreA,
+            vec![MicroInstruction::WriteAddress {
+                src: SelectedRegister::A,
+            }],
+        ),
+        (
+            InstructionOp::LoadA,
+            vec![MicroInstruction::ReadAddress {
+                dst: SelectedRegister::A,
             }],
         ),
     ]);

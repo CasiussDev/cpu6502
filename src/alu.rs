@@ -17,6 +17,7 @@ pub enum AluBinaryOp {
     And,
     Or,
     Xor,
+    Cmp,
 }
 
 #[allow(dead_code)]

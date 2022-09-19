@@ -35,8 +35,7 @@ pub enum MicroInstruction {
     },
     AluBinaryOp {
         op: AluBinaryOp,
-        dst: SelectedRegister,
-        src: SelectedRegister,
+        operand: SelectedRegister,
     },
     SetStatusFlag {
         flag: StatusRegFlags,
