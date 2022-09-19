@@ -36,6 +36,20 @@ pub enum InstructionOp {
     PushStatus,
     PullA,
     PullStatus,
+    Or,
+    And,
+    Xor,
+    Add,
+    Sub,
+    Cmp,
+    StoreA,
+    LoadA,
+}
+
+impl Default for InstructionOp {
+    fn default() -> Self {
+        InstructionOp::Nop
+    }
 }
 
 type OpsMap = std::collections::HashMap<InstructionOp, MicroInstructionsVector>;
