@@ -3,6 +3,10 @@ mod instructions;
 mod pinout;
 mod registers;
 
+#[macro_use]
+extern crate enum_primitive_derive;
+extern crate num_traits;
+
 #[cfg(test)]
 mod tests {
     #[test]
