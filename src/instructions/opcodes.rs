@@ -70,7 +70,7 @@ fn sequence_mode_g1(op: OpsG01, addr_mode: AddrModeG01) -> InstructionSequenceMo
         AddrModeG01::ZeroPage => InstructionSequenceMode::ZeroPage,
         AddrModeG01::Immediate => InstructionSequenceMode::Immediate,
         AddrModeG01::Absolute => InstructionSequenceMode::Absolute,
-        AddrModeG01::ZeroPageIndirectIdx => InstructionSequenceMode::ZeroPageIndirectIdx,
+        AddrModeG01::ZeroPageIndxIndirect => InstructionSequenceMode::ZeroPageIdxIndirect,
         AddrModeG01::ZeroPageIdx => InstructionSequenceMode::ZeroPageIndx,
         AddrModeG01::AbsoluteIdxY | AddrModeG01::AbsoluteIdxX => match op {
             OpsG01::STA => InstructionSequenceMode::AbsoluteIdxWrite,
@@ -82,15 +82,15 @@ fn sequence_mode_g1(op: OpsG01, addr_mode: AddrModeG01) -> InstructionSequenceMo
             | OpsG01::CMP
             | OpsG01::SBC => InstructionSequenceMode::AbsoluteIdxRead,
         },
-        AddrModeG01::ZeroPageIndxIndirect => match op {
-            OpsG01::STA => InstructionSequenceMode::ZeroPageIdxIndirectWrite,
+        AddrModeG01::ZeroPageIndirectIdx => match op {
+            OpsG01::STA => InstructionSequenceMode::ZeroPageIndirectIdxWrite,
             OpsG01::ORA
             | OpsG01::AND
             | OpsG01::EOR
             | OpsG01::ADC
             | OpsG01::LDA
             | OpsG01::CMP
-            | OpsG01::SBC => InstructionSequenceMode::ZeroPageIdxIndirectRead,
+            | OpsG01::SBC => InstructionSequenceMode::ZeroPageIndirectIdxRead,
         },
     }
 }
@@ -105,6 +105,10 @@ fn index_reg_g1(addr_mode: AddrModeG01) -> Option<SelectedRegister> {
     }
 }
 
+fn illegal_instruction_g1(op: OpsG01, addr_mode: AddrModeG01) -> bool {
+    (op == OpsG01::STA) && (addr_mode == AddrModeG01::Immediate)
+}
+
 #[allow(dead_code)]
 pub fn decode(opcode: u8) -> DecodedOpcode {
     match opcode & OPCODE_GROUP_MASK {
@@ -113,8 +117,10 @@ pub fn decode(opcode: u8) -> DecodedOpcode {
             let addr_mode = AddrModeG01::from_u8(opcode & OPCODE_G1_ADDR_MASK).unwrap();
             let operation = instr_op_g1(op);
             let sequence = sequence_mode_g1(op, addr_mode);
-            let index = index_reg_g1(addr_mode);
-            return DecodedOpcode::new( sequence, operation, index );
+            if illegal_instruction_g1(op, addr_mode) == false {
+                let index = index_reg_g1(addr_mode);
+                return DecodedOpcode::new(sequence, operation, index);
+            }
         }
         _ => (),
     };
