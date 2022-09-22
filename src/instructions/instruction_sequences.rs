@@ -7,16 +7,15 @@ use strum::IntoEnumIterator;
 #[cfg(test)]
 use strum_macros::EnumIter;
 
-#[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 #[cfg_attr(test, derive(EnumIter))]
 pub enum InstructionSequenceMode {
     Break,
     ReturnInterrupt,
+    JumpSubroutine,
     ReturnSubroutine,
     Push,
     Pull,
-    JumpSubroutine,
     Implied,
     Immediate,
 
@@ -43,7 +42,7 @@ pub enum InstructionSequenceMode {
     ZeroPageIndirectIdxReadModifyWrite,
     ZeroPageIndirectIdxWrite,
 
-    AbsoluteIndirect,
+    AbsoluteIndirectJump,
 }
 
 impl Default for InstructionSequenceMode {
@@ -54,7 +53,6 @@ impl Default for InstructionSequenceMode {
 
 type SequenceMap = std::collections::HashMap<InstructionSequenceMode, MicroInstructionsVector>;
 
-#[allow(dead_code)]
 pub fn create_instruction_mode_sequences() -> SequenceMap {
     //let sequences = SequenceMap::new();
     let sequences = HashMap::from([
@@ -610,6 +608,30 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             ],
         ),
         (
+            InstructionSequenceMode::Relative,
+            vec![
+                MicroInstruction::ReadPC {
+                    dst: SelectedRegister::Tmp,
+                    increment: true,
+                },
+                MicroInstruction::YieldClock,
+                // Next clock
+                MicroInstruction::ReadPC {
+                    dst: SelectedRegister::IR,
+                    increment: false,
+                },
+                MicroInstruction::RunOperation,
+                MicroInstruction::YieldClock,
+                // Next clock
+                MicroInstruction::ReadPC {
+                    dst: SelectedRegister::IR,
+                    increment: false,
+                },
+                MicroInstruction::FixAddressOrIncrementPC,
+                MicroInstruction::YieldClock,
+            ],
+        ),
+        (
             InstructionSequenceMode::ZeroPageIdxIndirect,
             vec![
                 MicroInstruction::ZeroRegister {
@@ -831,6 +853,43 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 MicroInstruction::RunOperation,
                 MicroInstruction::YieldClock,
                 // Next Clock
+            ],
+        ),
+        (
+            InstructionSequenceMode::AbsoluteIndirectJump,
+            vec![
+                MicroInstruction::ReadPC {
+                    dst: SelectedRegister::Tmp,
+                    increment: true,
+                },
+                MicroInstruction::YieldClock,
+                // Next Clock
+                MicroInstruction::ReadPC {
+                    dst: SelectedRegister::AddrHigh,
+                    increment: true,
+                },
+                MicroInstruction::CopyRegister {
+                    dst: SelectedRegister::AddrLow,
+                    src: SelectedRegister::Tmp,
+                },
+                MicroInstruction::YieldClock,
+                // Next Clock
+                MicroInstruction::ReadAddress {
+                    dst: SelectedRegister::Tmp,
+                },
+                MicroInstruction::YieldClock,
+                // Next Clock
+                MicroInstruction::IncrementRegister {
+                    dst: SelectedRegister::AddrLow,
+                },
+                MicroInstruction::ReadAddress {
+                    dst: SelectedRegister::PCHigh,
+                },
+                MicroInstruction::CopyRegister {
+                    dst: SelectedRegister::PCLow,
+                    src: SelectedRegister::Tmp,
+                },
+                MicroInstruction::YieldClock,
             ],
         ),
     ]);

@@ -53,6 +53,7 @@ pub enum MicroInstruction {
     YieldClock,
 
     FixAddressOrRunOpAndFinish,
+    FixAddressOrIncrementPC,
 }
 
 pub type MicroInstructionsVector = std::vec::Vec<MicroInstruction>;
