@@ -25,6 +25,14 @@ pub enum SelectedRegister {
     AddrHigh,
     AddrLow,
     Addr,
+
+    // "virtual" registers
+    NMInterruptAddrLow = 0xFFFA,
+    NMInterruptAddHigh = 0xFFFB,
+    ProgramStartAddrLow = 0xFFFC,
+    ProgramStartAddrHigh = 0xFFFD,
+    InterruptAddrLow = 0xFFFE,
+    InterruptAddrHigh = 0xFFFF,
     Discard,
 }
 
@@ -75,14 +83,22 @@ impl RegisterFile {
 
     pub fn get_copy_selected_register16(&self, selection: SelectedRegister) -> Reg16 {
         assert!(
-            (selection == SelectedRegister::Addr) || (selection == SelectedRegister::PC),
-            "trying to read a 16 bit register as 8 bit"
+            (selection == SelectedRegister::Addr)
+                || (selection == SelectedRegister::PC)
+                || (selection == SelectedRegister::NMInterruptAddHigh)
+                || (selection == SelectedRegister::NMInterruptAddrLow)
+                || (selection == SelectedRegister::ProgramStartAddrHigh)
+                || (selection == SelectedRegister::ProgramStartAddrLow)
+                || (selection == SelectedRegister::InterruptAddrLow)
+                || (selection == SelectedRegister::InterruptAddrHigh),
+            "trying to read an 8 bit register as 16 bit"
         );
 
         match selection {
             SelectedRegister::Addr => self.addr,
             SelectedRegister::PC => self.pc,
-            _ => Reg16::default(),
+            //virtual registers
+            v => Reg16 { value: v as u16 },
         }
     }
 
@@ -100,6 +116,37 @@ impl RegisterFile {
         assert_ne!(
             selection,
             SelectedRegister::PC,
+            "trying to read a 16 bit register as 8 bit"
+        );
+
+        assert_ne!(
+            selection,
+            SelectedRegister::NMInterruptAddHigh,
+            "trying to read a 16 bit register as 8 bit"
+        );
+        assert_ne!(
+            selection,
+            SelectedRegister::NMInterruptAddrLow,
+            "trying to read a 16 bit register as 8 bit"
+        );
+        assert_ne!(
+            selection,
+            SelectedRegister::ProgramStartAddrLow,
+            "trying to read a 16 bit register as 8 bit"
+        );
+        assert_ne!(
+            selection,
+            SelectedRegister::ProgramStartAddrHigh,
+            "trying to read a 16 bit register as 8 bit"
+        );
+        assert_ne!(
+            selection,
+            SelectedRegister::InterruptAddrHigh,
+            "trying to read a 16 bit register as 8 bit"
+        );
+        assert_ne!(
+            selection,
+            SelectedRegister::InterruptAddrLow,
             "trying to read a 16 bit register as 8 bit"
         );
 
@@ -128,6 +175,8 @@ impl RegisterFile {
             SelectedRegister::Discard => Reg8::default(),
             SelectedRegister::Addr => Reg8::default(),
             SelectedRegister::PC => Reg8::default(),
+            //virtual registers
+            _ => Reg8::default(),
         }
     }
 
@@ -138,7 +187,7 @@ impl RegisterFile {
     pub fn set_selected_register16(&mut self, selection: SelectedRegister, reg: Reg16) {
         assert!(
             (selection == SelectedRegister::Addr) || (selection == SelectedRegister::PC),
-            "trying to read a 16 bit register as 8 bit"
+            "trying to read a 16 bit register as 8 bit or trying to set virtual register"
         );
 
         match selection {
@@ -160,6 +209,37 @@ impl RegisterFile {
             "trying to write a 16 bit register as 8 bit"
         );
 
+        assert_ne!(
+            selection,
+            SelectedRegister::NMInterruptAddHigh,
+            "trying to write a 16 bit register as 8 bit"
+        );
+        assert_ne!(
+            selection,
+            SelectedRegister::NMInterruptAddrLow,
+            "trying to write a 16 bit register as 8 bit"
+        );
+        assert_ne!(
+            selection,
+            SelectedRegister::ProgramStartAddrLow,
+            "trying to write a 16 bit register as 8 bit"
+        );
+        assert_ne!(
+            selection,
+            SelectedRegister::ProgramStartAddrHigh,
+            "trying to write a 16 bit register as 8 bit"
+        );
+        assert_ne!(
+            selection,
+            SelectedRegister::InterruptAddrHigh,
+            "trying to write a 16 bit register as 8 bit"
+        );
+        assert_ne!(
+            selection,
+            SelectedRegister::InterruptAddrLow,
+            "trying to write a 16 bit register as 8 bit"
+        );
+
         match selection {
             SelectedRegister::A => self.a = reg,
             SelectedRegister::X => self.x = reg,
@@ -175,6 +255,12 @@ impl RegisterFile {
             SelectedRegister::Discard => (),
             SelectedRegister::Addr => (),
             SelectedRegister::PC => (),
+            SelectedRegister::NMInterruptAddHigh => (),
+            SelectedRegister::NMInterruptAddrLow => (),
+            SelectedRegister::ProgramStartAddrHigh => (),
+            SelectedRegister::ProgramStartAddrLow => (),
+            SelectedRegister::InterruptAddrHigh => (),
+            SelectedRegister::InterruptAddrLow => (),
         };
     }
 }
