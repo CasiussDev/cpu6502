@@ -120,14 +120,12 @@ pub fn decode(opcode: u8) -> DecodedOpcode {
             if illegal_instruction_g1(op, addr_mode) == false {
                 let index = index_reg_g1(addr_mode);
                 return DecodedOpcode::new(sequence, operation, index);
+            } else if cfg!(feature = "undoc_opcodes") {
+                todo!();
             }
         }
         _ => (),
     };
-
-    //if let Some(op) = OpsG01::try_from(opcode & OPCODE_GROUP_MASK) {
-    //    let addr_mode = AddrModeG01::
-    //}
 
     DecodedOpcode::default()
 }
