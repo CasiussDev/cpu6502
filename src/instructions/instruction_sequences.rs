@@ -1,5 +1,5 @@
 use crate::instructions::microinstructions::{MicroInstruction, MicroInstructionsVector};
-use crate::registers::{SelectedRegister, StatusRegFlags};
+use crate::registers::{SelectedRegister16, SelectedRegister8, StatusRegFlags};
 use std::collections::HashMap;
 
 #[cfg(test)]
@@ -60,65 +60,74 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::Break,
             vec![
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::Discard,
+                    dst: SelectedRegister8::Discard,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
+                MicroInstruction::ZeroRegister {
+                    dst: SelectedRegister8::AddrHigh,
+                },
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::Addr,
-                    src: SelectedRegister::SP,
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::SP,
                 },
                 MicroInstruction::WriteAddress {
-                    src: SelectedRegister::PCHigh,
+                    src: SelectedRegister8::PCHigh,
                 },
                 MicroInstruction::DecrementRegister {
-                    dst: SelectedRegister::SP,
+                    dst: SelectedRegister8::SP,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
+                MicroInstruction::ZeroRegister {
+                    dst: SelectedRegister8::AddrHigh,
+                },
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::Addr,
-                    src: SelectedRegister::SP,
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::SP,
                 },
                 MicroInstruction::WriteAddress {
-                    src: SelectedRegister::PCLow,
+                    src: SelectedRegister8::PCLow,
                 },
                 MicroInstruction::DecrementRegister {
-                    dst: SelectedRegister::SP,
+                    dst: SelectedRegister8::SP,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::SetStatusFlag {
                     flag: StatusRegFlags::BREAK,
                 },
+                MicroInstruction::ZeroRegister {
+                    dst: SelectedRegister8::AddrHigh,
+                },
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::Addr,
-                    src: SelectedRegister::SP,
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::SP,
                 },
                 MicroInstruction::WriteAddress {
-                    src: SelectedRegister::Status,
+                    src: SelectedRegister8::Status,
                 },
                 MicroInstruction::DecrementRegister {
-                    dst: SelectedRegister::SP,
+                    dst: SelectedRegister8::SP,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::Addr,
-                    src: SelectedRegister::InterruptAddrLow,
+                MicroInstruction::CopyRegister16 {
+                    dst: SelectedRegister16::Addr,
+                    src: SelectedRegister16::InterruptAddrLow,
                 },
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::PCLow,
+                    dst: SelectedRegister8::PCLow,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::Addr,
-                    src: SelectedRegister::InterruptAddrHigh,
+                MicroInstruction::CopyRegister16 {
+                    dst: SelectedRegister16::Addr,
+                    src: SelectedRegister16::InterruptAddrHigh,
                 },
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::PCHigh,
+                    dst: SelectedRegister8::PCHigh,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
@@ -128,46 +137,55 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::ReturnInterrupt,
             vec![
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::Discard,
+                    dst: SelectedRegister8::Discard,
                     increment: false,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::IncrementRegister {
-                    dst: SelectedRegister::SP,
+                    dst: SelectedRegister8::SP,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
+                MicroInstruction::ZeroRegister {
+                    dst: SelectedRegister8::AddrHigh,
+                },
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::Addr,
-                    src: SelectedRegister::SP,
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::SP,
                 },
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Status,
+                    dst: SelectedRegister8::Status,
                 },
                 MicroInstruction::IncrementRegister {
-                    dst: SelectedRegister::SP,
+                    dst: SelectedRegister8::SP,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
+                MicroInstruction::ZeroRegister {
+                    dst: SelectedRegister8::AddrHigh,
+                },
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::Addr,
-                    src: SelectedRegister::SP,
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::SP,
                 },
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::PCLow,
+                    dst: SelectedRegister8::PCLow,
                 },
                 MicroInstruction::IncrementRegister {
-                    dst: SelectedRegister::SP,
+                    dst: SelectedRegister8::SP,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
+                MicroInstruction::ZeroRegister {
+                    dst: SelectedRegister8::AddrHigh,
+                },
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::Addr,
-                    src: SelectedRegister::SP,
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::SP,
                 },
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::PCHigh,
+                    dst: SelectedRegister8::PCHigh,
                 },
                 MicroInstruction::YieldClock,
             ],
@@ -176,21 +194,21 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::Push,
             vec![
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::Discard,
+                    dst: SelectedRegister8::Discard,
                     increment: false,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::ZeroRegister {
-                    dst: SelectedRegister::AddrHigh,
+                    dst: SelectedRegister8::AddrHigh,
                 },
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::AddrLow,
-                    src: SelectedRegister::SP,
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::SP,
                 },
                 MicroInstruction::RunOperation,
                 MicroInstruction::DecrementRegister {
-                    dst: SelectedRegister::SP,
+                    dst: SelectedRegister8::SP,
                 },
                 MicroInstruction::YieldClock,
             ],
@@ -199,22 +217,22 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::Pull,
             vec![
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::Discard,
+                    dst: SelectedRegister8::Discard,
                     increment: false,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::IncrementRegister {
-                    dst: SelectedRegister::SP,
+                    dst: SelectedRegister8::SP,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::ZeroRegister {
-                    dst: SelectedRegister::AddrHigh,
+                    dst: SelectedRegister8::AddrHigh,
                 },
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::AddrLow,
-                    src: SelectedRegister::SP,
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::SP,
                 },
                 MicroInstruction::RunOperation,
                 MicroInstruction::YieldClock,
@@ -224,44 +242,50 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::JumpSubroutine,
             vec![
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::YieldClock,
                 // Next clock
+                MicroInstruction::ZeroRegister {
+                    dst: SelectedRegister8::AddrHigh,
+                },
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::Addr,
-                    src: SelectedRegister::SP,
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::SP,
                 },
                 MicroInstruction::WriteAddress {
-                    src: SelectedRegister::PCHigh,
+                    src: SelectedRegister8::PCHigh,
                 },
                 MicroInstruction::DecrementRegister {
-                    dst: SelectedRegister::SP,
+                    dst: SelectedRegister8::SP,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
+                MicroInstruction::ZeroRegister {
+                    dst: SelectedRegister8::AddrHigh,
+                },
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::Addr,
-                    src: SelectedRegister::SP,
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::SP,
                 },
                 MicroInstruction::WriteAddress {
-                    src: SelectedRegister::PCLow,
+                    src: SelectedRegister8::PCLow,
                 },
                 MicroInstruction::DecrementRegister {
-                    dst: SelectedRegister::SP,
+                    dst: SelectedRegister8::SP,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::PCHigh,
+                    dst: SelectedRegister8::PCHigh,
                     increment: true,
                 },
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::PCLow,
-                    src: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::PCLow,
+                    src: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
             ],
@@ -270,43 +294,49 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::ReturnSubroutine,
             vec![
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::Discard,
+                    dst: SelectedRegister8::Discard,
                     increment: false,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::IncrementRegister {
-                    dst: SelectedRegister::SP,
+                    dst: SelectedRegister8::SP,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
+                MicroInstruction::ZeroRegister {
+                    dst: SelectedRegister8::AddrHigh,
+                },
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::Addr,
-                    src: SelectedRegister::SP,
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::SP,
                 },
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::IncrementRegister {
-                    dst: SelectedRegister::SP,
+                    dst: SelectedRegister8::SP,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
+                MicroInstruction::ZeroRegister {
+                    dst: SelectedRegister8::AddrHigh,
+                },
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::Addr,
-                    src: SelectedRegister::SP,
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::SP,
                 },
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::PCHigh,
+                    dst: SelectedRegister8::PCHigh,
                 },
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::PCLow,
-                    src: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::PCLow,
+                    src: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::IncrementRegister {
-                    dst: SelectedRegister::PC,
+                MicroInstruction::IncrementRegister16 {
+                    dst: SelectedRegister16::PC,
                 },
                 MicroInstruction::YieldClock,
             ],
@@ -315,7 +345,7 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::Implied,
             vec![
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::Discard,
+                    dst: SelectedRegister8::Discard,
                     increment: false,
                 },
                 MicroInstruction::RunOperation,
@@ -326,15 +356,15 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::Immediate,
             vec![
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::AddrLow,
-                    src: SelectedRegister::PCLow,
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::PCLow,
                 },
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::AddrHigh,
-                    src: SelectedRegister::PCHigh,
+                    dst: SelectedRegister8::AddrHigh,
+                    src: SelectedRegister8::PCHigh,
                 },
-                MicroInstruction::IncrementRegister {
-                    dst: SelectedRegister::PC,
+                MicroInstruction::IncrementRegister16 {
+                    dst: SelectedRegister16::PC,
                 },
                 MicroInstruction::RunOperation,
                 MicroInstruction::YieldClock,
@@ -344,18 +374,18 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::AbsoluteJump,
             vec![
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::AddrLow,
+                    dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::PCHigh,
+                    dst: SelectedRegister8::PCHigh,
                     increment: true,
                 },
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::PCLow,
-                    src: SelectedRegister::AddrLow,
+                    dst: SelectedRegister8::PCLow,
+                    src: SelectedRegister8::AddrLow,
                 },
                 MicroInstruction::YieldClock,
             ],
@@ -364,13 +394,13 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::Absolute,
             vec![
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::AddrLow,
+                    dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::AddrHigh,
+                    dst: SelectedRegister8::AddrHigh,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
@@ -383,30 +413,30 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::AbsoluteReadModifyWrite,
             vec![
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::AddrLow,
+                    dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::AddrHigh,
+                    dst: SelectedRegister8::AddrHigh,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::WriteAddress {
-                    src: SelectedRegister::Tmp,
+                    src: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::RunOperation,
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::WriteAddress {
-                    src: SelectedRegister::Tmp,
+                    src: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
             ],
@@ -415,10 +445,10 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::ZeroPage,
             vec![
                 MicroInstruction::ZeroRegister {
-                    dst: SelectedRegister::AddrHigh,
+                    dst: SelectedRegister8::AddrHigh,
                 },
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::AddrLow,
+                    dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
@@ -431,27 +461,27 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::ZeroPageReadModifyWrite,
             vec![
                 MicroInstruction::ZeroRegister {
-                    dst: SelectedRegister::AddrHigh,
+                    dst: SelectedRegister8::AddrHigh,
                 },
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::AddrLow,
+                    dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::WriteAddress {
-                    src: SelectedRegister::Tmp,
+                    src: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::RunOperation,
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::WriteAddress {
-                    src: SelectedRegister::Tmp,
+                    src: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
             ],
@@ -460,16 +490,16 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::ZeroPageIndx,
             vec![
                 MicroInstruction::ZeroRegister {
-                    dst: SelectedRegister::AddrHigh,
+                    dst: SelectedRegister8::AddrHigh,
                 },
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::AddrLow,
+                    dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Discard,
+                    dst: SelectedRegister8::Discard,
                 },
                 MicroInstruction::AddIndexToAddress,
                 MicroInstruction::YieldClock,
@@ -482,33 +512,33 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::ZeroPageIdxReadModifyWrite,
             vec![
                 MicroInstruction::ZeroRegister {
-                    dst: SelectedRegister::AddrHigh,
+                    dst: SelectedRegister8::AddrHigh,
                 },
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::AddrLow,
+                    dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Discard,
+                    dst: SelectedRegister8::Discard,
                 },
                 MicroInstruction::AddIndexToAddress,
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::WriteAddress {
-                    src: SelectedRegister::Tmp,
+                    src: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::RunOperation,
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::WriteAddress {
-                    src: SelectedRegister::Tmp,
+                    src: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
             ],
@@ -517,20 +547,20 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::AbsoluteIdxRead,
             vec![
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::AddrLow,
+                    dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::AddrHigh,
+                    dst: SelectedRegister8::AddrHigh,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::AddIndexToAddress,
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::FixAddressOrRunOpAndFinish,
                 MicroInstruction::YieldClock,
@@ -544,37 +574,37 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::AbsoluteIdxReadModifyWrite,
             vec![
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::AddrLow,
+                    dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::AddrHigh,
+                    dst: SelectedRegister8::AddrHigh,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
                 MicroInstruction::AddIndexToAddress,
                 // Next clock
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Discard,
+                    dst: SelectedRegister8::Discard,
                 },
                 MicroInstruction::FixAddress,
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::WriteAddress {
-                    src: SelectedRegister::Tmp,
+                    src: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::RunOperation,
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::WriteAddress {
-                    src: SelectedRegister::Tmp,
+                    src: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
@@ -584,20 +614,20 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::AbsoluteIdxWrite,
             vec![
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::AddrLow,
+                    dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::AddrHigh,
+                    dst: SelectedRegister8::AddrHigh,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::AddIndexToAddress,
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::FixAddress,
                 MicroInstruction::YieldClock,
@@ -611,20 +641,20 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::Relative,
             vec![
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::IR,
+                    dst: SelectedRegister8::IR,
                     increment: false,
                 },
                 MicroInstruction::RunOperation,
                 MicroInstruction::YieldClock,
                 // Next clock
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::IR,
+                    dst: SelectedRegister8::IR,
                     increment: false,
                 },
                 MicroInstruction::FixAddressOrIncrementPC,
@@ -635,34 +665,34 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::ZeroPageIdxIndirect,
             vec![
                 MicroInstruction::ZeroRegister {
-                    dst: SelectedRegister::AddrHigh,
+                    dst: SelectedRegister8::AddrHigh,
                 },
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::AddrLow,
+                    dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
                 // Next Clock
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Discard,
+                    dst: SelectedRegister8::Discard,
                 },
                 MicroInstruction::AddIndexToAddress,
                 MicroInstruction::YieldClock,
                 // Next Clock
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
                 // Next Clock
                 MicroInstruction::IncrementRegister {
-                    dst: SelectedRegister::AddrLow,
+                    dst: SelectedRegister8::AddrLow,
                 },
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::AddrHigh,
+                    dst: SelectedRegister8::AddrHigh,
                 },
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::AddrLow,
-                    src: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
                 // Next Clock
@@ -674,50 +704,50 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::ZeroPageIdxIndirectReadModifyWrite,
             vec![
                 MicroInstruction::ZeroRegister {
-                    dst: SelectedRegister::AddrHigh,
+                    dst: SelectedRegister8::AddrHigh,
                 },
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::AddrLow,
+                    dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
                 // Next Clock
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Discard,
+                    dst: SelectedRegister8::Discard,
                 },
                 MicroInstruction::AddIndexToAddress,
                 MicroInstruction::YieldClock,
                 // Next Clock
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
                 // Next Clock
                 MicroInstruction::IncrementRegister {
-                    dst: SelectedRegister::AddrLow,
+                    dst: SelectedRegister8::AddrLow,
                 },
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::AddrHigh,
+                    dst: SelectedRegister8::AddrHigh,
                 },
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::AddrLow,
-                    src: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
                 // Next Clock
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
                 // Next Clock
                 MicroInstruction::WriteAddress {
-                    src: SelectedRegister::Tmp,
+                    src: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::RunOperation,
                 MicroInstruction::YieldClock,
                 // Next Clock
                 MicroInstruction::WriteAddress {
-                    src: SelectedRegister::Tmp,
+                    src: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
             ],
@@ -726,28 +756,28 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::ZeroPageIndirectIdxRead,
             vec![
                 MicroInstruction::ZeroRegister {
-                    dst: SelectedRegister::AddrHigh,
+                    dst: SelectedRegister8::AddrHigh,
                 },
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::AddrLow,
+                    dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
                 // Next Clock
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
                 // Next Clock
                 MicroInstruction::IncrementRegister {
-                    dst: SelectedRegister::AddrLow,
+                    dst: SelectedRegister8::AddrLow,
                 },
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::AddrHigh,
+                    dst: SelectedRegister8::AddrHigh,
                 },
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::AddrLow,
-                    src: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::AddIndexToAddress,
                 MicroInstruction::YieldClock,
@@ -764,51 +794,51 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::ZeroPageIndirectIdxReadModifyWrite,
             vec![
                 MicroInstruction::ZeroRegister {
-                    dst: SelectedRegister::AddrHigh,
+                    dst: SelectedRegister8::AddrHigh,
                 },
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::AddrLow,
+                    dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
                 // Next Clock
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
                 // Next Clock
                 MicroInstruction::IncrementRegister {
-                    dst: SelectedRegister::AddrLow,
+                    dst: SelectedRegister8::AddrLow,
                 },
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::AddrHigh,
+                    dst: SelectedRegister8::AddrHigh,
                 },
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::AddrLow,
-                    src: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::AddIndexToAddress,
                 MicroInstruction::YieldClock,
                 // Next Clock
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Discard,
+                    dst: SelectedRegister8::Discard,
                 },
                 MicroInstruction::FixAddress,
                 MicroInstruction::YieldClock,
                 // Next Clock
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
                 // Next Clock
                 MicroInstruction::WriteAddress {
-                    src: SelectedRegister::Tmp,
+                    src: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::RunOperation,
                 MicroInstruction::YieldClock,
                 // Next Clock
                 MicroInstruction::WriteAddress {
-                    src: SelectedRegister::Tmp,
+                    src: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
                 // Next Clock
@@ -818,34 +848,34 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::ZeroPageIndirectIdxWrite,
             vec![
                 MicroInstruction::ZeroRegister {
-                    dst: SelectedRegister::AddrHigh,
+                    dst: SelectedRegister8::AddrHigh,
                 },
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::AddrLow,
+                    dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
                 // Next Clock
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
                 // Next Clock
                 MicroInstruction::IncrementRegister {
-                    dst: SelectedRegister::AddrLow,
+                    dst: SelectedRegister8::AddrLow,
                 },
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::AddrHigh,
+                    dst: SelectedRegister8::AddrHigh,
                 },
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::AddrLow,
-                    src: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::AddIndexToAddress,
                 MicroInstruction::YieldClock,
                 // Next Clock
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Discard,
+                    dst: SelectedRegister8::Discard,
                 },
                 MicroInstruction::FixAddress,
                 MicroInstruction::YieldClock,
@@ -859,35 +889,35 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             InstructionSequenceMode::AbsoluteIndirectJump,
             vec![
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                     increment: true,
                 },
                 MicroInstruction::YieldClock,
                 // Next Clock
                 MicroInstruction::ReadPC {
-                    dst: SelectedRegister::AddrHigh,
+                    dst: SelectedRegister8::AddrHigh,
                     increment: true,
                 },
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::AddrLow,
-                    src: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
                 // Next Clock
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
                 // Next Clock
                 MicroInstruction::IncrementRegister {
-                    dst: SelectedRegister::AddrLow,
+                    dst: SelectedRegister8::AddrLow,
                 },
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::PCHigh,
+                    dst: SelectedRegister8::PCHigh,
                 },
                 MicroInstruction::CopyRegister {
-                    dst: SelectedRegister::PCLow,
-                    src: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::PCLow,
+                    src: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::YieldClock,
             ],

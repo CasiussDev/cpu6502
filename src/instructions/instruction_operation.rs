@@ -1,6 +1,6 @@
 use crate::alu::{AluBinaryOp, AluUnaryOp};
 use crate::instructions::microinstructions::{MicroInstruction, MicroInstructionsVector};
-use crate::registers::{SelectedRegister, StatusRegFlags};
+use crate::registers::{SelectedRegister8, StatusRegFlags};
 use std::collections::HashMap;
 
 #[cfg(test)]
@@ -61,28 +61,28 @@ pub fn create_instructionops_sequences() -> OpsMap {
             InstructionOp::IncrementX,
             vec![MicroInstruction::AluUnaryOp {
                 op: AluUnaryOp::Inc,
-                reg: SelectedRegister::X,
+                reg: SelectedRegister8::X,
             }],
         ),
         (
             InstructionOp::IncrementY,
             vec![MicroInstruction::AluUnaryOp {
                 op: AluUnaryOp::Inc,
-                reg: SelectedRegister::Y,
+                reg: SelectedRegister8::Y,
             }],
         ),
         (
             InstructionOp::DecrementX,
             vec![MicroInstruction::AluUnaryOp {
                 op: AluUnaryOp::Dec,
-                reg: SelectedRegister::X,
+                reg: SelectedRegister8::X,
             }],
         ),
         (
             InstructionOp::DecrementY,
             vec![MicroInstruction::AluUnaryOp {
                 op: AluUnaryOp::Dec,
-                reg: SelectedRegister::Y,
+                reg: SelectedRegister8::Y,
             }],
         ),
         (
@@ -136,78 +136,78 @@ pub fn create_instructionops_sequences() -> OpsMap {
         (
             InstructionOp::TransferAccumulatorToX,
             vec![MicroInstruction::CopyRegister {
-                src: SelectedRegister::A,
-                dst: SelectedRegister::X,
+                src: SelectedRegister8::A,
+                dst: SelectedRegister8::X,
             }],
         ),
         (
             InstructionOp::TransferAccumulatorToY,
             vec![MicroInstruction::CopyRegister {
-                src: SelectedRegister::A,
-                dst: SelectedRegister::Y,
+                src: SelectedRegister8::A,
+                dst: SelectedRegister8::Y,
             }],
         ),
         (
             InstructionOp::TransferStackPtrToX,
             vec![MicroInstruction::CopyRegister {
-                src: SelectedRegister::SP,
-                dst: SelectedRegister::X,
+                src: SelectedRegister8::SP,
+                dst: SelectedRegister8::X,
             }],
         ),
         (
             InstructionOp::TransferXToAccumulator,
             vec![MicroInstruction::CopyRegister {
-                src: SelectedRegister::X,
-                dst: SelectedRegister::A,
+                src: SelectedRegister8::X,
+                dst: SelectedRegister8::A,
             }],
         ),
         (
             InstructionOp::TransferYToAccumulator,
             vec![MicroInstruction::CopyRegister {
-                src: SelectedRegister::Y,
-                dst: SelectedRegister::A,
+                src: SelectedRegister8::Y,
+                dst: SelectedRegister8::A,
             }],
         ),
         (
             InstructionOp::TransferXToStackPtr,
             vec![MicroInstruction::CopyRegister {
-                src: SelectedRegister::X,
-                dst: SelectedRegister::SP,
+                src: SelectedRegister8::X,
+                dst: SelectedRegister8::SP,
             }],
         ),
         (
             InstructionOp::PushA,
             vec![MicroInstruction::WriteAddress {
-                src: SelectedRegister::A,
+                src: SelectedRegister8::A,
             }],
         ),
         (
             InstructionOp::PushStatus,
             vec![MicroInstruction::WriteAddress {
-                src: SelectedRegister::Status,
+                src: SelectedRegister8::Status,
             }],
         ),
         (
             InstructionOp::PullA,
             vec![MicroInstruction::ReadAddress {
-                dst: SelectedRegister::A,
+                dst: SelectedRegister8::A,
             }],
         ),
         (
             InstructionOp::PullStatus,
             vec![MicroInstruction::ReadAddress {
-                dst: SelectedRegister::Status,
+                dst: SelectedRegister8::Status,
             }],
         ),
         (
             InstructionOp::Or,
             vec![
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::AluBinaryOp {
                     op: AluBinaryOp::Or,
-                    operand: SelectedRegister::Tmp,
+                    operand: SelectedRegister8::Tmp,
                 },
             ],
         ),
@@ -215,11 +215,11 @@ pub fn create_instructionops_sequences() -> OpsMap {
             InstructionOp::And,
             vec![
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::AluBinaryOp {
                     op: AluBinaryOp::And,
-                    operand: SelectedRegister::Tmp,
+                    operand: SelectedRegister8::Tmp,
                 },
             ],
         ),
@@ -227,11 +227,11 @@ pub fn create_instructionops_sequences() -> OpsMap {
             InstructionOp::Xor,
             vec![
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::AluBinaryOp {
                     op: AluBinaryOp::Xor,
-                    operand: SelectedRegister::Tmp,
+                    operand: SelectedRegister8::Tmp,
                 },
             ],
         ),
@@ -239,11 +239,11 @@ pub fn create_instructionops_sequences() -> OpsMap {
             InstructionOp::Add,
             vec![
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::AluBinaryOp {
                     op: AluBinaryOp::Add,
-                    operand: SelectedRegister::Tmp,
+                    operand: SelectedRegister8::Tmp,
                 },
             ],
         ),
@@ -251,11 +251,11 @@ pub fn create_instructionops_sequences() -> OpsMap {
             InstructionOp::Sub,
             vec![
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::AluBinaryOp {
                     op: AluBinaryOp::Sub,
-                    operand: SelectedRegister::Tmp,
+                    operand: SelectedRegister8::Tmp,
                 },
             ],
         ),
@@ -263,24 +263,24 @@ pub fn create_instructionops_sequences() -> OpsMap {
             InstructionOp::Cmp,
             vec![
                 MicroInstruction::ReadAddress {
-                    dst: SelectedRegister::Tmp,
+                    dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::AluBinaryOp {
                     op: AluBinaryOp::Cmp,
-                    operand: SelectedRegister::Tmp,
+                    operand: SelectedRegister8::Tmp,
                 },
             ],
         ),
         (
             InstructionOp::StoreA,
             vec![MicroInstruction::WriteAddress {
-                src: SelectedRegister::A,
+                src: SelectedRegister8::A,
             }],
         ),
         (
             InstructionOp::LoadA,
             vec![MicroInstruction::ReadAddress {
-                dst: SelectedRegister::A,
+                dst: SelectedRegister8::A,
             }],
         ),
     ]);

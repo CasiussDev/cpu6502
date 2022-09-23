@@ -1,6 +1,6 @@
 use crate::instructions::InstructionOp;
 use crate::instructions::InstructionSequenceMode;
-use crate::registers::SelectedRegister;
+use crate::registers::SelectedRegister8;
 use num_traits::FromPrimitive;
 
 const OPCODE_GROUP_MASK: u8 = 0b_0000_0011;
@@ -35,14 +35,14 @@ pub enum AddrModeG01 {
 pub struct DecodedOpcode {
     pub sequence: InstructionSequenceMode,
     pub operation: InstructionOp,
-    pub index: Option<SelectedRegister>,
+    pub index: Option<SelectedRegister8>,
 }
 
 impl DecodedOpcode {
     pub fn new(
         sequence: InstructionSequenceMode,
         operation: InstructionOp,
-        index: Option<SelectedRegister>,
+        index: Option<SelectedRegister8>,
     ) -> Self {
         Self {
             sequence,
@@ -95,12 +95,12 @@ fn sequence_mode_g1(op: OpsG01, addr_mode: AddrModeG01) -> InstructionSequenceMo
     }
 }
 
-fn index_reg_g1(addr_mode: AddrModeG01) -> Option<SelectedRegister> {
+fn index_reg_g1(addr_mode: AddrModeG01) -> Option<SelectedRegister8> {
     match addr_mode {
         AddrModeG01::ZeroPageIdx
         | AddrModeG01::ZeroPageIndxIndirect
-        | AddrModeG01::AbsoluteIdxX => Some(SelectedRegister::X),
-        AddrModeG01::ZeroPageIndirectIdx | AddrModeG01::AbsoluteIdxY => Some(SelectedRegister::Y),
+        | AddrModeG01::AbsoluteIdxX => Some(SelectedRegister8::X),
+        AddrModeG01::ZeroPageIndirectIdx | AddrModeG01::AbsoluteIdxY => Some(SelectedRegister8::Y),
         _ => None,
     }
 }

@@ -1,5 +1,5 @@
 use crate::alu::{AluBinaryOp, AluUnaryOp};
-use crate::registers::register_file::SelectedRegister;
+use crate::registers::register_file::{SelectedRegister8, SelectedRegister16};
 use crate::registers::StatusRegFlags;
 
 #[allow(dead_code)]
@@ -7,35 +7,42 @@ use crate::registers::StatusRegFlags;
 pub enum MicroInstruction {
     Fetch,
     ReadPC {
-        dst: SelectedRegister,
+        dst: SelectedRegister8,
         increment: bool,
     },
     ReadAddress {
-        dst: SelectedRegister,
+        dst: SelectedRegister8,
     },
     WriteAddress {
-        src: SelectedRegister,
+        src: SelectedRegister8,
     },
     CopyRegister {
-        dst: SelectedRegister,
-        src: SelectedRegister,
+        dst: SelectedRegister8,
+        src: SelectedRegister8,
+    },
+    CopyRegister16 {
+        dst: SelectedRegister16,
+        src: SelectedRegister16,
     },
     ZeroRegister {
-        dst: SelectedRegister,
+        dst: SelectedRegister8,
     },
     IncrementRegister {
-        dst: SelectedRegister,
+        dst: SelectedRegister8,
+    },
+    IncrementRegister16 {
+        dst: SelectedRegister16,
     },
     DecrementRegister {
-        dst: SelectedRegister,
+        dst: SelectedRegister8,
     },
     AluUnaryOp {
         op: AluUnaryOp,
-        reg: SelectedRegister,
+        reg: SelectedRegister8,
     },
     AluBinaryOp {
         op: AluBinaryOp,
-        operand: SelectedRegister,
+        operand: SelectedRegister8,
     },
     SetStatusFlag {
         flag: StatusRegFlags,

@@ -11,7 +11,7 @@ use rand::rngs::ThreadRng;
 
 #[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
-pub enum SelectedRegister {
+pub enum SelectedRegister8 {
     A,
     X,
     Y,
@@ -21,9 +21,16 @@ pub enum SelectedRegister {
     Tmp,
     PCHigh,
     PCLow,
-    PC,
     AddrHigh,
     AddrLow,
+
+    Discard,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+pub enum SelectedRegister16 {
+    PC,
+
     Addr,
 
     // "virtual" registers
@@ -81,102 +88,39 @@ impl RegisterFile {
         self.status.set_flags(StatusRegFlags::IRQ_DISABLE);
     }
 
-    pub fn get_copy_selected_register16(&self, selection: SelectedRegister) -> Reg16 {
-        assert!(
-            (selection == SelectedRegister::Addr)
-                || (selection == SelectedRegister::PC)
-                || (selection == SelectedRegister::NMInterruptAddHigh)
-                || (selection == SelectedRegister::NMInterruptAddrLow)
-                || (selection == SelectedRegister::ProgramStartAddrHigh)
-                || (selection == SelectedRegister::ProgramStartAddrLow)
-                || (selection == SelectedRegister::InterruptAddrLow)
-                || (selection == SelectedRegister::InterruptAddrHigh),
-            "trying to read an 8 bit register as 16 bit"
-        );
-
+    pub fn get_copy_selected_register16(&self, selection: SelectedRegister16) -> Reg16 {
         match selection {
-            SelectedRegister::Addr => self.addr,
-            SelectedRegister::PC => self.pc,
+            SelectedRegister16::Addr => self.addr,
+            SelectedRegister16::PC => self.pc,
             //virtual registers
             v => Reg16 { value: v as u16 },
         }
     }
 
-    pub fn get_copy_selected_register8(&self, selection: SelectedRegister) -> Reg8 {
-        assert_ne!(
-            selection,
-            SelectedRegister::Discard,
-            "trying to read from discard register"
-        );
-        assert_ne!(
-            selection,
-            SelectedRegister::Addr,
-            "trying to read a 16 bit register as 8 bit"
-        );
-        assert_ne!(
-            selection,
-            SelectedRegister::PC,
-            "trying to read a 16 bit register as 8 bit"
-        );
-
-        assert_ne!(
-            selection,
-            SelectedRegister::NMInterruptAddHigh,
-            "trying to read a 16 bit register as 8 bit"
-        );
-        assert_ne!(
-            selection,
-            SelectedRegister::NMInterruptAddrLow,
-            "trying to read a 16 bit register as 8 bit"
-        );
-        assert_ne!(
-            selection,
-            SelectedRegister::ProgramStartAddrLow,
-            "trying to read a 16 bit register as 8 bit"
-        );
-        assert_ne!(
-            selection,
-            SelectedRegister::ProgramStartAddrHigh,
-            "trying to read a 16 bit register as 8 bit"
-        );
-        assert_ne!(
-            selection,
-            SelectedRegister::InterruptAddrHigh,
-            "trying to read a 16 bit register as 8 bit"
-        );
-        assert_ne!(
-            selection,
-            SelectedRegister::InterruptAddrLow,
-            "trying to read a 16 bit register as 8 bit"
-        );
-
+    pub fn get_copy_selected_register8(&self, selection: SelectedRegister8) -> Reg8 {
         match selection {
-            SelectedRegister::A => self.a,
-            SelectedRegister::X => self.x,
-            SelectedRegister::Y => self.y,
-            SelectedRegister::SP => self.sp,
-            SelectedRegister::Status => Reg8 {
+            SelectedRegister8::A => self.a,
+            SelectedRegister8::X => self.x,
+            SelectedRegister8::Y => self.y,
+            SelectedRegister8::SP => self.sp,
+            SelectedRegister8::Status => Reg8 {
                 value: self.status.get_u8(),
             },
-            SelectedRegister::IR => self.ir,
-            SelectedRegister::Tmp => self.tmp,
-            SelectedRegister::PCHigh => Reg8 {
+            SelectedRegister8::IR => self.ir,
+            SelectedRegister8::Tmp => self.tmp,
+            SelectedRegister8::PCHigh => Reg8 {
                 value: self.pc.get_high_u8(),
             },
-            SelectedRegister::PCLow => Reg8 {
+            SelectedRegister8::PCLow => Reg8 {
                 value: self.pc.get_low_u8(),
             },
-            SelectedRegister::AddrHigh => Reg8 {
+            SelectedRegister8::AddrHigh => Reg8 {
                 value: self.addr.get_high_u8(),
             },
-            SelectedRegister::AddrLow => Reg8 {
+            SelectedRegister8::AddrLow => Reg8 {
                 value: self.addr.get_low_u8(),
             },
-            SelectedRegister::Discard => Reg8::default(),
-            SelectedRegister::Addr => Reg8::default(),
-            SelectedRegister::PC => Reg8::default(),
-            //virtual registers
-            _ => Reg8::default(),
+            SelectedRegister8::Discard => Reg8::default(),
         }
     }
 
@@ -184,83 +128,28 @@ impl RegisterFile {
         self.status
     }
 
-    pub fn set_selected_register16(&mut self, selection: SelectedRegister, reg: Reg16) {
-        assert!(
-            (selection == SelectedRegister::Addr) || (selection == SelectedRegister::PC),
-            "trying to read a 16 bit register as 8 bit or trying to set virtual register"
-        );
-
+    pub fn set_selected_register16(&mut self, selection: SelectedRegister16, reg: Reg16) {
         match selection {
-            SelectedRegister::Addr => self.addr = reg,
-            SelectedRegister::PC => self.pc = reg,
+            SelectedRegister16::Addr => self.addr = reg,
+            SelectedRegister16::PC => self.pc = reg,
             _ => (),
         }
     }
 
-    pub fn set_selected_register8(&mut self, selection: SelectedRegister, reg: Reg8) {
-        assert_ne!(
-            selection,
-            SelectedRegister::Addr,
-            "trying to write a 16 bit register as 8 bit"
-        );
-        assert_ne!(
-            selection,
-            SelectedRegister::PC,
-            "trying to write a 16 bit register as 8 bit"
-        );
-
-        assert_ne!(
-            selection,
-            SelectedRegister::NMInterruptAddHigh,
-            "trying to write a 16 bit register as 8 bit"
-        );
-        assert_ne!(
-            selection,
-            SelectedRegister::NMInterruptAddrLow,
-            "trying to write a 16 bit register as 8 bit"
-        );
-        assert_ne!(
-            selection,
-            SelectedRegister::ProgramStartAddrLow,
-            "trying to write a 16 bit register as 8 bit"
-        );
-        assert_ne!(
-            selection,
-            SelectedRegister::ProgramStartAddrHigh,
-            "trying to write a 16 bit register as 8 bit"
-        );
-        assert_ne!(
-            selection,
-            SelectedRegister::InterruptAddrHigh,
-            "trying to write a 16 bit register as 8 bit"
-        );
-        assert_ne!(
-            selection,
-            SelectedRegister::InterruptAddrLow,
-            "trying to write a 16 bit register as 8 bit"
-        );
-
+    pub fn set_selected_register8(&mut self, selection: SelectedRegister8, reg: Reg8) {
         match selection {
-            SelectedRegister::A => self.a = reg,
-            SelectedRegister::X => self.x = reg,
-            SelectedRegister::Y => self.y = reg,
-            SelectedRegister::SP => self.sp = reg,
-            SelectedRegister::Status => self.status.set_u8(reg.value),
-            SelectedRegister::IR => self.ir = reg,
-            SelectedRegister::Tmp => self.tmp = reg,
-            SelectedRegister::PCHigh => self.pc.set_high_u8(reg.value),
-            SelectedRegister::PCLow => self.pc.set_low_u8(reg.value),
-            SelectedRegister::AddrHigh => self.addr.set_high_u8(reg.value),
-            SelectedRegister::AddrLow => self.addr.set_low_u8(reg.value),
-            SelectedRegister::Discard => (),
-            SelectedRegister::Addr => (),
-            SelectedRegister::PC => (),
-            SelectedRegister::NMInterruptAddHigh => (),
-            SelectedRegister::NMInterruptAddrLow => (),
-            SelectedRegister::ProgramStartAddrHigh => (),
-            SelectedRegister::ProgramStartAddrLow => (),
-            SelectedRegister::InterruptAddrHigh => (),
-            SelectedRegister::InterruptAddrLow => (),
+            SelectedRegister8::A => self.a = reg,
+            SelectedRegister8::X => self.x = reg,
+            SelectedRegister8::Y => self.y = reg,
+            SelectedRegister8::SP => self.sp = reg,
+            SelectedRegister8::Status => self.status.set_u8(reg.value),
+            SelectedRegister8::IR => self.ir = reg,
+            SelectedRegister8::Tmp => self.tmp = reg,
+            SelectedRegister8::PCHigh => self.pc.set_high_u8(reg.value),
+            SelectedRegister8::PCLow => self.pc.set_low_u8(reg.value),
+            SelectedRegister8::AddrHigh => self.addr.set_high_u8(reg.value),
+            SelectedRegister8::AddrLow => self.addr.set_low_u8(reg.value),
+            SelectedRegister8::Discard => (),
         };
     }
 }
@@ -282,7 +171,7 @@ impl fmt::Debug for RegisterFile {
 
 #[cfg(test)]
 mod tests {
-    use crate::registers::{Reg8, RegisterFile, SelectedRegister};
+    use crate::registers::{Reg8, RegisterFile, SelectedRegister8};
 
     #[cfg(feature = "random")]
     use crate::registers::StatusRegFlags;
@@ -339,11 +228,11 @@ mod tests {
         let mut register_file = RegisterFile::default();
 
         // WHEN
-        register_file.set_selected_register8(SelectedRegister::PCHigh, Reg8 { value: 0xCA });
-        register_file.set_selected_register8(SelectedRegister::PCLow, Reg8 { value: 0xFE });
+        register_file.set_selected_register8(SelectedRegister8::PCHigh, Reg8 { value: 0xCA });
+        register_file.set_selected_register8(SelectedRegister8::PCLow, Reg8 { value: 0xFE });
 
-        register_file.set_selected_register8(SelectedRegister::AddrHigh, Reg8 { value: 0xFA });
-        register_file.set_selected_register8(SelectedRegister::AddrLow, Reg8 { value: 0xCE });
+        register_file.set_selected_register8(SelectedRegister8::AddrHigh, Reg8 { value: 0xFA });
+        register_file.set_selected_register8(SelectedRegister8::AddrLow, Reg8 { value: 0xCE });
 
         // THEN
         assert_eq!(register_file.pc.get_u16(), 0xCAFE);
