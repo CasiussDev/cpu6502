@@ -1,6 +1,7 @@
 use crate::alu::{AluBinaryOp, AluUnaryOp};
 use crate::instructions::microinstructions::{MicroInstruction, MicroInstructionsVector};
 use crate::registers::{SelectedRegister8, StatusRegFlags};
+use lazy_static::lazy_static;
 use std::collections::HashMap;
 
 #[cfg(test)]
@@ -45,13 +46,17 @@ pub enum InstructionOp {
     LoadA,
 }
 
+type OpsMap = std::collections::HashMap<InstructionOp, MicroInstructionsVector>;
+
+lazy_static! {
+    static ref OPS_SEQUENCES_DEFS: OpsMap = create_instructionops_sequences();
+}
+
 impl Default for InstructionOp {
     fn default() -> Self {
         InstructionOp::Nop
     }
 }
-
-type OpsMap = std::collections::HashMap<InstructionOp, MicroInstructionsVector>;
 
 #[allow(dead_code)]
 pub fn create_instructionops_sequences() -> OpsMap {
@@ -294,7 +299,7 @@ mod tests {
 
     #[test]
     fn check_all_ops_implemented() {
-        let instruction_ops = create_instructionops_sequences();
+        let instruction_ops = &*OPS_SEQUENCES_DEFS;
         for op in InstructionOp::iter() {
             assert!(
                 instruction_ops.contains_key(&op),

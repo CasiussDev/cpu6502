@@ -1,5 +1,7 @@
 use crate::instructions::microinstructions::{MicroInstruction, MicroInstructionsVector};
 use crate::registers::{SelectedRegister16, SelectedRegister8, StatusRegFlags};
+//use once_cell::unsync::Lazy;
+use lazy_static::lazy_static;
 use std::collections::HashMap;
 
 #[cfg(test)]
@@ -45,13 +47,18 @@ pub enum InstructionSequenceMode {
     AbsoluteIndirectJump,
 }
 
+type SequenceMap = std::collections::HashMap<InstructionSequenceMode, MicroInstructionsVector>;
+
+//static SEQUENCES_DEFS: Lazy<SequenceMap> = Lazy::new(|| { create_instruction_mode_sequences() });
+lazy_static! {
+    static ref MODES_SEQUENCES_DEFS: SequenceMap = create_instruction_mode_sequences();
+}
+
 impl Default for InstructionSequenceMode {
     fn default() -> Self {
         InstructionSequenceMode::Implied
     }
 }
-
-type SequenceMap = std::collections::HashMap<InstructionSequenceMode, MicroInstructionsVector>;
 
 pub fn create_instruction_mode_sequences() -> SequenceMap {
     //let sequences = SequenceMap::new();
@@ -945,7 +952,7 @@ mod tests {
 
     #[test]
     fn instructionsequences_checklastmicroinstruction_yieldclock() {
-        for (mode, sequence) in create_instruction_mode_sequences() {
+        for (mode, sequence) in MODES_SEQUENCES_DEFS.iter() {
             let last_microinstruction = sequence.last().unwrap_or_else(|| {
                 panic!(
                     "Sequence mode {:?} does not have any microinstruction",
@@ -962,10 +969,10 @@ mod tests {
 
     #[test]
     fn check_all_instruction_modes_implemented() {
-        let sequence_modes = create_instruction_mode_sequences();
+        let sequences = &*MODES_SEQUENCES_DEFS;
         for mode in InstructionSequenceMode::iter() {
             assert!(
-                sequence_modes.contains_key(&mode),
+                sequences.contains_key(&mode),
                 "Mode {:?} not implemented",
                 mode,
             )

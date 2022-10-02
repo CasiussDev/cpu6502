@@ -6,6 +6,7 @@ mod registers;
 #[macro_use]
 extern crate enum_primitive_derive;
 extern crate num_traits;
+extern crate lazy_static;
 
 #[cfg(test)]
 mod tests {
