@@ -65,8 +65,9 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ZeroRegister {
+                MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
+                    src: SelectedRegister8::StackPage,
                 },
                 MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
@@ -80,8 +81,9 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ZeroRegister {
+                MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
+                    src: SelectedRegister8::StackPage,
                 },
                 MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
@@ -98,8 +100,9 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 MicroInstruction::SetStatusFlag {
                     flag: StatusRegFlags::BREAK,
                 },
-                MicroInstruction::ZeroRegister {
+                MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
+                    src: SelectedRegister8::StackPage,
                 },
                 MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
@@ -147,8 +150,9 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ZeroRegister {
+                MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
+                    src: SelectedRegister8::StackPage,
                 },
                 MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
@@ -162,8 +166,9 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ZeroRegister {
+                MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
+                    src: SelectedRegister8::StackPage,
                 },
                 MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
@@ -177,8 +182,9 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ZeroRegister {
+                MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
+                    src: SelectedRegister8::StackPage,
                 },
                 MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
@@ -199,8 +205,9 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ZeroRegister {
+                MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
+                    src: SelectedRegister8::StackPage,
                 },
                 MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
@@ -227,8 +234,9 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ZeroRegister {
+                MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
+                    src: SelectedRegister8::StackPage,
                 },
                 MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
@@ -249,8 +257,9 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 // Next clock
                 MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ZeroRegister {
+                MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
+                    src: SelectedRegister8::StackPage,
                 },
                 MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
@@ -264,8 +273,9 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ZeroRegister {
+                MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
+                    src: SelectedRegister8::StackPage,
                 },
                 MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
@@ -304,8 +314,9 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ZeroRegister {
+                MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
+                    src: SelectedRegister8::StackPage,
                 },
                 MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
@@ -319,8 +330,9 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 },
                 MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ZeroRegister {
+                MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
+                    src: SelectedRegister8::StackPage,
                 },
                 MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,

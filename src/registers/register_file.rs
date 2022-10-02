@@ -12,7 +12,7 @@ use rand::rngs::ThreadRng;
 #[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum SelectedRegister8 {
-    A,
+    A = 0xF0,
     X,
     Y,
     SP,
@@ -24,6 +24,8 @@ pub enum SelectedRegister8 {
     AddrHigh,
     AddrLow,
 
+    // "virtual" registers
+    StackPage = 0x01,
     Discard,
 }
 
@@ -120,6 +122,9 @@ impl RegisterFile {
             SelectedRegister8::AddrLow => Reg8 {
                 value: self.addr.get_low_u8(),
             },
+            SelectedRegister8::StackPage => Reg8 {
+                value: SelectedRegister8::StackPage as u8,
+            },
             SelectedRegister8::Discard => Reg8::default(),
         }
     }
@@ -129,6 +134,37 @@ impl RegisterFile {
     }
 
     pub fn set_selected_register16(&mut self, selection: SelectedRegister16, reg: Reg16) {
+        assert_ne!(
+            selection,
+            SelectedRegister16::NMInterruptAddHigh,
+            "Attempting to write a read only register"
+        );
+        assert_ne!(
+            selection,
+            SelectedRegister16::NMInterruptAddrLow,
+            "Attempting to write a read only register"
+        );
+        assert_ne!(
+            selection,
+            SelectedRegister16::InterruptAddrHigh,
+            "Attempting to write a read only register"
+        );
+        assert_ne!(
+            selection,
+            SelectedRegister16::InterruptAddrLow,
+            "Attempting to write a read only register"
+        );
+        assert_ne!(
+            selection,
+            SelectedRegister16::ProgramStartAddrHigh,
+            "Attempting to write a read only register"
+        );
+        assert_ne!(
+            selection,
+            SelectedRegister16::ProgramStartAddrLow,
+            "Attempting to write a read only register"
+        );
+
         match selection {
             SelectedRegister16::Addr => self.addr = reg,
             SelectedRegister16::PC => self.pc = reg,
@@ -137,6 +173,12 @@ impl RegisterFile {
     }
 
     pub fn set_selected_register8(&mut self, selection: SelectedRegister8, reg: Reg8) {
+        assert_ne!(
+            selection,
+            SelectedRegister8::StackPage,
+            "Attempting to write a read only register"
+        );
+
         match selection {
             SelectedRegister8::A => self.a = reg,
             SelectedRegister8::X => self.x = reg,
@@ -149,6 +191,7 @@ impl RegisterFile {
             SelectedRegister8::PCLow => self.pc.set_low_u8(reg.value),
             SelectedRegister8::AddrHigh => self.addr.set_high_u8(reg.value),
             SelectedRegister8::AddrLow => self.addr.set_low_u8(reg.value),
+            SelectedRegister8::StackPage => (),
             SelectedRegister8::Discard => (),
         };
     }
