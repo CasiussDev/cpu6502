@@ -32,7 +32,6 @@ pub enum SelectedRegister8 {
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum SelectedRegister16 {
     PC,
-
     Addr,
 
     // "virtual" registers
@@ -42,6 +41,7 @@ pub enum SelectedRegister16 {
     ProgramStartAddrHigh = 0xFFFD,
     InterruptAddrLow = 0xFFFE,
     InterruptAddrHigh = 0xFFFF,
+    #[allow(dead_code)]
     Discard,
 }
 
@@ -96,6 +96,19 @@ impl RegisterFile {
             SelectedRegister16::PC => self.pc,
             //virtual registers
             v => Reg16 { value: v as u16 },
+        }
+    }
+
+    pub fn get_selected_register8(&mut self, selection: SelectedRegister8) -> &mut Reg8 {
+        match selection {
+            SelectedRegister8::A => &mut self.a,
+            SelectedRegister8::X => &mut self.x,
+            SelectedRegister8::Y => &mut self.y,
+            SelectedRegister8::SP => &mut self.sp,
+            SelectedRegister8::Status => todo!(),
+            SelectedRegister8::IR => &mut self.ir,
+            SelectedRegister8::Tmp => &mut self.tmp,
+            _ => todo!(),
         }
     }
 
