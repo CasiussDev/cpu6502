@@ -99,6 +99,15 @@ impl RegisterFile {
         }
     }
 
+    pub fn get_selected_register16(&mut self, selection: SelectedRegister16) -> &mut Reg16 {
+        match selection {
+            SelectedRegister16::Addr => &mut self.addr,
+            SelectedRegister16::PC => &mut self.pc,
+            //virtual registers
+            _ => panic!("trying to get a mutable ref of a virtual register"),
+        }
+    }
+
     pub fn get_selected_register8(&mut self, selection: SelectedRegister8) -> &mut Reg8 {
         match selection {
             SelectedRegister8::A => &mut self.a,

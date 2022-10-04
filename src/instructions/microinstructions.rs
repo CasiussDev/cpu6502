@@ -143,9 +143,18 @@ pub fn execute(
             regs.set_selected_register16(dst, src);
         }
         MicroInstruction::ZeroRegister { dst } => regs.set_selected_register8(dst, Reg8::default()),
-        MicroInstruction::IncrementRegister { .. } => {}
-        MicroInstruction::IncrementRegister16 { .. } => {}
-        MicroInstruction::DecrementRegister { .. } => {}
+        MicroInstruction::IncrementRegister { dst } => {
+            let dst = regs.get_selected_register8(dst);
+            dst.inc();
+        }
+        MicroInstruction::IncrementRegister16 { dst } => {
+            let dst = regs.get_selected_register16(dst);
+            dst.inc();
+        }
+        MicroInstruction::DecrementRegister { dst } => {
+            let dst = regs.get_selected_register8(dst);
+            dst.dec();
+        }
         MicroInstruction::AluUnaryOp { op, reg } => execute_alu_unary(op, reg, regs),
         MicroInstruction::AluBinaryOp { op, operand } => execute_alu_binary(op, operand, regs),
         MicroInstruction::SetStatusFlag { flag } => {
