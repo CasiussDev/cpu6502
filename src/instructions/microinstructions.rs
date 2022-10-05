@@ -97,6 +97,7 @@ pub enum ExecutionStatus {
     Continue,
     RunOp,
     WaitMemory { dst: Option<SelectedRegister8> },
+    RunOpAndFinish,
 }
 #[allow(dead_code)]
 pub fn execute(
@@ -178,11 +179,45 @@ pub fn execute(
             let addr_low = addr_low.wrapping_add(index_reg.get_u8());
             regs.addr.set_low_u8(addr_low);
         }
-        MicroInstruction::FixAddress => {}
+        MicroInstruction::FixAddress => {
+            let addr_low_value = regs.addr.get_low_u8();
+            let index_value = regs
+                .get_copy_selected_register8(index_reg.expect("Index register not specified"))
+                .get_u8();
+
+            if index_value > addr_low_value {
+                let addr_high_value = regs.addr.get_high_u8().wrapping_add(1);
+                regs.addr.set_high_u8(addr_high_value);
+            }
+        }
         MicroInstruction::RunOperation => return ExecutionStatus::RunOp,
         MicroInstruction::YieldClock => return ExecutionStatus::YieldClock,
-        MicroInstruction::FixAddressOrRunOpAndFinish => {}
-        MicroInstruction::FixAddressOrIncrementPC => {}
+        MicroInstruction::FixAddressOrRunOpAndFinish => {
+            let addr_low_value = regs.addr.get_low_u8();
+            let index_value = regs
+                .get_copy_selected_register8(index_reg.expect("Index register not specified"))
+                .get_u8();
+
+            if index_value > addr_low_value {
+                let addr_high_value = regs.addr.get_high_u8().wrapping_add(1);
+                regs.addr.set_high_u8(addr_high_value);
+            } else {
+                return ExecutionStatus::RunOpAndFinish;
+            }
+        }
+        MicroInstruction::FixAddressOrIncrementPC => {
+            let addr_low_value = regs.addr.get_low_u8();
+            let index_value = regs
+                .get_copy_selected_register8(index_reg.expect("Index register not specified"))
+                .get_u8();
+
+            if index_value > addr_low_value {
+                let addr_high_value = regs.addr.get_high_u8().wrapping_add(1);
+                regs.addr.set_high_u8(addr_high_value);
+            } else {
+                regs.pc.inc();
+            }
+        }
     }
 
     ExecutionStatus::Continue
