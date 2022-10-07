@@ -73,6 +73,10 @@ fn execute_alu_unary(op: AluUnaryOp, selected_reg: SelectedRegister8, regs: &mut
     match op {
         AluUnaryOp::Inc => alu::inc(reg, &mut status),
         AluUnaryOp::Dec => alu::dec(reg, &mut status),
+        AluUnaryOp::Asl => alu::shift_left(reg, &mut status),
+        AluUnaryOp::Lsr => alu::shift_right(reg, &mut status),
+        AluUnaryOp::Rol => alu::rotate_left(reg, &mut status),
+        AluUnaryOp::Ror => alu::rotate_right(reg, &mut status),
     };
     regs.status = status;
 }
@@ -86,9 +90,7 @@ fn execute_alu_binary(op: AluBinaryOp, operand: SelectedRegister8, regs: &mut Re
         AluBinaryOp::And => alu::and(&mut regs.a, &operand, &mut regs.status),
         AluBinaryOp::Or => alu::or(&mut regs.a, &operand, &mut regs.status),
         AluBinaryOp::Xor => alu::xor(&mut regs.a, &operand, &mut regs.status),
-        AluBinaryOp::Cmp => {
-            alu::cmp(&mut regs.a, &operand, &mut regs.status);
-        }
+        AluBinaryOp::Cmp => alu::cmp(&mut regs.a, &operand, &mut regs.status),
     }
 }
 
@@ -106,6 +108,17 @@ pub fn execute(
     regs: &mut RegisterFile,
     pins: &mut Pinout,
 ) -> ExecutionStatus {
+    assert!(
+        (index_reg == None)
+            || (index_reg == Some(SelectedRegister8::X))
+            || (index_reg == Some(SelectedRegister8::Y))
+    );
+
+    assert!(matches!(
+        index_reg,
+        None | Some(SelectedRegister8::X) | Some(SelectedRegister8::Y)
+    ));
+
     match micro_instr {
         MicroInstruction::Fetch => {
             pins.set_address_output(regs.pc.get_u16());

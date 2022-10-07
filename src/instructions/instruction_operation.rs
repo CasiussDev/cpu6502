@@ -14,8 +14,10 @@ use strum_macros::EnumIter;
 #[cfg_attr(test, derive(EnumIter))]
 pub enum InstructionOp {
     Nop,
+    IncrementMemory,
     IncrementX,
     IncrementY,
+    DecrementMemory,
     DecrementX,
     DecrementY,
     ClearCarry,
@@ -42,6 +44,14 @@ pub enum InstructionOp {
     Add,
     Sub,
     Cmp,
+    ShiftLeftA,
+    ShiftRightA,
+    RotateLeftA,
+    RotateRightA,
+    ShiftLeftMemory,
+    ShiftRightMemory,
+    RotateLeftMemory,
+    RotateRightMemory,
     StoreA,
     LoadA,
 }
@@ -63,6 +73,13 @@ pub fn create_instructionops_sequences() -> OpsMap {
     let ops = HashMap::from([
         (InstructionOp::Nop, vec![]),
         (
+            InstructionOp::IncrementMemory,
+            vec![MicroInstruction::AluUnaryOp {
+                op: AluUnaryOp::Inc,
+                reg: SelectedRegister8::Tmp,
+            }],
+        ),
+        (
             InstructionOp::IncrementX,
             vec![MicroInstruction::AluUnaryOp {
                 op: AluUnaryOp::Inc,
@@ -77,6 +94,13 @@ pub fn create_instructionops_sequences() -> OpsMap {
             }],
         ),
         (
+            InstructionOp::DecrementMemory,
+            vec![MicroInstruction::AluUnaryOp {
+                op: AluUnaryOp::Dec,
+                reg: SelectedRegister8::Tmp,
+            }],
+        ),
+        (
             InstructionOp::DecrementX,
             vec![MicroInstruction::AluUnaryOp {
                 op: AluUnaryOp::Dec,
@@ -88,6 +112,62 @@ pub fn create_instructionops_sequences() -> OpsMap {
             vec![MicroInstruction::AluUnaryOp {
                 op: AluUnaryOp::Dec,
                 reg: SelectedRegister8::Y,
+            }],
+        ),
+        (
+            InstructionOp::ShiftLeftA,
+            vec![MicroInstruction::AluUnaryOp {
+                op: AluUnaryOp::Asl,
+                reg: SelectedRegister8::A,
+            }],
+        ),
+        (
+            InstructionOp::ShiftRightA,
+            vec![MicroInstruction::AluUnaryOp {
+                op: AluUnaryOp::Lsr,
+                reg: SelectedRegister8::A,
+            }],
+        ),
+        (
+            InstructionOp::RotateLeftA,
+            vec![MicroInstruction::AluUnaryOp {
+                op: AluUnaryOp::Rol,
+                reg: SelectedRegister8::A,
+            }],
+        ),
+        (
+            InstructionOp::RotateRightA,
+            vec![MicroInstruction::AluUnaryOp {
+                op: AluUnaryOp::Ror,
+                reg: SelectedRegister8::A,
+            }],
+        ),
+        (
+            InstructionOp::ShiftLeftMemory,
+            vec![MicroInstruction::AluUnaryOp {
+                op: AluUnaryOp::Asl,
+                reg: SelectedRegister8::Tmp,
+            }],
+        ),
+        (
+            InstructionOp::ShiftRightMemory,
+            vec![MicroInstruction::AluUnaryOp {
+                op: AluUnaryOp::Lsr,
+                reg: SelectedRegister8::Tmp,
+            }],
+        ),
+        (
+            InstructionOp::RotateLeftMemory,
+            vec![MicroInstruction::AluUnaryOp {
+                op: AluUnaryOp::Rol,
+                reg: SelectedRegister8::Tmp,
+            }],
+        ),
+        (
+            InstructionOp::RotateRightMemory,
+            vec![MicroInstruction::AluUnaryOp {
+                op: AluUnaryOp::Ror,
+                reg: SelectedRegister8::Tmp,
             }],
         ),
         (

@@ -2,14 +2,16 @@ mod tests;
 
 use crate::registers::{Reg8, StatusReg, StatusRegFlags};
 
-#[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum AluUnaryOp {
     Inc,
     Dec,
+    Asl,
+    Lsr,
+    Rol,
+    Ror,
 }
 
-#[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum AluBinaryOp {
     Add,
@@ -20,7 +22,6 @@ pub enum AluBinaryOp {
     Cmp,
 }
 
-#[allow(dead_code)]
 pub fn update_status_nz(result: i8, status_register: &mut StatusReg) {
     if result < 0 {
         status_register.set_flags(StatusRegFlags::NEGATIVE);
@@ -36,7 +37,6 @@ pub fn update_status_nz(result: i8, status_register: &mut StatusReg) {
     }
 }
 
-#[allow(dead_code)]
 pub fn update_status_carry_add(carry: bool, status_register: &mut StatusReg) {
     if carry {
         status_register.set_flags(StatusRegFlags::CARRY);
@@ -45,7 +45,6 @@ pub fn update_status_carry_add(carry: bool, status_register: &mut StatusReg) {
     }
 }
 
-#[allow(dead_code)]
 pub fn update_status_carry_sub(carry: bool, status_register: &mut StatusReg) {
     if carry {
         status_register.clear_flags(StatusRegFlags::CARRY);
@@ -54,7 +53,6 @@ pub fn update_status_carry_sub(carry: bool, status_register: &mut StatusReg) {
     }
 }
 
-#[allow(dead_code)]
 pub fn update_status_v(overflow: bool, status_register: &mut StatusReg) {
     if overflow {
         status_register.set_flags(StatusRegFlags::OVERFLOW);
@@ -63,7 +61,6 @@ pub fn update_status_v(overflow: bool, status_register: &mut StatusReg) {
     }
 }
 
-#[allow(dead_code)]
 pub fn add(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusReg) {
     if cfg!(feature = "decimal") && status_register.are_all_flags_set(StatusRegFlags::DECIMAL) {
         todo!();
@@ -88,8 +85,11 @@ pub fn add(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusR
     }
 }
 
-#[allow(dead_code)]
-pub fn cmp(accumulator: &Reg8, operand: &Reg8, status_register: &mut StatusReg) -> i8 {
+pub fn cmp(accumulator: &Reg8, operand: &Reg8, status_register: &mut StatusReg) {
+    cmp_internal(accumulator, operand, status_register);
+}
+
+fn cmp_internal(accumulator: &Reg8, operand: &Reg8, status_register: &mut StatusReg) -> i8 {
     let (mut result, mut overflow) = accumulator.get_i8().overflowing_sub(operand.get_i8());
     let (_, mut carry) = accumulator.get_u8().overflowing_sub(operand.get_u8());
 
@@ -108,17 +108,15 @@ pub fn cmp(accumulator: &Reg8, operand: &Reg8, status_register: &mut StatusReg) 
     result
 }
 
-#[allow(dead_code)]
 pub fn sub(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusReg) {
     if cfg!(feature = "decimal") && status_register.are_all_flags_set(StatusRegFlags::DECIMAL) {
         todo!();
     } else {
-        let result = cmp(accumulator, operand, status_register);
+        let result = cmp_internal(accumulator, operand, status_register);
         accumulator.set_i8(result);
     }
 }
 
-#[allow(dead_code)]
 pub fn inc(src_dst: &mut Reg8, status_register: &mut StatusReg) {
     if cfg!(feature = "decimal") && status_register.are_all_flags_set(StatusRegFlags::DECIMAL) {
         todo!();
@@ -131,7 +129,6 @@ pub fn inc(src_dst: &mut Reg8, status_register: &mut StatusReg) {
     }
 }
 
-#[allow(dead_code)]
 pub fn dec(src_dst: &mut Reg8, status_register: &mut StatusReg) {
     if cfg!(feature = "decimal") && status_register.are_all_flags_set(StatusRegFlags::DECIMAL) {
         todo!();
@@ -144,7 +141,67 @@ pub fn dec(src_dst: &mut Reg8, status_register: &mut StatusReg) {
     }
 }
 
-#[allow(dead_code)]
+pub fn shift_left(src_dst: &mut Reg8, status_register: &mut StatusReg) {
+    let msb = src_dst.get_u8() & 0x80;
+    src_dst.shift_left();
+
+    update_status_nz(src_dst.get_i8(), status_register);
+    if msb != 0 {
+        status_register.set_flags(StatusRegFlags::CARRY);
+    } else {
+        status_register.clear_flags(StatusRegFlags::CARRY);
+    }
+}
+
+pub fn shift_right(src_dst: &mut Reg8, status_register: &mut StatusReg) {
+    let lsb = src_dst.get_u8() & 0x01;
+    src_dst.shift_right();
+
+    update_status_nz(src_dst.get_i8(), status_register);
+    if lsb != 0 {
+        status_register.set_flags(StatusRegFlags::CARRY);
+    } else {
+        status_register.clear_flags(StatusRegFlags::CARRY);
+    }
+}
+
+pub fn rotate_left(src_dst: &mut Reg8, status_register: &mut StatusReg) {
+    let old_carry_bit_set = status_register.are_all_flags_set(StatusRegFlags::CARRY);
+
+    let msb = src_dst.get_u8() & 0x80;
+    src_dst.shift_left();
+
+    if old_carry_bit_set {
+        src_dst.inc();
+    }
+
+    update_status_nz(src_dst.get_i8(), status_register);
+    if msb != 0 {
+        status_register.set_flags(StatusRegFlags::CARRY);
+    } else {
+        status_register.clear_flags(StatusRegFlags::CARRY);
+    }
+}
+
+pub fn rotate_right(src_dst: &mut Reg8, status_register: &mut StatusReg) {
+    let old_carry_bit_set = status_register.are_all_flags_set(StatusRegFlags::CARRY);
+
+    let lsb = src_dst.get_u8() & 0x01;
+    src_dst.shift_right();
+
+    if old_carry_bit_set {
+        let result = src_dst.get_u8() & 0x80;
+        src_dst.set_u8(result);
+    }
+
+    update_status_nz(src_dst.get_i8(), status_register);
+    if lsb != 0 {
+        status_register.set_flags(StatusRegFlags::CARRY);
+    } else {
+        status_register.clear_flags(StatusRegFlags::CARRY);
+    }
+}
+
 pub fn and(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusReg) {
     let result = accumulator.get_u8() & operand.get_u8();
 
@@ -153,7 +210,6 @@ pub fn and(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusR
     accumulator.set_u8(result);
 }
 
-#[allow(dead_code)]
 pub fn or(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusReg) {
     let result = accumulator.get_u8() | operand.get_u8();
 
@@ -162,7 +218,6 @@ pub fn or(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusRe
     accumulator.set_u8(result);
 }
 
-#[allow(dead_code)]
 pub fn xor(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusReg) {
     let result = accumulator.get_u8() ^ operand.get_u8();
 

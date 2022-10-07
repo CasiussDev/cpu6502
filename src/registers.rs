@@ -56,6 +56,14 @@ impl Reg8 {
     pub fn dec(&mut self) {
         self.value = self.value.wrapping_sub(1);
     }
+
+    pub fn shift_left(&mut self) {
+        self.value = self.value << 1;
+    }
+
+    pub fn shift_right(&mut self) {
+        self.value = self.value >> 1;
+    }
 }
 
 #[allow(dead_code)]

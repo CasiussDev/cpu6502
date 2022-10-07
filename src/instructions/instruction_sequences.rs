@@ -978,4 +978,58 @@ mod tests {
             )
         }
     }
+
+    #[test]
+    fn check_readmodifywrite_instructions_use_tmp_reg() {
+        let sequences = &*MODES_SEQUENCES_DEFS;
+
+        let modes = [
+            InstructionSequenceMode::AbsoluteReadModifyWrite,
+            InstructionSequenceMode::ZeroPageReadModifyWrite,
+            InstructionSequenceMode::ZeroPageIdxReadModifyWrite,
+            InstructionSequenceMode::AbsoluteIdxReadModifyWrite,
+            InstructionSequenceMode::ZeroPageIdxIndirectReadModifyWrite,
+            InstructionSequenceMode::ZeroPageIndirectIdxReadModifyWrite,
+        ];
+
+        for mode in &modes {
+            if let Some(sequence) = sequences.get(mode) {
+                let runop_position = sequence
+                    .iter()
+                    .position(|&instr| instr == MicroInstruction::RunOperation);
+
+                if let Some(position) = runop_position {
+                    let last_memory_read_before_op =
+                        sequence[..position].iter().rev().find(|&instr| {
+                            matches!(
+                                instr,
+                                MicroInstruction::ReadAddress { .. }
+                            )
+                        });
+
+                    assert_eq!(
+                        last_memory_read_before_op,
+                        Some(&MicroInstruction::ReadAddress {
+                            dst: SelectedRegister8::Tmp
+                        })
+                    );
+
+                    let next_memory_write_after_op =
+                    sequence[position..].iter().find(|&instr| {
+                        matches!(
+                                instr,
+                                MicroInstruction::WriteAddress { .. }
+                            )
+                    });
+
+                    assert_eq!(
+                        next_memory_write_after_op,
+                        Some(&MicroInstruction::WriteAddress {
+                            src: SelectedRegister8::Tmp
+                        })
+                    );
+                }
+            }
+        }
+    }
 }
