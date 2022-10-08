@@ -56,7 +56,7 @@ pub enum InstructionOp {
     LoadA,
 }
 
-type OpsMap = std::collections::HashMap<InstructionOp, MicroInstructionsVector>;
+type OpsMap = HashMap<InstructionOp, MicroInstructionsVector>;
 
 lazy_static! {
     static ref OPS_SEQUENCES_DEFS: OpsMap = create_instructionops_sequences();
@@ -70,7 +70,7 @@ impl Default for InstructionOp {
 
 #[allow(dead_code)]
 pub fn create_instructionops_sequences() -> OpsMap {
-    let ops = HashMap::from([
+    HashMap::from([
         (InstructionOp::Nop, vec![]),
         (
             InstructionOp::IncrementMemory,
@@ -368,9 +368,7 @@ pub fn create_instructionops_sequences() -> OpsMap {
                 dst: SelectedRegister8::A,
             }],
         ),
-    ]);
-
-    ops
+    ])
 }
 
 #[cfg(test)]

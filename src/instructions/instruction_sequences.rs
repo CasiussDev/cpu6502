@@ -47,7 +47,7 @@ pub enum InstructionSequenceMode {
     AbsoluteIndirectJump,
 }
 
-type SequenceMap = std::collections::HashMap<InstructionSequenceMode, MicroInstructionsVector>;
+type SequenceMap = HashMap<InstructionSequenceMode, MicroInstructionsVector>;
 
 //static SEQUENCES_DEFS: Lazy<SequenceMap> = Lazy::new(|| { create_instruction_mode_sequences() });
 lazy_static! {
@@ -61,8 +61,7 @@ impl Default for InstructionSequenceMode {
 }
 
 pub fn create_instruction_mode_sequences() -> SequenceMap {
-    //let sequences = SequenceMap::new();
-    let sequences = HashMap::from([
+    HashMap::from([
         (
             InstructionSequenceMode::Break,
             vec![
@@ -941,9 +940,7 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 MicroInstruction::YieldClock,
             ],
         ),
-    ]);
-
-    sequences
+    ])
 }
 
 #[cfg(test)]
@@ -959,8 +956,9 @@ mod tests {
                     mode
                 )
             });
-            assert!(
-                *last_microinstruction == MicroInstruction::YieldClock,
+            assert_eq!(
+                *last_microinstruction,
+                MicroInstruction::YieldClock,
                 "Sequence mode {:?} does not finish with YieldClock",
                 mode
             );
@@ -999,13 +997,10 @@ mod tests {
                     .position(|&instr| instr == MicroInstruction::RunOperation);
 
                 if let Some(position) = runop_position {
-                    let last_memory_read_before_op =
-                        sequence[..position].iter().rev().find(|&instr| {
-                            matches!(
-                                instr,
-                                MicroInstruction::ReadAddress { .. }
-                            )
-                        });
+                    let last_memory_read_before_op = sequence[..position]
+                        .iter()
+                        .rev()
+                        .find(|&instr| matches!(instr, MicroInstruction::ReadAddress { .. }));
 
                     assert_eq!(
                         last_memory_read_before_op,
@@ -1014,13 +1009,9 @@ mod tests {
                         })
                     );
 
-                    let next_memory_write_after_op =
-                    sequence[position..].iter().find(|&instr| {
-                        matches!(
-                                instr,
-                                MicroInstruction::WriteAddress { .. }
-                            )
-                    });
+                    let next_memory_write_after_op = sequence[position..]
+                        .iter()
+                        .find(|&instr| matches!(instr, MicroInstruction::WriteAddress { .. }));
 
                     assert_eq!(
                         next_memory_write_after_op,

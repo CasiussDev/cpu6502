@@ -220,17 +220,17 @@ impl RegisterFile {
 }
 
 impl fmt::Debug for RegisterFile {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "\nRegister File\n")?;
         write!(f, "\tA: {:?}", self.a)?;
         write!(f, "\tX: {:?}", self.x)?;
         write!(f, "\tY: {:?}", self.y)?;
-        writeln!(f, "")?;
+        writeln!(f)?;
         write!(f, "\tSP: {:?}", self.sp)?;
         write!(f, "\tPC: {:?}", self.pc)?;
-        writeln!(f, "")?;
+        writeln!(f)?;
         write!(f, "\tStatus: {:?}", self.status)?;
-        writeln!(f, "")
+        writeln!(f)
     }
 }
 

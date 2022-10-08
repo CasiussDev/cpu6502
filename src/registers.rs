@@ -58,11 +58,11 @@ impl Reg8 {
     }
 
     pub fn shift_left(&mut self) {
-        self.value = self.value << 1;
+        self.value <<= 1;
     }
 
     pub fn shift_right(&mut self) {
-        self.value = self.value >> 1;
+        self.value >>= 1;
     }
 }
 
@@ -171,7 +171,7 @@ mod tests {
 
     #[test]
     fn reg8_setvalue_getvaluecorrect() {
-        let mut rng = rand::thread_rng();
+        let mut rng = thread_rng();
         let uniform = Uniform::new_inclusive(0_u8, u8::MAX);
 
         // GIVEN
@@ -192,7 +192,7 @@ mod tests {
 
     #[test]
     fn reg16_setvalue_getvaluecorrect() {
-        let mut rng = rand::thread_rng();
+        let mut rng = thread_rng();
         let uniform = Uniform::new_inclusive(0_u16, u16::MAX);
 
         // GIVEN
@@ -213,7 +213,7 @@ mod tests {
 
     #[test]
     fn reg16_sethighlowvalue_getvaluecorrect() {
-        let mut rng = rand::thread_rng();
+        let mut rng = thread_rng();
         let uniform = Uniform::new_inclusive(0_u16, u16::MAX);
 
         // GIVEN

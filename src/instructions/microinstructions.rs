@@ -65,7 +65,7 @@ pub enum MicroInstruction {
     FixAddressOrIncrementPC,
 }
 
-pub type MicroInstructionsVector = std::vec::Vec<MicroInstruction>;
+pub type MicroInstructionsVector = Vec<MicroInstruction>;
 
 fn execute_alu_unary(op: AluUnaryOp, selected_reg: SelectedRegister8, regs: &mut RegisterFile) {
     let mut status = regs.status;
@@ -90,7 +90,7 @@ fn execute_alu_binary(op: AluBinaryOp, operand: SelectedRegister8, regs: &mut Re
         AluBinaryOp::And => alu::and(&mut regs.a, &operand, &mut regs.status),
         AluBinaryOp::Or => alu::or(&mut regs.a, &operand, &mut regs.status),
         AluBinaryOp::Xor => alu::xor(&mut regs.a, &operand, &mut regs.status),
-        AluBinaryOp::Cmp => alu::cmp(&mut regs.a, &operand, &mut regs.status),
+        AluBinaryOp::Cmp => alu::cmp(&regs.a, &operand, &mut regs.status),
     }
 }
 

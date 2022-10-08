@@ -135,7 +135,7 @@ mod tests {
     #[test]
     fn g1_print() {
         for i in 0_u8..=0b_0011_1111 {
-            let opcode = (i<<2) + 1;
+            let opcode = (i << 2) + 1;
             let decoded = super::decode(opcode);
 
             println!("{:#04X}\t{:?}", opcode, decoded);
