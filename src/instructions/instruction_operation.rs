@@ -44,6 +44,10 @@ pub enum InstructionOp {
     Add,
     Sub,
     Cmp,
+    Cpx,
+    Cpy,
+    Bit,
+    BitImmediate,
     ShiftLeftA,
     ShiftRightA,
     RotateLeftA,
@@ -54,6 +58,10 @@ pub enum InstructionOp {
     RotateRightMemory,
     StoreA,
     LoadA,
+    StoreX,
+    LoadX,
+    StoreY,
+    LoadY,
 }
 
 type OpsMap = HashMap<InstructionOp, MicroInstructionsVector>;
@@ -357,6 +365,28 @@ pub fn create_instructionops_sequences() -> OpsMap {
             ],
         ),
         (
+            InstructionOp::Cpx,
+            vec![
+                MicroInstruction::ReadAddress {
+                    dst: SelectedRegister8::Tmp,
+                },
+                MicroInstruction::AluCompareIndex {
+                    index: SelectedRegister8::X,
+                },
+            ],
+        ),
+        (
+            InstructionOp::Cpy,
+            vec![
+                MicroInstruction::ReadAddress {
+                    dst: SelectedRegister8::Tmp,
+                },
+                MicroInstruction::AluCompareIndex {
+                    index: SelectedRegister8::Y,
+                },
+            ],
+        ),
+        (
             InstructionOp::StoreA,
             vec![MicroInstruction::WriteAddress {
                 src: SelectedRegister8::A,
@@ -367,6 +397,35 @@ pub fn create_instructionops_sequences() -> OpsMap {
             vec![MicroInstruction::ReadAddress {
                 dst: SelectedRegister8::A,
             }],
+        ),
+        (
+            InstructionOp::StoreX,
+            vec![MicroInstruction::WriteAddress {
+                src: SelectedRegister8::X,
+            }],
+        ),
+        (
+            InstructionOp::LoadX,
+            vec![MicroInstruction::ReadAddress {
+                dst: SelectedRegister8::X,
+            }],
+        ),
+        (
+            InstructionOp::StoreY,
+            vec![MicroInstruction::WriteAddress {
+                src: SelectedRegister8::Y,
+            }],
+        ),
+        (
+            InstructionOp::LoadY,
+            vec![MicroInstruction::ReadAddress {
+                dst: SelectedRegister8::Y,
+            }],
+        ),
+        (InstructionOp::Bit, vec![MicroInstruction::BitInstr]),
+        (
+            InstructionOp::BitImmediate,
+            vec![MicroInstruction::BitInstrImmediate],
         ),
     ])
 }

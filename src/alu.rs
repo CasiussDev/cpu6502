@@ -28,37 +28,20 @@ pub fn update_status_nz(result: i8, status_register: &mut StatusReg) {
         status_register.clear_flags(StatusRegFlags::ZERO);
     } else {
         status_register.clear_flags(StatusRegFlags::NEGATIVE);
-
-        if result == 0 {
-            status_register.set_flags(StatusRegFlags::ZERO);
-        } else {
-            status_register.clear_flags(StatusRegFlags::ZERO);
-        }
+        status_register.update_flags(StatusRegFlags::ZERO, result == 0);
     }
 }
 
 pub fn update_status_carry_add(carry: bool, status_register: &mut StatusReg) {
-    if carry {
-        status_register.set_flags(StatusRegFlags::CARRY);
-    } else {
-        status_register.clear_flags(StatusRegFlags::CARRY);
-    }
+    status_register.update_flags(StatusRegFlags::CARRY, carry);
 }
 
 pub fn update_status_carry_sub(carry: bool, status_register: &mut StatusReg) {
-    if carry {
-        status_register.clear_flags(StatusRegFlags::CARRY);
-    } else {
-        status_register.set_flags(StatusRegFlags::CARRY);
-    }
+    status_register.update_flags(StatusRegFlags::CARRY, !carry);
 }
 
 pub fn update_status_v(overflow: bool, status_register: &mut StatusReg) {
-    if overflow {
-        status_register.set_flags(StatusRegFlags::OVERFLOW);
-    } else {
-        status_register.clear_flags(StatusRegFlags::OVERFLOW);
-    }
+    status_register.update_flags(StatusRegFlags::OVERFLOW, overflow);
 }
 
 pub fn add(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusReg) {
@@ -146,11 +129,7 @@ pub fn shift_left(src_dst: &mut Reg8, status_register: &mut StatusReg) {
     src_dst.shift_left();
 
     update_status_nz(src_dst.get_i8(), status_register);
-    if msb != 0 {
-        status_register.set_flags(StatusRegFlags::CARRY);
-    } else {
-        status_register.clear_flags(StatusRegFlags::CARRY);
-    }
+    status_register.update_flags(StatusRegFlags::CARRY, msb != 0);
 }
 
 pub fn shift_right(src_dst: &mut Reg8, status_register: &mut StatusReg) {
@@ -158,11 +137,7 @@ pub fn shift_right(src_dst: &mut Reg8, status_register: &mut StatusReg) {
     src_dst.shift_right();
 
     update_status_nz(src_dst.get_i8(), status_register);
-    if lsb != 0 {
-        status_register.set_flags(StatusRegFlags::CARRY);
-    } else {
-        status_register.clear_flags(StatusRegFlags::CARRY);
-    }
+    status_register.update_flags(StatusRegFlags::CARRY, lsb != 0);
 }
 
 pub fn rotate_left(src_dst: &mut Reg8, status_register: &mut StatusReg) {
@@ -176,11 +151,7 @@ pub fn rotate_left(src_dst: &mut Reg8, status_register: &mut StatusReg) {
     }
 
     update_status_nz(src_dst.get_i8(), status_register);
-    if msb != 0 {
-        status_register.set_flags(StatusRegFlags::CARRY);
-    } else {
-        status_register.clear_flags(StatusRegFlags::CARRY);
-    }
+    status_register.update_flags(StatusRegFlags::CARRY, msb != 0);
 }
 
 pub fn rotate_right(src_dst: &mut Reg8, status_register: &mut StatusReg) {
@@ -195,11 +166,7 @@ pub fn rotate_right(src_dst: &mut Reg8, status_register: &mut StatusReg) {
     }
 
     update_status_nz(src_dst.get_i8(), status_register);
-    if lsb != 0 {
-        status_register.set_flags(StatusRegFlags::CARRY);
-    } else {
-        status_register.clear_flags(StatusRegFlags::CARRY);
-    }
+    status_register.update_flags(StatusRegFlags::CARRY, lsb != 0);
 }
 
 pub fn and(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusReg) {
@@ -224,4 +191,9 @@ pub fn xor(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusR
     update_status_nz(result as i8, status_register);
 
     accumulator.set_u8(result);
+}
+
+pub fn bit_compare(accumulator: Reg8, operand: Reg8, status_register: &mut StatusReg) {
+    let and = accumulator.get_u8() & operand.get_u8();
+    status_register.update_flags(StatusRegFlags::ZERO, and == 0);
 }

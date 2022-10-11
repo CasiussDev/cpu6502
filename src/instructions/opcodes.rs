@@ -4,11 +4,12 @@ use crate::registers::SelectedRegister8;
 use num_traits::FromPrimitive;
 
 const OPCODE_GROUP_MASK: u8 = 0b_0000_0011;
-const OPCODE_G1_OP_MASK: u8 = 0b_1110_0011;
-const OPCODE_G1_ADDR_MASK: u8 = 0b_0001_1100;
+
+const OPCODE_G123_OP_MASK: u8 = 0b_1110_0011;
+const OPCODE_G123_ADDR_MASK: u8 = 0b_0001_1100;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Primitive)]
-pub enum OpsG01 {
+pub enum OpsG1 {
     ORA = 0x01,
     AND = 0x21,
     EOR = 0x41,
@@ -20,7 +21,7 @@ pub enum OpsG01 {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Primitive)]
-pub enum AddrModeG01 {
+pub enum AddrModeG1 {
     ZeroPageIndxIndirect = 0x00,
     ZeroPage = 0x04,
     Immediate = 0x08,
@@ -28,6 +29,54 @@ pub enum AddrModeG01 {
     ZeroPageIndirectIdx = 0x10,
     ZeroPageIdx = 0x14,
     AbsoluteIdxY = 0x18,
+    AbsoluteIdxX = 0x1C,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Primitive)]
+pub enum OpsG2 {
+    ASL = 0x02,
+    ROL = 0x22,
+    LSR = 0x42,
+    ROR = 0x62,
+    STX = 0x82,
+    LDX = 0xA2,
+    DEC = 0xC2,
+    INC = 0xE2,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Primitive)]
+pub enum AddrModeG2 {
+    Immediate = 0x00,
+    ZeroPage = 0x04,
+    Accumulator = 0x08,
+    Absolute = 0x0C,
+    Unused1 = 0x10,
+    ZeroPageIdx = 0x14,
+    Unused2 = 0x18,
+    AbsoluteIdxX = 0x1C,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Primitive)]
+pub enum OpsG3 {
+    Unused = 0x00,
+    BIT = 0x20,
+    JMP = 0x40,
+    JMPInd = 0x60,
+    STY = 0x80,
+    LDY = 0xA0,
+    CPY = 0xC0,
+    CPX = 0xE0,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Primitive)]
+pub enum AddrModeG3 {
+    Immediate = 0x00,
+    ZeroPage = 0x04,
+    Unused1 = 0x08,
+    Absolute = 0x0C,
+    Unused2 = 0x10,
+    ZeroPageIdx = 0x14,
+    Unused3 = 0x18,
     AbsoluteIdxX = 0x1C,
 }
 
@@ -52,93 +101,302 @@ impl DecodedOpcode {
     }
 }
 
-fn instr_op_g1(op: OpsG01) -> InstructionOp {
+fn instr_op_g1(op: OpsG1) -> InstructionOp {
     match op {
-        OpsG01::ORA => InstructionOp::Or,
-        OpsG01::AND => InstructionOp::And,
-        OpsG01::EOR => InstructionOp::Xor,
-        OpsG01::ADC => InstructionOp::Add,
-        OpsG01::STA => InstructionOp::StoreA,
-        OpsG01::LDA => InstructionOp::LoadA,
-        OpsG01::CMP => InstructionOp::Cmp,
-        OpsG01::SBC => InstructionOp::Sub,
+        OpsG1::ORA => InstructionOp::Or,
+        OpsG1::AND => InstructionOp::And,
+        OpsG1::EOR => InstructionOp::Xor,
+        OpsG1::ADC => InstructionOp::Add,
+        OpsG1::STA => InstructionOp::StoreA,
+        OpsG1::LDA => InstructionOp::LoadA,
+        OpsG1::CMP => InstructionOp::Cmp,
+        OpsG1::SBC => InstructionOp::Sub,
     }
 }
 
-fn sequence_mode_g1(op: OpsG01, addr_mode: AddrModeG01) -> InstructionSequenceMode {
-    match addr_mode {
-        AddrModeG01::ZeroPage => InstructionSequenceMode::ZeroPage,
-        AddrModeG01::Immediate => InstructionSequenceMode::Immediate,
-        AddrModeG01::Absolute => InstructionSequenceMode::Absolute,
-        AddrModeG01::ZeroPageIndxIndirect => InstructionSequenceMode::ZeroPageIdxIndirect,
-        AddrModeG01::ZeroPageIdx => InstructionSequenceMode::ZeroPageIndx,
-        AddrModeG01::AbsoluteIdxY | AddrModeG01::AbsoluteIdxX => match op {
-            OpsG01::STA => InstructionSequenceMode::AbsoluteIdxWrite,
-            OpsG01::ORA
-            | OpsG01::AND
-            | OpsG01::EOR
-            | OpsG01::ADC
-            | OpsG01::LDA
-            | OpsG01::CMP
-            | OpsG01::SBC => InstructionSequenceMode::AbsoluteIdxRead,
+fn instr_op_g2(op: OpsG2, addr_mode: AddrModeG2) -> InstructionOp {
+    match op {
+        OpsG2::ASL => match addr_mode {
+            AddrModeG2::Accumulator => InstructionOp::ShiftLeftA,
+            _ => InstructionOp::ShiftLeftMemory,
         },
-        AddrModeG01::ZeroPageIndirectIdx => match op {
-            OpsG01::STA => InstructionSequenceMode::ZeroPageIndirectIdxWrite,
-            OpsG01::ORA
-            | OpsG01::AND
-            | OpsG01::EOR
-            | OpsG01::ADC
-            | OpsG01::LDA
-            | OpsG01::CMP
-            | OpsG01::SBC => InstructionSequenceMode::ZeroPageIndirectIdxRead,
+        OpsG2::ROL => match addr_mode {
+            AddrModeG2::Accumulator => InstructionOp::RotateLeftA,
+            _ => InstructionOp::RotateLeftMemory,
+        },
+        OpsG2::LSR => match addr_mode {
+            AddrModeG2::Accumulator => InstructionOp::ShiftRightA,
+            _ => InstructionOp::ShiftRightMemory,
+        },
+        OpsG2::ROR => match addr_mode {
+            AddrModeG2::Accumulator => InstructionOp::RotateRightA,
+            _ => InstructionOp::RotateRightMemory,
+        },
+        OpsG2::STX => InstructionOp::StoreX,
+        OpsG2::LDX => InstructionOp::LoadX,
+        OpsG2::DEC => InstructionOp::DecrementMemory,
+        OpsG2::INC => InstructionOp::IncrementMemory,
+    }
+}
+
+fn instr_op_g3(op: OpsG3, addr_mode: AddrModeG3) -> InstructionOp {
+    match op {
+        OpsG3::Unused => InstructionOp::Nop,
+        OpsG3::BIT => {
+            if addr_mode == AddrModeG3::Immediate {
+                InstructionOp::BitImmediate
+            } else {
+                InstructionOp::Bit
+            }
+        }
+        OpsG3::JMP => InstructionOp::Nop,
+        OpsG3::JMPInd => InstructionOp::Nop,
+        OpsG3::STY => InstructionOp::StoreY,
+        OpsG3::LDY => InstructionOp::LoadY,
+        OpsG3::CPY => InstructionOp::Cpy,
+        OpsG3::CPX => InstructionOp::Cpx,
+    }
+}
+
+fn sequence_mode_g1(op: OpsG1, addr_mode: AddrModeG1) -> InstructionSequenceMode {
+    match addr_mode {
+        AddrModeG1::ZeroPage => InstructionSequenceMode::ZeroPage,
+        AddrModeG1::Immediate => InstructionSequenceMode::Immediate,
+        AddrModeG1::Absolute => InstructionSequenceMode::Absolute,
+        AddrModeG1::ZeroPageIndxIndirect => InstructionSequenceMode::ZeroPageIdxIndirect,
+        AddrModeG1::ZeroPageIdx => InstructionSequenceMode::ZeroPageIndx,
+        AddrModeG1::AbsoluteIdxY | AddrModeG1::AbsoluteIdxX => match op {
+            OpsG1::STA => InstructionSequenceMode::AbsoluteIdxWrite,
+            OpsG1::ORA
+            | OpsG1::AND
+            | OpsG1::EOR
+            | OpsG1::ADC
+            | OpsG1::LDA
+            | OpsG1::CMP
+            | OpsG1::SBC => InstructionSequenceMode::AbsoluteIdxRead,
+        },
+        AddrModeG1::ZeroPageIndirectIdx => match op {
+            OpsG1::STA => InstructionSequenceMode::ZeroPageIndirectIdxWrite,
+            OpsG1::ORA
+            | OpsG1::AND
+            | OpsG1::EOR
+            | OpsG1::ADC
+            | OpsG1::LDA
+            | OpsG1::CMP
+            | OpsG1::SBC => InstructionSequenceMode::ZeroPageIndirectIdxRead,
         },
     }
 }
 
-fn index_reg_g1(addr_mode: AddrModeG01) -> Option<SelectedRegister8> {
+fn sequence_mode_g2(op: OpsG2, addr_mode: AddrModeG2) -> InstructionSequenceMode {
+    match op {
+        OpsG2::ASL | OpsG2::ROL | OpsG2::LSR | OpsG2::ROR | OpsG2::DEC | OpsG2::INC => {
+            match addr_mode {
+                AddrModeG2::ZeroPage => InstructionSequenceMode::ZeroPageReadModifyWrite,
+                AddrModeG2::Immediate => InstructionSequenceMode::Immediate, // Illegal
+                AddrModeG2::Absolute => InstructionSequenceMode::AbsoluteReadModifyWrite,
+                AddrModeG2::ZeroPageIdx => InstructionSequenceMode::ZeroPageIdxReadModifyWrite,
+                AddrModeG2::AbsoluteIdxX => InstructionSequenceMode::AbsoluteIdxReadModifyWrite,
+                AddrModeG2::Accumulator => InstructionSequenceMode::Implied, // Illegal for Inc and Dec
+                AddrModeG2::Unused1 | AddrModeG2::Unused2 => InstructionSequenceMode::default(), // Illegal
+            }
+        }
+        OpsG2::STX | OpsG2::LDX => {
+            match addr_mode {
+                AddrModeG2::Immediate => InstructionSequenceMode::Immediate, // Illegal for STX
+                AddrModeG2::ZeroPage => InstructionSequenceMode::ZeroPage,
+                AddrModeG2::Accumulator => InstructionSequenceMode::Implied, // Illegal
+                AddrModeG2::Absolute => InstructionSequenceMode::Absolute,
+                AddrModeG2::ZeroPageIdx => InstructionSequenceMode::ZeroPageIdxIndirect,
+                AddrModeG2::AbsoluteIdxX => {
+                    if op == OpsG2::STX {
+                        InstructionSequenceMode::AbsoluteIdxWrite // Illegal
+                    } else {
+                        InstructionSequenceMode::AbsoluteIdxRead
+                    }
+                }
+                AddrModeG2::Unused1 | AddrModeG2::Unused2 => InstructionSequenceMode::default(), // Illegal
+            }
+        }
+    }
+}
+
+fn sequence_mode_g3(op: OpsG3, addr_mode: AddrModeG3) -> InstructionSequenceMode {
+    match op {
+        OpsG3::JMP => InstructionSequenceMode::AbsoluteJump,
+        OpsG3::JMPInd => InstructionSequenceMode::AbsoluteIndirectJump,
+        _ => match addr_mode {
+            AddrModeG3::Immediate => InstructionSequenceMode::Immediate, // Illegal for BIT, Jumps and STY
+            AddrModeG3::ZeroPage => InstructionSequenceMode::ZeroPage,   // Illegal for Jumps
+            AddrModeG3::Unused1 | AddrModeG3::Unused2 | AddrModeG3::Unused3 => {
+                InstructionSequenceMode::default()
+            } // Illegal
+            AddrModeG3::Absolute => InstructionSequenceMode::Absolute,
+            AddrModeG3::ZeroPageIdx => InstructionSequenceMode::ZeroPageIndx, // Illegal for BIT, Jumps and Cp
+            AddrModeG3::AbsoluteIdxX => InstructionSequenceMode::AbsoluteIdxRead, // Only legal for LDY
+        },
+    }
+}
+
+fn index_reg_g1(addr_mode: AddrModeG1) -> Option<SelectedRegister8> {
     match addr_mode {
-        AddrModeG01::ZeroPageIdx
-        | AddrModeG01::ZeroPageIndxIndirect
-        | AddrModeG01::AbsoluteIdxX => Some(SelectedRegister8::X),
-        AddrModeG01::ZeroPageIndirectIdx | AddrModeG01::AbsoluteIdxY => Some(SelectedRegister8::Y),
+        AddrModeG1::ZeroPageIdx
+        | AddrModeG1::ZeroPageIndxIndirect
+        | AddrModeG1::AbsoluteIdxX => Some(SelectedRegister8::X),
+        AddrModeG1::ZeroPageIndirectIdx | AddrModeG1::AbsoluteIdxY => Some(SelectedRegister8::Y),
         _ => None,
     }
 }
 
-fn illegal_instruction_g1(op: OpsG01, addr_mode: AddrModeG01) -> bool {
-    (op == OpsG01::STA) && (addr_mode == AddrModeG01::Immediate)
+fn index_reg_g2(op: OpsG2, addr_mode: AddrModeG2) -> Option<SelectedRegister8> {
+    match addr_mode {
+        AddrModeG2::ZeroPageIdx => {
+            if matches!(op, OpsG2::STX | OpsG2::LDX) {
+                Some(SelectedRegister8::Y)
+            } else {
+                Some(SelectedRegister8::X)
+            }
+        }
+        AddrModeG2::AbsoluteIdxX => {
+            if op == OpsG2::LDX {
+                Some(SelectedRegister8::Y)
+            } else {
+                Some(SelectedRegister8::X)
+            }
+        }
+        _ => None,
+    }
+}
+
+fn index_reg_g3(addr_mode: AddrModeG3) -> Option<SelectedRegister8> {
+    if matches!(
+        addr_mode,
+        AddrModeG3::ZeroPageIdx | AddrModeG3::AbsoluteIdxX
+    ) {
+        Some(SelectedRegister8::X)
+    } else {
+        None
+    }
+}
+
+fn illegal_instruction_g1(op: OpsG1, addr_mode: AddrModeG1) -> bool {
+    (op == OpsG1::STA) && (addr_mode == AddrModeG1::Immediate)
+}
+
+fn illegal_instruction_g2(op: OpsG2, addr_mode: AddrModeG2) -> bool {
+    ((op == OpsG2::STX) && (addr_mode == AddrModeG2::AbsoluteIdxX))
+        || ((op != OpsG2::LDX) && (addr_mode == AddrModeG2::Immediate))
+        || (matches!(op, OpsG2::STX | OpsG2::LDX | OpsG2::DEC | OpsG2::INC)
+            && (addr_mode == AddrModeG2::Accumulator))
+        || matches!(addr_mode, AddrModeG2::Unused1 | AddrModeG2::Unused2)
+}
+
+fn illegal_instruction_g3(op: OpsG3, addr_mode: AddrModeG3) -> bool {
+    (op == OpsG3::Unused)
+        || matches!(
+            addr_mode,
+            AddrModeG3::Unused1 | AddrModeG3::Unused2 | AddrModeG3::Unused3
+        )
+        || ((addr_mode == AddrModeG3::AbsoluteIdxX) && (op != OpsG3::LDY))
+        || ((addr_mode == AddrModeG3::Immediate)
+            && (matches!(op, OpsG3::BIT | OpsG3::JMP | OpsG3::JMPInd | OpsG3::STY)))
+        || ((addr_mode == AddrModeG3::ZeroPage) && matches!(op, OpsG3::JMP | OpsG3::JMPInd))
+        || ((addr_mode == AddrModeG3::ZeroPageIdx) && !matches!(op, OpsG3::STY | OpsG3::LDY))
 }
 
 #[allow(dead_code)]
 pub fn decode(opcode: u8) -> DecodedOpcode {
+    let mut decoded_opcode = DecodedOpcode::default();
     match opcode & OPCODE_GROUP_MASK {
         1 => {
-            let op = OpsG01::from_u8(opcode & OPCODE_G1_OP_MASK).unwrap();
-            let addr_mode = AddrModeG01::from_u8(opcode & OPCODE_G1_ADDR_MASK).unwrap();
-            let operation = instr_op_g1(op);
-            let sequence = sequence_mode_g1(op, addr_mode);
+            let op = OpsG1::from_u8(opcode & OPCODE_G123_OP_MASK).unwrap();
+            let addr_mode = AddrModeG1::from_u8(opcode & OPCODE_G123_ADDR_MASK).unwrap();
             if illegal_instruction_g1(op, addr_mode) == false {
+                let operation = instr_op_g1(op);
+                let sequence = sequence_mode_g1(op, addr_mode);
                 let index = index_reg_g1(addr_mode);
-                return DecodedOpcode::new(sequence, operation, index);
+                decoded_opcode = DecodedOpcode::new(sequence, operation, index);
             } else if cfg!(feature = "undoc_opcodes") {
                 todo!();
+            }
+        }
+        2 => {
+            let op = OpsG2::from_u8(opcode & OPCODE_G123_OP_MASK).unwrap();
+            let addr_mode = AddrModeG2::from_u8(opcode & OPCODE_G123_ADDR_MASK).unwrap();
+            if illegal_instruction_g2(op, addr_mode) == false {
+                let operation = instr_op_g2(op, addr_mode);
+                let sequence = sequence_mode_g2(op, addr_mode);
+                let index = index_reg_g2(op, addr_mode);
+                decoded_opcode = DecodedOpcode::new(sequence, operation, index);
+            } else if cfg!(feature = "undoc_opcodes") {
+                todo!();
+            }
+        }
+        0 => {
+            let op = OpsG3::from_u8(opcode & OPCODE_G123_OP_MASK).unwrap();
+            let addr_mode = AddrModeG3::from_u8(opcode & OPCODE_G123_ADDR_MASK).unwrap();
+            if illegal_instruction_g3(op, addr_mode) == false {
+                let operation = instr_op_g3(op, addr_mode);
+                let sequence = sequence_mode_g3(op, addr_mode);
+                let index = index_reg_g3(addr_mode);
+                decoded_opcode = DecodedOpcode::new(sequence, operation, index);
+            } else {
+
+
+
+                if cfg!(feature = "undoc_opcodes") {
+                    todo!();
+                }
             }
         }
         _ => (),
     };
 
-    DecodedOpcode::default()
+    decoded_opcode
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::instructions::{InstructionOp, InstructionSequenceMode};
+
     #[test]
     fn g1_print() {
+        println!("\nGroup 1\n");
         for i in 0_u8..=0b_0011_1111 {
             let opcode = (i << 2) + 1;
             let decoded = super::decode(opcode);
 
-            println!("{:#04X}\t{:?}", opcode, decoded);
+            println!("\t{:#04X}\t{:?}", opcode, decoded);
+        }
+    }
+
+    #[test]
+    fn g2_print() {
+        println!("\nGroup 2\n");
+        for i in 0_u8..=0b_0011_1111 {
+            let opcode = (i << 2) + 2;
+            let decoded = super::decode(opcode);
+
+            println!("\t{:#04X}\t{:?}", opcode, decoded);
+        }
+    }
+
+    #[test]
+    fn g3_print() {
+        println!("\nGroup 3\n");
+        for i in 0_u8..=0b_0011_1111 {
+            let opcode = i << 2;
+            let decoded = super::decode(opcode);
+
+            if (decoded.operation != InstructionOp::Nop)
+                || matches!(
+                    decoded.sequence,
+                    InstructionSequenceMode::AbsoluteJump
+                        | InstructionSequenceMode::AbsoluteIndirectJump
+                )
+            {
+                println!("\t{:#04X}\t{:?}", opcode, decoded);
+            }
         }
     }
 

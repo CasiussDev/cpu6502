@@ -46,12 +46,17 @@ pub enum MicroInstruction {
         op: AluBinaryOp,
         operand: SelectedRegister8,
     },
+    AluCompareIndex {
+        index: SelectedRegister8,
+    },
     SetStatusFlag {
         flag: StatusRegFlags,
     },
     ClearStatusFlag {
         flag: StatusRegFlags,
     },
+    BitInstr,
+    BitInstrImmediate,
     //AddIndexToAddress {
     //    index: SelectedRegister,
     //},
@@ -91,6 +96,14 @@ fn execute_alu_binary(op: AluBinaryOp, operand: SelectedRegister8, regs: &mut Re
         AluBinaryOp::Or => alu::or(&mut regs.a, &operand, &mut regs.status),
         AluBinaryOp::Xor => alu::xor(&mut regs.a, &operand, &mut regs.status),
         AluBinaryOp::Cmp => alu::cmp(&regs.a, &operand, &mut regs.status),
+    }
+}
+
+fn execute_alu_compare_index(operand: SelectedRegister8, regs: &mut RegisterFile) {
+    match operand {
+        SelectedRegister8::X => alu::cmp(&regs.x, &regs.tmp, &mut regs.status),
+        SelectedRegister8::Y => alu::cmp(&regs.y, &regs.tmp, &mut regs.status),
+        _ => panic!("trying to call index comparison using an invalid register"),
     }
 }
 
@@ -171,6 +184,7 @@ pub fn execute(
         }
         MicroInstruction::AluUnaryOp { op, reg } => execute_alu_unary(op, reg, regs),
         MicroInstruction::AluBinaryOp { op, operand } => execute_alu_binary(op, operand, regs),
+        MicroInstruction::AluCompareIndex { index } => execute_alu_compare_index(index, regs),
         MicroInstruction::SetStatusFlag { flag } => {
             regs.status.set_flags(flag);
         }
@@ -230,6 +244,17 @@ pub fn execute(
             } else {
                 regs.pc.inc();
             }
+        }
+        MicroInstruction::BitInstr => {
+            let msb = regs.tmp.get_u8() & 0x80;
+            let smsb = regs.tmp.get_u8() & 0x40;
+            regs.status.update_flags(StatusRegFlags::NEGATIVE, msb != 0);
+            regs.status
+                .update_flags(StatusRegFlags::OVERFLOW, smsb != 0);
+            alu::bit_compare(regs.a, regs.tmp, &mut regs.status);
+        }
+        MicroInstruction::BitInstrImmediate => {
+            alu::bit_compare(regs.a, regs.tmp, &mut regs.status);
         }
     }
 

@@ -51,6 +51,14 @@ impl StatusReg {
         self.flags.remove(flags_to_clear);
     }
 
+    pub fn update_flags(&mut self, flags_to_update: StatusRegFlags, value: bool) {
+        if value == true {
+            self.set_flags(flags_to_update);
+        } else {
+            self.clear_flags(flags_to_update);
+        }
+    }
+
     pub fn are_all_flags_set(&self, flags_to_check: StatusRegFlags) -> bool {
         self.flags.contains(flags_to_check)
     }
