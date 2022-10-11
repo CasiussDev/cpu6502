@@ -80,6 +80,18 @@ pub enum AddrModeG3 {
     AbsoluteIdxX = 0x1C,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Primitive)]
+pub enum OpsCompBranch {
+    BPL = 0x10,
+    BMI = 0x30,
+    BVC = 0x50,
+    BVS = 0x70,
+    BCC = 0x90,
+    BCS = 0xB0,
+    BNE = 0xD0,
+    BEQ = 0xF0,
+}
+
 #[derive(Clone, Copy, Default, Debug, Eq, PartialEq)]
 pub struct DecodedOpcode {
     pub sequence: InstructionSequenceMode,
@@ -155,6 +167,19 @@ fn instr_op_g3(op: OpsG3, addr_mode: AddrModeG3) -> InstructionOp {
         OpsG3::LDY => InstructionOp::LoadY,
         OpsG3::CPY => InstructionOp::Cpy,
         OpsG3::CPX => InstructionOp::Cpx,
+    }
+}
+
+fn instr_op_cond_branch(op: OpsCompBranch) -> InstructionOp {
+    match op {
+        OpsCompBranch::BPL => InstructionOp::BranchPlus,
+        OpsCompBranch::BMI => InstructionOp::BranchMinus,
+        OpsCompBranch::BVC => InstructionOp::BranchOverflowClear,
+        OpsCompBranch::BVS => InstructionOp::BranchOverflowSet,
+        OpsCompBranch::BCC => InstructionOp::BranchCarryClear,
+        OpsCompBranch::BCS => InstructionOp::BranchCarrySet,
+        OpsCompBranch::BNE => InstructionOp::BranchNotEqual,
+        OpsCompBranch::BEQ => InstructionOp::BranchEqual,
     }
 }
 
@@ -240,9 +265,9 @@ fn sequence_mode_g3(op: OpsG3, addr_mode: AddrModeG3) -> InstructionSequenceMode
 
 fn index_reg_g1(addr_mode: AddrModeG1) -> Option<SelectedRegister8> {
     match addr_mode {
-        AddrModeG1::ZeroPageIdx
-        | AddrModeG1::ZeroPageIndxIndirect
-        | AddrModeG1::AbsoluteIdxX => Some(SelectedRegister8::X),
+        AddrModeG1::ZeroPageIdx | AddrModeG1::ZeroPageIndxIndirect | AddrModeG1::AbsoluteIdxX => {
+            Some(SelectedRegister8::X)
+        }
         AddrModeG1::ZeroPageIndirectIdx | AddrModeG1::AbsoluteIdxY => Some(SelectedRegister8::Y),
         _ => None,
     }
@@ -341,10 +366,11 @@ pub fn decode(opcode: u8) -> DecodedOpcode {
                 let index = index_reg_g3(addr_mode);
                 decoded_opcode = DecodedOpcode::new(sequence, operation, index);
             } else {
-
-
-
-                if cfg!(feature = "undoc_opcodes") {
+                if let Some(op) = OpsCompBranch::from_u8(opcode) {
+                    let operation = instr_op_cond_branch(op);
+                    decoded_opcode =
+                        DecodedOpcode::new(InstructionSequenceMode::Relative, operation, None);
+                } else if cfg!(feature = "undoc_opcodes") {
                     todo!();
                 }
             }
@@ -388,13 +414,27 @@ mod tests {
             let opcode = i << 2;
             let decoded = super::decode(opcode);
 
-            if (decoded.operation != InstructionOp::Nop)
+            if decoded.sequence != InstructionSequenceMode::Relative
+                && (decoded.operation != InstructionOp::Nop)
                 || matches!(
                     decoded.sequence,
                     InstructionSequenceMode::AbsoluteJump
                         | InstructionSequenceMode::AbsoluteIndirectJump
                 )
             {
+                println!("\t{:#04X}\t{:?}", opcode, decoded);
+            }
+        }
+    }
+
+    #[test]
+    fn cond_branch_print() {
+        println!("\nConditional Branches\n");
+        for i in 0_u8..=0b_0011_1111 {
+            let opcode = i << 2;
+            let decoded = super::decode(opcode);
+
+            if decoded.sequence == InstructionSequenceMode::Relative {
                 println!("\t{:#04X}\t{:?}", opcode, decoded);
             }
         }

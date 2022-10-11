@@ -62,6 +62,14 @@ pub enum InstructionOp {
     LoadX,
     StoreY,
     LoadY,
+    BranchPlus,
+    BranchMinus,
+    BranchOverflowClear,
+    BranchOverflowSet,
+    BranchCarryClear,
+    BranchCarrySet,
+    BranchNotEqual,
+    BranchEqual,
 }
 
 type OpsMap = HashMap<InstructionOp, MicroInstructionsVector>;
@@ -426,6 +434,62 @@ pub fn create_instructionops_sequences() -> OpsMap {
         (
             InstructionOp::BitImmediate,
             vec![MicroInstruction::BitInstrImmediate],
+        ),
+        (
+            InstructionOp::BranchPlus,
+            vec![MicroInstruction::TakeConditionalBranch {
+                flag_to_test: StatusRegFlags::NEGATIVE,
+                branch_if_set: false,
+            }],
+        ),
+        (
+            InstructionOp::BranchMinus,
+            vec![MicroInstruction::TakeConditionalBranch {
+                flag_to_test: StatusRegFlags::NEGATIVE,
+                branch_if_set: true,
+            }],
+        ),
+        (
+            InstructionOp::BranchOverflowClear,
+            vec![MicroInstruction::TakeConditionalBranch {
+                flag_to_test: StatusRegFlags::OVERFLOW,
+                branch_if_set: false,
+            }],
+        ),
+        (
+            InstructionOp::BranchOverflowSet,
+            vec![MicroInstruction::TakeConditionalBranch {
+                flag_to_test: StatusRegFlags::OVERFLOW,
+                branch_if_set: true,
+            }],
+        ),
+        (
+            InstructionOp::BranchCarryClear,
+            vec![MicroInstruction::TakeConditionalBranch {
+                flag_to_test: StatusRegFlags::CARRY,
+                branch_if_set: false,
+            }],
+        ),
+        (
+            InstructionOp::BranchCarrySet,
+            vec![MicroInstruction::TakeConditionalBranch {
+                flag_to_test: StatusRegFlags::CARRY,
+                branch_if_set: true,
+            }],
+        ),
+        (
+            InstructionOp::BranchNotEqual,
+            vec![MicroInstruction::TakeConditionalBranch {
+                flag_to_test: StatusRegFlags::ZERO,
+                branch_if_set: false,
+            }],
+        ),
+        (
+            InstructionOp::BranchEqual,
+            vec![MicroInstruction::TakeConditionalBranch {
+                flag_to_test: StatusRegFlags::ZERO,
+                branch_if_set: true,
+            }],
         ),
     ])
 }

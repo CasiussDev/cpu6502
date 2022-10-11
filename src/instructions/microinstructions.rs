@@ -57,9 +57,10 @@ pub enum MicroInstruction {
     },
     BitInstr,
     BitInstrImmediate,
-    //AddIndexToAddress {
-    //    index: SelectedRegister,
-    //},
+    TakeConditionalBranch {
+        flag_to_test: StatusRegFlags,
+        branch_if_set: bool,
+    },
     AddIndexToAddress,
     FixAddress,
     RunOperation,
@@ -113,6 +114,7 @@ pub enum ExecutionStatus {
     RunOp,
     WaitMemory { dst: Option<SelectedRegister8> },
     RunOpAndFinish,
+    FinishInstruction,
 }
 #[allow(dead_code)]
 pub fn execute(
@@ -255,6 +257,22 @@ pub fn execute(
         }
         MicroInstruction::BitInstrImmediate => {
             alu::bit_compare(regs.a, regs.tmp, &mut regs.status);
+        }
+        MicroInstruction::TakeConditionalBranch {
+            flag_to_test,
+            branch_if_set,
+        } => {
+            let must_branch = regs.status.are_all_flags_set(flag_to_test) == branch_if_set;
+            if must_branch {
+                let (pc_low_byte, carry) = regs.pc.get_low_u8().overflowing_add(regs.tmp.get_u8());
+                regs.pc.set_low_u8(pc_low_byte);
+                if carry == false {
+                    return ExecutionStatus::FinishInstruction;
+                }
+            } else {
+                regs.pc.inc();
+                return ExecutionStatus::FinishInstruction;
+            }
         }
     }
 
