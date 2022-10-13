@@ -92,6 +92,44 @@ pub enum OpsCompBranch {
     BEQ = 0xF0,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Primitive)]
+pub enum OpsSubroutine {
+    BRK = 0x00,
+    JSR = 0x20,
+    RTI = 0x40,
+    RTS = 0x60,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Primitive)]
+pub enum OpsSingleByte0 {
+    PHP = 0x08,
+    PLP = 0x28,
+    PHA = 0x48,
+    PLA = 0x68,
+    DEY = 0x88,
+    TAY = 0xA8,
+    INY = 0xC8,
+    INX = 0xE8,
+    CLC = 0x18,
+    SEC = 0x38,
+    CLI = 0x58,
+    SEI = 0x78,
+    TYA = 0x98,
+    CLV = 0xB8,
+    CLD = 0xD8,
+    SED = 0xF8,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Primitive)]
+pub enum OpsSingleByte2 {
+    TXA = 0x8A,
+    TXS = 0x9A,
+    TAX = 0xAA,
+    TSX = 0xBA,
+    DEX = 0xCA,
+    NOP = 0xEA,
+}
+
 #[derive(Clone, Copy, Default, Debug, Eq, PartialEq)]
 pub struct DecodedOpcode {
     pub sequence: InstructionSequenceMode,
@@ -183,6 +221,37 @@ fn instr_op_cond_branch(op: OpsCompBranch) -> InstructionOp {
     }
 }
 
+fn instr_op_single_byte0(op: OpsSingleByte0) -> InstructionOp {
+    match op {
+        OpsSingleByte0::PHP => InstructionOp::PushStatus,
+        OpsSingleByte0::PLP => InstructionOp::PullStatus,
+        OpsSingleByte0::PHA => InstructionOp::PushA,
+        OpsSingleByte0::PLA => InstructionOp::PullA,
+        OpsSingleByte0::DEY => InstructionOp::DecrementY,
+        OpsSingleByte0::TAY => InstructionOp::TransferAccumulatorToY,
+        OpsSingleByte0::INY => InstructionOp::IncrementY,
+        OpsSingleByte0::INX => InstructionOp::IncrementX,
+        OpsSingleByte0::CLC => InstructionOp::ClearCarry,
+        OpsSingleByte0::SEC => InstructionOp::SetCarry,
+        OpsSingleByte0::CLI => InstructionOp::ClearInterruptDisable,
+        OpsSingleByte0::SEI => InstructionOp::SetInterruptDisable,
+        OpsSingleByte0::TYA => InstructionOp::TransferYToAccumulator,
+        OpsSingleByte0::CLV => InstructionOp::ClearOverflow,
+        OpsSingleByte0::CLD => InstructionOp::ClearDecimal,
+        OpsSingleByte0::SED => InstructionOp::SetDecimal,
+    }
+}
+fn instr_op_single_byte2(op: OpsSingleByte2) -> InstructionOp {
+    match op {
+        OpsSingleByte2::TXA => InstructionOp::TransferXToAccumulator,
+        OpsSingleByte2::TXS => InstructionOp::TransferXToStackPtr,
+        OpsSingleByte2::TAX => InstructionOp::TransferAccumulatorToX,
+        OpsSingleByte2::TSX => InstructionOp::TransferStackPtrToX,
+        OpsSingleByte2::DEX => InstructionOp::DecrementX,
+        OpsSingleByte2::NOP => InstructionOp::Nop,
+    }
+}
+
 fn sequence_mode_g1(op: OpsG1, addr_mode: AddrModeG1) -> InstructionSequenceMode {
     match addr_mode {
         AddrModeG1::ZeroPage => InstructionSequenceMode::ZeroPage,
@@ -260,6 +329,23 @@ fn sequence_mode_g3(op: OpsG3, addr_mode: AddrModeG3) -> InstructionSequenceMode
             AddrModeG3::ZeroPageIdx => InstructionSequenceMode::ZeroPageIndx, // Illegal for BIT, Jumps and Cp
             AddrModeG3::AbsoluteIdxX => InstructionSequenceMode::AbsoluteIdxRead, // Only legal for LDY
         },
+    }
+}
+
+fn sequence_mode_subroutine(op: OpsSubroutine) -> InstructionSequenceMode {
+    match op {
+        OpsSubroutine::BRK => InstructionSequenceMode::Break,
+        OpsSubroutine::JSR => InstructionSequenceMode::JumpSubroutine,
+        OpsSubroutine::RTI => InstructionSequenceMode::ReturnInterrupt,
+        OpsSubroutine::RTS => InstructionSequenceMode::ReturnSubroutine,
+    }
+}
+
+fn sequence_mode_single_byte0(op: OpsSingleByte0) -> InstructionSequenceMode {
+    match op {
+        OpsSingleByte0::PHP | OpsSingleByte0::PHA => InstructionSequenceMode::Push,
+        OpsSingleByte0::PLP | OpsSingleByte0::PLA => InstructionSequenceMode::Pull,
+        _ => InstructionSequenceMode::Implied,
     }
 }
 
@@ -353,6 +439,9 @@ pub fn decode(opcode: u8) -> DecodedOpcode {
                 let sequence = sequence_mode_g2(op, addr_mode);
                 let index = index_reg_g2(op, addr_mode);
                 decoded_opcode = DecodedOpcode::new(sequence, operation, index);
+            } else if let Some(op) = OpsSingleByte2::from_u8(opcode) {
+                let operation = instr_op_single_byte2(op);
+                decoded_opcode = DecodedOpcode::new(InstructionSequenceMode::Implied, operation, None);
             } else if cfg!(feature = "undoc_opcodes") {
                 todo!();
             }
@@ -365,14 +454,19 @@ pub fn decode(opcode: u8) -> DecodedOpcode {
                 let sequence = sequence_mode_g3(op, addr_mode);
                 let index = index_reg_g3(addr_mode);
                 decoded_opcode = DecodedOpcode::new(sequence, operation, index);
-            } else {
-                if let Some(op) = OpsCompBranch::from_u8(opcode) {
-                    let operation = instr_op_cond_branch(op);
-                    decoded_opcode =
-                        DecodedOpcode::new(InstructionSequenceMode::Relative, operation, None);
-                } else if cfg!(feature = "undoc_opcodes") {
-                    todo!();
-                }
+            } else if let Some(op) = OpsCompBranch::from_u8(opcode) {
+                let operation = instr_op_cond_branch(op);
+                decoded_opcode =
+                    DecodedOpcode::new(InstructionSequenceMode::Relative, operation, None);
+            } else if let Some(op) = OpsSubroutine::from_u8(opcode) {
+                let sequence = sequence_mode_subroutine(op);
+                decoded_opcode = DecodedOpcode::new(sequence, InstructionOp::Nop, None);
+            } else if let Some(op) = OpsSingleByte0::from_u8(opcode) {
+                let operation = instr_op_single_byte0(op);
+                let sequence = sequence_mode_single_byte0(op);
+                decoded_opcode = DecodedOpcode::new(sequence, operation, None);
+            } else if cfg!(feature = "undoc_opcodes") {
+                todo!();
             }
         }
         _ => (),
@@ -383,7 +477,9 @@ pub fn decode(opcode: u8) -> DecodedOpcode {
 
 #[cfg(test)]
 mod tests {
+    use crate::instructions::opcodes::{OpsSingleByte0, OpsSingleByte2};
     use crate::instructions::{InstructionOp, InstructionSequenceMode};
+    use crate::num_traits::FromPrimitive;
 
     #[test]
     fn g1_print() {
@@ -435,6 +531,47 @@ mod tests {
             let decoded = super::decode(opcode);
 
             if decoded.sequence == InstructionSequenceMode::Relative {
+                println!("\t{:#04X}\t{:?}", opcode, decoded);
+            }
+        }
+    }
+
+    #[test]
+    fn subroutine_print() {
+        println!("\nSubroutines and Interrupts\n");
+        for i in 0_u8..=0b_0011_1111 {
+            let opcode = i << 2;
+            let decoded = super::decode(opcode);
+
+            if matches!(
+                decoded.sequence,
+                InstructionSequenceMode::Break
+                    | InstructionSequenceMode::ReturnSubroutine
+                    | InstructionSequenceMode::ReturnInterrupt
+                    | InstructionSequenceMode::JumpSubroutine
+            ) {
+                println!("\t{:#04X}\t{:?}", opcode, decoded);
+            }
+        }
+    }
+
+    #[test]
+    fn single_byte_print() {
+        println!("\nSingle Bytes\n");
+        for i in 0_u8..=0b_0011_1111 {
+            let opcode = i << 2;
+
+            if let Some(_) = OpsSingleByte0::from_u8(opcode) {
+                let decoded = super::decode(opcode);
+                println!("\t{:#04X}\t{:?}", opcode, decoded);
+            }
+        }
+
+        for i in 0_u8..=0b_0011_1111 {
+            let opcode = (i << 2) + 2;
+
+            if let Some(_) = OpsSingleByte2::from_u8(opcode) {
+                let decoded = super::decode(opcode);
                 println!("\t{:#04X}\t{:?}", opcode, decoded);
             }
         }
