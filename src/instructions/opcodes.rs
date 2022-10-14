@@ -415,7 +415,6 @@ fn illegal_instruction_g3(op: OpsG3, addr_mode: AddrModeG3) -> bool {
         || ((addr_mode == AddrModeG3::ZeroPageIdx) && !matches!(op, OpsG3::STY | OpsG3::LDY))
 }
 
-#[allow(dead_code)]
 pub fn decode(opcode: u8) -> DecodedOpcode {
     let mut decoded_opcode = DecodedOpcode::default();
     match opcode & OPCODE_GROUP_MASK {
@@ -441,7 +440,8 @@ pub fn decode(opcode: u8) -> DecodedOpcode {
                 decoded_opcode = DecodedOpcode::new(sequence, operation, index);
             } else if let Some(op) = OpsSingleByte2::from_u8(opcode) {
                 let operation = instr_op_single_byte2(op);
-                decoded_opcode = DecodedOpcode::new(InstructionSequenceMode::Implied, operation, None);
+                decoded_opcode =
+                    DecodedOpcode::new(InstructionSequenceMode::Implied, operation, None);
             } else if cfg!(feature = "undoc_opcodes") {
                 todo!();
             }

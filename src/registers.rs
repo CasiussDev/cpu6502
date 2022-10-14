@@ -17,7 +17,6 @@ pub struct Reg16 {
     value: u16,
 }
 
-#[allow(dead_code)]
 impl Reg8 {
     pub fn reset(&mut self) {
         self.value = 0;
@@ -66,16 +65,17 @@ impl Reg8 {
     }
 }
 
-#[allow(dead_code)]
 impl Reg16 {
     pub fn reset(&mut self) {
         self.value = 0;
     }
 
+    #[allow(dead_code)]
     pub fn new(value: u16) -> Self {
         Self { value }
     }
 
+    #[allow(dead_code)]
     pub fn new_i16(value: i16) -> Self {
         Self {
             value: (value as u16),
@@ -138,6 +138,7 @@ impl Reg16 {
         self.value = self.value.wrapping_add(1);
     }
 
+    #[allow(dead_code)]
     pub fn dec(&mut self) {
         self.value = self.value.wrapping_sub(1);
     }

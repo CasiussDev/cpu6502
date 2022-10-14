@@ -9,7 +9,6 @@ use rand::distributions::{Distribution, Uniform};
 #[cfg(feature = "random")]
 use rand::rngs::ThreadRng;
 
-#[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum SelectedRegister8 {
     A = 0xF0,
@@ -41,6 +40,7 @@ pub enum SelectedRegister16 {
     ProgramStartAddrHigh = 0xFFFD,
     InterruptAddrLow = 0xFFFE,
     InterruptAddrHigh = 0xFFFF,
+
     #[allow(dead_code)]
     Discard,
 }
@@ -60,7 +60,6 @@ pub struct RegisterFile {
     pub addr: Reg16,
 }
 
-#[allow(dead_code)]
 impl RegisterFile {
     // TO DO: NES specific?
     pub fn powerup(&mut self) {
@@ -151,10 +150,6 @@ impl RegisterFile {
         }
     }
 
-    pub fn get_copy_status_register(&self) -> StatusReg {
-        self.status
-    }
-
     pub fn set_selected_register16(&mut self, selection: SelectedRegister16, reg: Reg16) {
         assert_ne!(
             selection,
@@ -194,13 +189,14 @@ impl RegisterFile {
         }
     }
 
-    pub fn set_selected_register8(&mut self, selection: SelectedRegister8, reg: Reg8) {
+    pub fn set_selected_register8(&mut self, selection: SelectedRegister8, value: u8) {
         assert_ne!(
             selection,
             SelectedRegister8::StackPage,
             "Attempting to write a read only register"
         );
 
+        let reg = Reg8::new(value);
         match selection {
             SelectedRegister8::A => self.a = reg,
             SelectedRegister8::X => self.x = reg,
@@ -236,7 +232,7 @@ impl fmt::Debug for RegisterFile {
 
 #[cfg(test)]
 mod tests {
-    use crate::registers::{Reg8, RegisterFile, SelectedRegister8};
+    use crate::registers::{RegisterFile, SelectedRegister8};
 
     #[cfg(feature = "random")]
     use crate::registers::StatusRegFlags;
@@ -293,11 +289,11 @@ mod tests {
         let mut register_file = RegisterFile::default();
 
         // WHEN
-        register_file.set_selected_register8(SelectedRegister8::PCHigh, Reg8 { value: 0xCA });
-        register_file.set_selected_register8(SelectedRegister8::PCLow, Reg8 { value: 0xFE });
+        register_file.set_selected_register8(SelectedRegister8::PCHigh, 0xCA);
+        register_file.set_selected_register8(SelectedRegister8::PCLow, 0xFE);
 
-        register_file.set_selected_register8(SelectedRegister8::AddrHigh, Reg8 { value: 0xFA });
-        register_file.set_selected_register8(SelectedRegister8::AddrLow, Reg8 { value: 0xCE });
+        register_file.set_selected_register8(SelectedRegister8::AddrHigh, 0xFA);
+        register_file.set_selected_register8(SelectedRegister8::AddrLow, 0xCE);
 
         // THEN
         assert_eq!(register_file.pc.get_u16(), 0xCAFE);

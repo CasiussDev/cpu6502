@@ -1,4 +1,5 @@
 mod alu;
+mod cpu;
 mod instructions;
 mod pinout;
 mod registers;
@@ -7,6 +8,8 @@ mod registers;
 extern crate enum_primitive_derive;
 extern crate lazy_static;
 extern crate num_traits;
+
+pub use cpu::Cpu;
 
 #[cfg(test)]
 mod tests {

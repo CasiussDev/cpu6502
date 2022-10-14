@@ -22,8 +22,8 @@ pub struct StatusReg {
     flags: StatusRegFlags,
 }
 
-#[allow(dead_code)]
 impl StatusReg {
+    #[allow(dead_code)]
     pub fn new_from_u8(flags: u8) -> Self {
         Self {
             flags: unsafe { StatusRegFlags::from_bits_unchecked(flags) },
@@ -63,6 +63,7 @@ impl StatusReg {
         self.flags.contains(flags_to_check)
     }
 
+    #[allow(dead_code)]
     pub fn are_any_flags_set(&self, flags_to_check: StatusRegFlags) -> bool {
         self.flags.intersects(flags_to_check)
     }

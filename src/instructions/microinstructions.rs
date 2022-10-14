@@ -2,9 +2,8 @@ use crate::alu;
 use crate::alu::{AluBinaryOp, AluUnaryOp};
 use crate::pinout::{DataDirectionMode, Pinout};
 use crate::registers::register_file::{SelectedRegister16, SelectedRegister8};
-use crate::registers::{Reg8, RegisterFile, StatusRegFlags};
+use crate::registers::{RegisterFile, StatusRegFlags};
 
-#[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum MicroInstruction {
     Fetch,
@@ -108,6 +107,7 @@ fn execute_alu_compare_index(operand: SelectedRegister8, regs: &mut RegisterFile
     }
 }
 
+#[derive(PartialEq, Debug)]
 pub enum ExecutionStatus {
     YieldClock,
     Continue,
@@ -116,19 +116,13 @@ pub enum ExecutionStatus {
     RunOpAndFinish,
     FinishInstruction,
 }
-#[allow(dead_code)]
+
 pub fn execute(
     micro_instr: MicroInstruction,
     index_reg: Option<SelectedRegister8>,
     regs: &mut RegisterFile,
     pins: &mut Pinout,
 ) -> ExecutionStatus {
-    assert!(
-        (index_reg == None)
-            || (index_reg == Some(SelectedRegister8::X))
-            || (index_reg == Some(SelectedRegister8::Y))
-    );
-
     assert!(matches!(
         index_reg,
         None | Some(SelectedRegister8::X) | Some(SelectedRegister8::Y)
@@ -165,13 +159,13 @@ pub fn execute(
         }
         MicroInstruction::CopyRegister { dst, src } => {
             let src = regs.get_copy_selected_register8(src);
-            regs.set_selected_register8(dst, src);
+            regs.set_selected_register8(dst, src.get_u8());
         }
         MicroInstruction::CopyRegister16 { dst, src } => {
             let src = regs.get_copy_selected_register16(src);
             regs.set_selected_register16(dst, src);
         }
-        MicroInstruction::ZeroRegister { dst } => regs.set_selected_register8(dst, Reg8::default()),
+        MicroInstruction::ZeroRegister { dst } => regs.set_selected_register8(dst, 0),
         MicroInstruction::IncrementRegister { dst } => {
             let dst = regs.get_selected_register8(dst);
             dst.inc();

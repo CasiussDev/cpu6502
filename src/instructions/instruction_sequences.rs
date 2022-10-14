@@ -54,6 +54,10 @@ lazy_static! {
     static ref MODES_SEQUENCES_DEFS: SequenceMap = create_instruction_mode_sequences();
 }
 
+pub fn get_sequences_map() -> &'static SequenceMap {
+    &MODES_SEQUENCES_DEFS
+}
+
 impl Default for InstructionSequenceMode {
     fn default() -> Self {
         InstructionSequenceMode::Implied

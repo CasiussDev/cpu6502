@@ -9,7 +9,6 @@ use strum::IntoEnumIterator;
 #[cfg(test)]
 use strum_macros::EnumIter;
 
-#[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 #[cfg_attr(test, derive(EnumIter))]
 pub enum InstructionOp {
@@ -78,13 +77,16 @@ lazy_static! {
     static ref OPS_SEQUENCES_DEFS: OpsMap = create_instructionops_sequences();
 }
 
+pub fn get_ops_map() -> &'static OpsMap {
+    &OPS_SEQUENCES_DEFS
+}
+
 impl Default for InstructionOp {
     fn default() -> Self {
         InstructionOp::Nop
     }
 }
 
-#[allow(dead_code)]
 pub fn create_instructionops_sequences() -> OpsMap {
     HashMap::from([
         (InstructionOp::Nop, vec![]),
