@@ -29,6 +29,21 @@ pub enum SelectedRegister8 {
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+pub enum IndexRegister {
+    X = SelectedRegister8::X as isize,
+    Y = SelectedRegister8::Y as isize,
+}
+
+impl From<IndexRegister> for SelectedRegister8 {
+    fn from(index_reg: IndexRegister) -> Self {
+        match index_reg {
+            IndexRegister::X => SelectedRegister8::X,
+            IndexRegister::Y => SelectedRegister8::Y,
+        }
+    }
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum SelectedRegister16 {
     PC,
     Addr,

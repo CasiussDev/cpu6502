@@ -2,7 +2,7 @@ use crate::alu;
 use crate::alu::{AluBinaryOp, AluUnaryOp};
 use crate::pinout::{DataDirectionMode, Pinout};
 use crate::registers::register_file::{SelectedRegister16, SelectedRegister8};
-use crate::registers::{RegisterFile, StatusRegFlags};
+use crate::registers::{IndexRegister, RegisterFile, StatusRegFlags};
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum MicroInstruction {
@@ -119,15 +119,10 @@ pub enum ExecutionStatus {
 
 pub fn execute(
     micro_instr: MicroInstruction,
-    index_reg: Option<SelectedRegister8>,
+    index_reg: Option<IndexRegister>,
     regs: &mut RegisterFile,
     pins: &mut Pinout,
 ) -> ExecutionStatus {
-    assert!(matches!(
-        index_reg,
-        None | Some(SelectedRegister8::X) | Some(SelectedRegister8::Y)
-    ));
-
     match micro_instr {
         MicroInstruction::Fetch => {
             pins.set_address_output(regs.pc.get_u16());
@@ -193,11 +188,7 @@ pub fn execute(
                 "index register not specified for MicroInstruction::AddIndexToAddress"
             );
             let index_reg = index_reg.unwrap();
-            assert!(
-                (index_reg == SelectedRegister8::X) || (index_reg == SelectedRegister8::Y),
-                "using a wrong register for index"
-            );
-            let index_reg = regs.get_copy_selected_register8(index_reg);
+            let index_reg = regs.get_copy_selected_register8(index_reg.into());
             let addr_low = regs.addr.get_low_u8();
             let addr_low = addr_low.wrapping_add(index_reg.get_u8());
             regs.addr.set_low_u8(addr_low);
@@ -205,7 +196,9 @@ pub fn execute(
         MicroInstruction::FixAddress => {
             let addr_low_value = regs.addr.get_low_u8();
             let index_value = regs
-                .get_copy_selected_register8(index_reg.expect("Index register not specified"))
+                .get_copy_selected_register8(
+                    index_reg.expect("Index register not specified").into(),
+                )
                 .get_u8();
 
             if index_value > addr_low_value {
@@ -218,7 +211,9 @@ pub fn execute(
         MicroInstruction::FixAddressOrRunOpAndFinish => {
             let addr_low_value = regs.addr.get_low_u8();
             let index_value = regs
-                .get_copy_selected_register8(index_reg.expect("Index register not specified"))
+                .get_copy_selected_register8(
+                    index_reg.expect("Index register not specified").into(),
+                )
                 .get_u8();
 
             if index_value > addr_low_value {
@@ -231,7 +226,9 @@ pub fn execute(
         MicroInstruction::FixAddressOrIncrementPC => {
             let addr_low_value = regs.addr.get_low_u8();
             let index_value = regs
-                .get_copy_selected_register8(index_reg.expect("Index register not specified"))
+                .get_copy_selected_register8(
+                    index_reg.expect("Index register not specified").into(),
+                )
                 .get_u8();
 
             if index_value > addr_low_value {

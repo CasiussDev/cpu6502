@@ -1,6 +1,6 @@
 use crate::instructions::InstructionOp;
 use crate::instructions::InstructionSequenceMode;
-use crate::registers::SelectedRegister8;
+use crate::registers::IndexRegister;
 use num_traits::FromPrimitive;
 
 const OPCODE_GROUP_MASK: u8 = 0b_0000_0011;
@@ -134,14 +134,14 @@ pub enum OpsSingleByte2 {
 pub struct DecodedOpcode {
     pub sequence: InstructionSequenceMode,
     pub operation: InstructionOp,
-    pub index: Option<SelectedRegister8>,
+    pub index: Option<IndexRegister>,
 }
 
 impl DecodedOpcode {
     pub fn new(
         sequence: InstructionSequenceMode,
         operation: InstructionOp,
-        index: Option<SelectedRegister8>,
+        index: Option<IndexRegister>,
     ) -> Self {
         Self {
             sequence,
@@ -349,42 +349,42 @@ fn sequence_mode_single_byte0(op: OpsSingleByte0) -> InstructionSequenceMode {
     }
 }
 
-fn index_reg_g1(addr_mode: AddrModeG1) -> Option<SelectedRegister8> {
+fn index_reg_g1(addr_mode: AddrModeG1) -> Option<IndexRegister> {
     match addr_mode {
         AddrModeG1::ZeroPageIdx | AddrModeG1::ZeroPageIndxIndirect | AddrModeG1::AbsoluteIdxX => {
-            Some(SelectedRegister8::X)
+            Some(IndexRegister::X)
         }
-        AddrModeG1::ZeroPageIndirectIdx | AddrModeG1::AbsoluteIdxY => Some(SelectedRegister8::Y),
+        AddrModeG1::ZeroPageIndirectIdx | AddrModeG1::AbsoluteIdxY => Some(IndexRegister::Y),
         _ => None,
     }
 }
 
-fn index_reg_g2(op: OpsG2, addr_mode: AddrModeG2) -> Option<SelectedRegister8> {
+fn index_reg_g2(op: OpsG2, addr_mode: AddrModeG2) -> Option<IndexRegister> {
     match addr_mode {
         AddrModeG2::ZeroPageIdx => {
             if matches!(op, OpsG2::STX | OpsG2::LDX) {
-                Some(SelectedRegister8::Y)
+                Some(IndexRegister::Y)
             } else {
-                Some(SelectedRegister8::X)
+                Some(IndexRegister::X)
             }
         }
         AddrModeG2::AbsoluteIdxX => {
             if op == OpsG2::LDX {
-                Some(SelectedRegister8::Y)
+                Some(IndexRegister::Y)
             } else {
-                Some(SelectedRegister8::X)
+                Some(IndexRegister::X)
             }
         }
         _ => None,
     }
 }
 
-fn index_reg_g3(addr_mode: AddrModeG3) -> Option<SelectedRegister8> {
+fn index_reg_g3(addr_mode: AddrModeG3) -> Option<IndexRegister> {
     if matches!(
         addr_mode,
         AddrModeG3::ZeroPageIdx | AddrModeG3::AbsoluteIdxX
     ) {
-        Some(SelectedRegister8::X)
+        Some(IndexRegister::X)
     } else {
         None
     }

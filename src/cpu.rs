@@ -1,7 +1,9 @@
 use crate::instructions::opcodes::decode;
-use crate::instructions::{get_ops_map, get_sequences_map, ExecutionStatus, MicroInstruction, execute};
+use crate::instructions::{
+    execute, get_ops_map, get_sequences_map, ExecutionStatus, MicroInstruction,
+};
 use crate::pinout::Pinout;
-use crate::registers::{RegisterFile, SelectedRegister8};
+use crate::registers::{IndexRegister, RegisterFile, SelectedRegister8};
 use std::slice::Iter;
 
 pub struct Cpu {
@@ -10,7 +12,7 @@ pub struct Cpu {
     current_sequence: Option<Iter<'static, MicroInstruction>>,
     current_op: Option<Iter<'static, MicroInstruction>>,
     data_destination: Option<SelectedRegister8>,
-    index_register: Option<SelectedRegister8>,
+    index_register: Option<IndexRegister>,
     instr_ready: bool,
     running_op: bool,
 }
@@ -43,7 +45,12 @@ impl Cpu {
 
         if let Some(op) = &mut self.current_op {
             if let Some(&micro_instr) = op.next() {
-                run_status = execute(micro_instr, self.index_register, &mut self.regs, &mut self.pins);
+                run_status = execute(
+                    micro_instr,
+                    self.index_register,
+                    &mut self.regs,
+                    &mut self.pins,
+                );
             } else {
                 self.running_op = false;
                 self.current_op = None;
@@ -60,7 +67,12 @@ impl Cpu {
         let run_status;
         let sequence = &mut self.current_sequence.as_mut().unwrap();
         if let Some(&micro_instr) = sequence.next() {
-            run_status = execute(micro_instr, self.index_register, &mut self.regs, &mut self.pins);
+            run_status = execute(
+                micro_instr,
+                self.index_register,
+                &mut self.regs,
+                &mut self.pins,
+            );
         } else {
             self.current_sequence = None;
             run_status = ExecutionStatus::Continue;
@@ -82,7 +94,12 @@ impl Cpu {
             } else if self.current_sequence.is_some() {
                 run_status = self.run_sequence();
             } else {
-                run_status = execute(MicroInstruction::Fetch, None, &mut self.regs, &mut self.pins);
+                run_status = execute(
+                    MicroInstruction::Fetch,
+                    None,
+                    &mut self.regs,
+                    &mut self.pins,
+                );
             }
 
             match run_status {
@@ -97,9 +114,7 @@ impl Cpu {
                     return YieldStatus::WaitingMemory;
                 }
                 ExecutionStatus::RunOpAndFinish => {}
-                ExecutionStatus::FinishInstruction => {
-
-                }
+                ExecutionStatus::FinishInstruction => {}
             };
         }
 
