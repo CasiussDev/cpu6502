@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::alu::*;
+    use crate::alu;
     use crate::registers::{Reg8, StatusReg, StatusRegFlags};
 
     #[test]
@@ -16,7 +16,7 @@ mod tests {
                 let operand = Reg8::new(op2);
 
                 // WHEN
-                add(&mut accumulator, &operand, &mut status_register);
+                alu::add(&mut accumulator, &operand, &mut status_register);
 
                 // THEN
                 assert_eq!(
@@ -51,7 +51,7 @@ mod tests {
                 let operand = Reg8::new(op2);
 
                 // WHEN
-                add(&mut accumulator, &operand, &mut status_register);
+                alu::add(&mut accumulator, &operand, &mut status_register);
 
                 // THEN
                 assert_eq!(
@@ -85,7 +85,7 @@ mod tests {
                 let operand = Reg8::new(op2);
 
                 // WHEN
-                sub(&mut accumulator, &operand, &mut status_register);
+                alu::sub(&mut accumulator, &operand, &mut status_register);
 
                 // THEN
                 assert_eq!(
@@ -119,7 +119,7 @@ mod tests {
                 let operand = Reg8::new(op2);
 
                 // WHEN
-                sub(&mut accumulator, &operand, &mut status_register);
+                alu::sub(&mut accumulator, &operand, &mut status_register);
 
                 // THEN
                 assert_eq!(
@@ -152,7 +152,7 @@ mod tests {
                 let operand = Reg8::new(op2);
 
                 // WHEN
-                add(&mut accumulator, &operand, &mut status_register);
+                alu::add(&mut accumulator, &operand, &mut status_register);
 
                 // THEN
                 assert_eq!(
@@ -186,7 +186,7 @@ mod tests {
                 let operand = Reg8::new(op2);
 
                 // WHEN
-                sub(&mut accumulator, &operand, &mut status_register);
+                alu::sub(&mut accumulator, &operand, &mut status_register);
 
                 // THEN
                 assert_eq!(
@@ -208,7 +208,7 @@ mod tests {
 
     fn perform_operands_add_overflowflagcorrect(mut op1: Reg8, op2: Reg8, expect_overflow: bool) {
         let mut status_register = StatusReg::default();
-        add(&mut op1, &op2, &mut status_register);
+        alu::add(&mut op1, &op2, &mut status_register);
 
         assert_eq!(
             status_register.are_all_flags_set(StatusRegFlags::OVERFLOW),
@@ -274,7 +274,7 @@ mod tests {
     fn perform_operands_sub_overflowflagcorrect(mut op1: Reg8, op2: Reg8, expect_overflow: bool) {
         let mut status_register = StatusReg::default();
         status_register.set_flags(StatusRegFlags::CARRY);
-        sub(&mut op1, &op2, &mut status_register);
+        alu::sub(&mut op1, &op2, &mut status_register);
 
         assert_eq!(
             status_register.are_all_flags_set(StatusRegFlags::OVERFLOW),
@@ -339,7 +339,7 @@ mod tests {
             let old_status_register = status_register;
 
             //WHEN
-            inc(&mut accumulator, &mut status_register);
+            alu::inc(&mut accumulator, &mut status_register);
 
             // THEN
             assert_eq!(accumulator.get_u8(), op1.wrapping_add(1));
@@ -370,7 +370,7 @@ mod tests {
             let old_status_register = status_register;
 
             //WHEN
-            dec(&mut accumulator, &mut status_register);
+            alu::dec(&mut accumulator, &mut status_register);
 
             // THEN
             assert_eq!(accumulator.get_u8(), op1.wrapping_sub(1));
@@ -401,7 +401,7 @@ mod tests {
                 let operand = Reg8::new(op2);
 
                 // WHEN
-                and(&mut accumulator, &operand, &mut status_register);
+                alu::and(&mut accumulator, &operand, &mut status_register);
 
                 // THEN
                 assert_eq!(accumulator.get_u8(), op1 & op2);
@@ -429,7 +429,7 @@ mod tests {
                 let operand = Reg8::new(op2);
 
                 // WHEN
-                or(&mut accumulator, &operand, &mut status_register);
+                alu::or(&mut accumulator, &operand, &mut status_register);
 
                 // THEN
                 assert_eq!(accumulator.get_u8(), op1 | op2);
@@ -457,7 +457,7 @@ mod tests {
                 let operand = Reg8::new(op2);
 
                 // WHEN
-                xor(&mut accumulator, &operand, &mut status_register);
+                alu::xor(&mut accumulator, &operand, &mut status_register);
 
                 // THEN
                 assert_eq!(accumulator.get_u8(), op1 ^ op2);

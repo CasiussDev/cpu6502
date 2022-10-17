@@ -1,6 +1,5 @@
 use bitflags::bitflags;
 use std::fmt;
-use std::fmt::Formatter;
 
 bitflags! {
     #[derive(Default)]
@@ -70,7 +69,7 @@ impl StatusReg {
 }
 
 impl fmt::Debug for StatusReg {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let letters = ['n', 'v', '-', 'b', 'd', 'i', 'z', 'c'];
         let flags = [
             StatusRegFlags::NEGATIVE,

@@ -1,8 +1,8 @@
-use crate::alu::{AluBinaryOp, AluUnaryOp};
+use crate::alu;
 use crate::instructions::microinstructions::{MicroInstruction, MicroInstructionsVector};
 use crate::registers::{SelectedRegister8, StatusRegFlags};
 use lazy_static::lazy_static;
-use std::collections::HashMap;
+use std::collections;
 
 #[cfg(test)]
 use strum::IntoEnumIterator;
@@ -71,7 +71,7 @@ pub enum InstructionOp {
     BranchEqual,
 }
 
-type OpsMap = HashMap<InstructionOp, MicroInstructionsVector>;
+type OpsMap = collections::HashMap<InstructionOp, MicroInstructionsVector>;
 
 lazy_static! {
     static ref OPS_SEQUENCES_DEFS: OpsMap = create_instructionops_sequences();
@@ -88,103 +88,103 @@ impl Default for InstructionOp {
 }
 
 pub fn create_instructionops_sequences() -> OpsMap {
-    HashMap::from([
+    collections::HashMap::from([
         (InstructionOp::Nop, vec![]),
         (
             InstructionOp::IncrementMemory,
             vec![MicroInstruction::AluUnaryOp {
-                op: AluUnaryOp::Inc,
+                op: alu::UnaryOp::Inc,
                 reg: SelectedRegister8::Tmp,
             }],
         ),
         (
             InstructionOp::IncrementX,
             vec![MicroInstruction::AluUnaryOp {
-                op: AluUnaryOp::Inc,
+                op: alu::UnaryOp::Inc,
                 reg: SelectedRegister8::X,
             }],
         ),
         (
             InstructionOp::IncrementY,
             vec![MicroInstruction::AluUnaryOp {
-                op: AluUnaryOp::Inc,
+                op: alu::UnaryOp::Inc,
                 reg: SelectedRegister8::Y,
             }],
         ),
         (
             InstructionOp::DecrementMemory,
             vec![MicroInstruction::AluUnaryOp {
-                op: AluUnaryOp::Dec,
+                op: alu::UnaryOp::Dec,
                 reg: SelectedRegister8::Tmp,
             }],
         ),
         (
             InstructionOp::DecrementX,
             vec![MicroInstruction::AluUnaryOp {
-                op: AluUnaryOp::Dec,
+                op: alu::UnaryOp::Dec,
                 reg: SelectedRegister8::X,
             }],
         ),
         (
             InstructionOp::DecrementY,
             vec![MicroInstruction::AluUnaryOp {
-                op: AluUnaryOp::Dec,
+                op: alu::UnaryOp::Dec,
                 reg: SelectedRegister8::Y,
             }],
         ),
         (
             InstructionOp::ShiftLeftA,
             vec![MicroInstruction::AluUnaryOp {
-                op: AluUnaryOp::Asl,
+                op: alu::UnaryOp::Asl,
                 reg: SelectedRegister8::A,
             }],
         ),
         (
             InstructionOp::ShiftRightA,
             vec![MicroInstruction::AluUnaryOp {
-                op: AluUnaryOp::Lsr,
+                op: alu::UnaryOp::Lsr,
                 reg: SelectedRegister8::A,
             }],
         ),
         (
             InstructionOp::RotateLeftA,
             vec![MicroInstruction::AluUnaryOp {
-                op: AluUnaryOp::Rol,
+                op: alu::UnaryOp::Rol,
                 reg: SelectedRegister8::A,
             }],
         ),
         (
             InstructionOp::RotateRightA,
             vec![MicroInstruction::AluUnaryOp {
-                op: AluUnaryOp::Ror,
+                op: alu::UnaryOp::Ror,
                 reg: SelectedRegister8::A,
             }],
         ),
         (
             InstructionOp::ShiftLeftMemory,
             vec![MicroInstruction::AluUnaryOp {
-                op: AluUnaryOp::Asl,
+                op: alu::UnaryOp::Asl,
                 reg: SelectedRegister8::Tmp,
             }],
         ),
         (
             InstructionOp::ShiftRightMemory,
             vec![MicroInstruction::AluUnaryOp {
-                op: AluUnaryOp::Lsr,
+                op: alu::UnaryOp::Lsr,
                 reg: SelectedRegister8::Tmp,
             }],
         ),
         (
             InstructionOp::RotateLeftMemory,
             vec![MicroInstruction::AluUnaryOp {
-                op: AluUnaryOp::Rol,
+                op: alu::UnaryOp::Rol,
                 reg: SelectedRegister8::Tmp,
             }],
         ),
         (
             InstructionOp::RotateRightMemory,
             vec![MicroInstruction::AluUnaryOp {
-                op: AluUnaryOp::Ror,
+                op: alu::UnaryOp::Ror,
                 reg: SelectedRegister8::Tmp,
             }],
         ),
@@ -309,7 +309,7 @@ pub fn create_instructionops_sequences() -> OpsMap {
                     dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::AluBinaryOp {
-                    op: AluBinaryOp::Or,
+                    op: alu::BinaryOp::Or,
                     operand: SelectedRegister8::Tmp,
                 },
             ],
@@ -321,7 +321,7 @@ pub fn create_instructionops_sequences() -> OpsMap {
                     dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::AluBinaryOp {
-                    op: AluBinaryOp::And,
+                    op: alu::BinaryOp::And,
                     operand: SelectedRegister8::Tmp,
                 },
             ],
@@ -333,7 +333,7 @@ pub fn create_instructionops_sequences() -> OpsMap {
                     dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::AluBinaryOp {
-                    op: AluBinaryOp::Xor,
+                    op: alu::BinaryOp::Xor,
                     operand: SelectedRegister8::Tmp,
                 },
             ],
@@ -345,7 +345,7 @@ pub fn create_instructionops_sequences() -> OpsMap {
                     dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::AluBinaryOp {
-                    op: AluBinaryOp::Add,
+                    op: alu::BinaryOp::Add,
                     operand: SelectedRegister8::Tmp,
                 },
             ],
@@ -357,7 +357,7 @@ pub fn create_instructionops_sequences() -> OpsMap {
                     dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::AluBinaryOp {
-                    op: AluBinaryOp::Sub,
+                    op: alu::BinaryOp::Sub,
                     operand: SelectedRegister8::Tmp,
                 },
             ],
@@ -369,7 +369,7 @@ pub fn create_instructionops_sequences() -> OpsMap {
                     dst: SelectedRegister8::Tmp,
                 },
                 MicroInstruction::AluBinaryOp {
-                    op: AluBinaryOp::Cmp,
+                    op: alu::BinaryOp::Cmp,
                     operand: SelectedRegister8::Tmp,
                 },
             ],

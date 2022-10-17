@@ -1,7 +1,5 @@
-use crate::instructions::opcodes::decode;
-use crate::instructions::{
-    execute, get_ops_map, get_sequences_map, ExecutionStatus, MicroInstruction,
-};
+use crate::instructions::{ExecutionStatus, MicroInstruction};
+use crate::instructions;
 use crate::pinout::Pinout;
 use crate::registers::{IndexRegister, RegisterFile, SelectedRegister8};
 use std::slice::Iter;
@@ -45,7 +43,7 @@ impl Cpu {
 
         if let Some(op) = &mut self.current_op {
             if let Some(&micro_instr) = op.next() {
-                run_status = execute(
+                run_status = instructions::execute(
                     micro_instr,
                     self.index_register,
                     &mut self.regs,
@@ -67,7 +65,7 @@ impl Cpu {
         let run_status;
         let sequence = &mut self.current_sequence.as_mut().unwrap();
         if let Some(&micro_instr) = sequence.next() {
-            run_status = execute(
+            run_status = instructions::execute(
                 micro_instr,
                 self.index_register,
                 &mut self.regs,
@@ -94,7 +92,7 @@ impl Cpu {
             } else if self.current_sequence.is_some() {
                 run_status = self.run_sequence();
             } else {
-                run_status = execute(
+                run_status = instructions::execute(
                     MicroInstruction::Fetch,
                     None,
                     &mut self.regs,
@@ -123,13 +121,13 @@ impl Cpu {
 
     fn decode_instr(&mut self) {
         let opcode = self.regs.ir.get_u8();
-        let decoded_intr = decode(opcode);
+        let decoded_intr = instructions::decode(opcode);
 
-        self.current_sequence = get_sequences_map()
+        self.current_sequence = instructions::get_sequences_map()
             .get(&decoded_intr.sequence)
             .map_or(None, |v| Some(v.iter()));
 
-        self.current_op = get_ops_map()
+        self.current_op = instructions::get_ops_map()
             .get(&decoded_intr.operation)
             .map_or(None, |v| Some(v.iter()));
 

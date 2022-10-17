@@ -2,7 +2,6 @@ use super::StatusReg;
 use super::{Reg16, Reg8};
 use crate::registers::StatusRegFlags;
 use std::fmt;
-use std::fmt::Formatter;
 
 #[cfg(feature = "random")]
 use rand::distributions::{Distribution, Uniform};
@@ -231,7 +230,7 @@ impl RegisterFile {
 }
 
 impl fmt::Debug for RegisterFile {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "\nRegister File\n")?;
         write!(f, "\tA: {:?}", self.a)?;
         write!(f, "\tX: {:?}", self.x)?;

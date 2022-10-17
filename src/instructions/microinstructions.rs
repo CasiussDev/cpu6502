@@ -1,6 +1,4 @@
-use crate::alu;
-use crate::alu::{AluBinaryOp, AluUnaryOp};
-use crate::pinout::{DataDirectionMode, Pinout};
+use crate::{alu, pinout};
 use crate::registers::register_file::{SelectedRegister16, SelectedRegister8};
 use crate::registers::{IndexRegister, RegisterFile, StatusRegFlags};
 
@@ -38,11 +36,11 @@ pub enum MicroInstruction {
         dst: SelectedRegister8,
     },
     AluUnaryOp {
-        op: AluUnaryOp,
+        op: alu::UnaryOp,
         reg: SelectedRegister8,
     },
     AluBinaryOp {
-        op: AluBinaryOp,
+        op: alu::BinaryOp,
         operand: SelectedRegister8,
     },
     AluCompareIndex {
@@ -72,30 +70,30 @@ pub enum MicroInstruction {
 
 pub type MicroInstructionsVector = Vec<MicroInstruction>;
 
-fn execute_alu_unary(op: AluUnaryOp, selected_reg: SelectedRegister8, regs: &mut RegisterFile) {
+fn execute_alu_unary(op: alu::UnaryOp, selected_reg: SelectedRegister8, regs: &mut RegisterFile) {
     let mut status = regs.status;
     let reg = regs.get_selected_register8(selected_reg);
     match op {
-        AluUnaryOp::Inc => alu::inc(reg, &mut status),
-        AluUnaryOp::Dec => alu::dec(reg, &mut status),
-        AluUnaryOp::Asl => alu::shift_left(reg, &mut status),
-        AluUnaryOp::Lsr => alu::shift_right(reg, &mut status),
-        AluUnaryOp::Rol => alu::rotate_left(reg, &mut status),
-        AluUnaryOp::Ror => alu::rotate_right(reg, &mut status),
+        alu::UnaryOp::Inc => alu::inc(reg, &mut status),
+        alu::UnaryOp::Dec => alu::dec(reg, &mut status),
+        alu::UnaryOp::Asl => alu::shift_left(reg, &mut status),
+        alu::UnaryOp::Lsr => alu::shift_right(reg, &mut status),
+        alu::UnaryOp::Rol => alu::rotate_left(reg, &mut status),
+        alu::UnaryOp::Ror => alu::rotate_right(reg, &mut status),
     };
     regs.status = status;
 }
 
-fn execute_alu_binary(op: AluBinaryOp, operand: SelectedRegister8, regs: &mut RegisterFile) {
+fn execute_alu_binary(op: alu::BinaryOp, operand: SelectedRegister8, regs: &mut RegisterFile) {
     //let mut status = regs.status;
     let operand = regs.get_copy_selected_register8(operand);
     match op {
-        AluBinaryOp::Add => alu::add(&mut regs.a, &operand, &mut regs.status),
-        AluBinaryOp::Sub => alu::sub(&mut regs.a, &operand, &mut regs.status),
-        AluBinaryOp::And => alu::and(&mut regs.a, &operand, &mut regs.status),
-        AluBinaryOp::Or => alu::or(&mut regs.a, &operand, &mut regs.status),
-        AluBinaryOp::Xor => alu::xor(&mut regs.a, &operand, &mut regs.status),
-        AluBinaryOp::Cmp => alu::cmp(&regs.a, &operand, &mut regs.status),
+        alu::BinaryOp::Add => alu::add(&mut regs.a, &operand, &mut regs.status),
+        alu::BinaryOp::Sub => alu::sub(&mut regs.a, &operand, &mut regs.status),
+        alu::BinaryOp::And => alu::and(&mut regs.a, &operand, &mut regs.status),
+        alu::BinaryOp::Or => alu::or(&mut regs.a, &operand, &mut regs.status),
+        alu::BinaryOp::Xor => alu::xor(&mut regs.a, &operand, &mut regs.status),
+        alu::BinaryOp::Cmp => alu::cmp(&regs.a, &operand, &mut regs.status),
     }
 }
 
@@ -121,12 +119,12 @@ pub fn execute(
     micro_instr: MicroInstruction,
     index_reg: Option<IndexRegister>,
     regs: &mut RegisterFile,
-    pins: &mut Pinout,
+    pins: &mut pinout::Pinout,
 ) -> ExecutionStatus {
     match micro_instr {
         MicroInstruction::Fetch => {
             pins.set_address_output(regs.pc.get_u16());
-            pins.set_data_direction(DataDirectionMode::Read);
+            pins.set_data_direction(pinout::DataDirectionMode::Read);
             regs.pc.inc();
             return ExecutionStatus::WaitMemory {
                 dst: Some(SelectedRegister8::IR),
@@ -134,7 +132,7 @@ pub fn execute(
         }
         MicroInstruction::ReadPC { dst, increment } => {
             pins.set_address_output(regs.pc.get_u16());
-            pins.set_data_direction(DataDirectionMode::Read);
+            pins.set_data_direction(pinout::DataDirectionMode::Read);
             if increment {
                 regs.pc.inc();
             };
@@ -142,12 +140,12 @@ pub fn execute(
         }
         MicroInstruction::ReadAddress { dst } => {
             pins.set_address_output(regs.addr.get_u16());
-            pins.set_data_direction(DataDirectionMode::Read);
+            pins.set_data_direction(pinout::DataDirectionMode::Read);
             return ExecutionStatus::WaitMemory { dst: Some(dst) };
         }
         MicroInstruction::WriteAddress { src } => {
             pins.set_address_output(regs.addr.get_u16());
-            pins.set_data_direction(DataDirectionMode::Write);
+            pins.set_data_direction(pinout::DataDirectionMode::Write);
             let data = regs.get_copy_selected_register8(src).get_u8();
             pins.set_data_output(data);
             return ExecutionStatus::WaitMemory { dst: None };

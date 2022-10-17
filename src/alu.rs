@@ -3,7 +3,7 @@ mod tests;
 use crate::registers::{Reg8, StatusReg, StatusRegFlags};
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
-pub enum AluUnaryOp {
+pub enum UnaryOp {
     Inc,
     Dec,
     Asl,
@@ -13,7 +13,7 @@ pub enum AluUnaryOp {
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
-pub enum AluBinaryOp {
+pub enum BinaryOp {
     Add,
     Sub,
     And,
