@@ -288,10 +288,16 @@ fn sequence_mode_g2(op: OpsG2, addr_mode: AddrModeG2) -> instr::InstructionSeque
                 AddrModeG2::ZeroPage => instr::InstructionSequenceMode::ZeroPageReadModifyWrite,
                 AddrModeG2::Immediate => instr::InstructionSequenceMode::Immediate, // Illegal
                 AddrModeG2::Absolute => instr::InstructionSequenceMode::AbsoluteReadModifyWrite,
-                AddrModeG2::ZeroPageIdx => instr::InstructionSequenceMode::ZeroPageIdxReadModifyWrite,
-                AddrModeG2::AbsoluteIdxX => instr::InstructionSequenceMode::AbsoluteIdxReadModifyWrite,
+                AddrModeG2::ZeroPageIdx => {
+                    instr::InstructionSequenceMode::ZeroPageIdxReadModifyWrite
+                }
+                AddrModeG2::AbsoluteIdxX => {
+                    instr::InstructionSequenceMode::AbsoluteIdxReadModifyWrite
+                }
                 AddrModeG2::Accumulator => instr::InstructionSequenceMode::Implied, // Illegal for Inc and Dec
-                AddrModeG2::Unused1 | AddrModeG2::Unused2 => instr::InstructionSequenceMode::default(), // Illegal
+                AddrModeG2::Unused1 | AddrModeG2::Unused2 => {
+                    instr::InstructionSequenceMode::default()
+                } // Illegal
             }
         }
         OpsG2::STX | OpsG2::LDX => {
@@ -308,7 +314,9 @@ fn sequence_mode_g2(op: OpsG2, addr_mode: AddrModeG2) -> instr::InstructionSeque
                         instr::InstructionSequenceMode::AbsoluteIdxRead
                     }
                 }
-                AddrModeG2::Unused1 | AddrModeG2::Unused2 => instr::InstructionSequenceMode::default(), // Illegal
+                AddrModeG2::Unused1 | AddrModeG2::Unused2 => {
+                    instr::InstructionSequenceMode::default()
+                } // Illegal
             }
         }
     }
@@ -476,8 +484,8 @@ pub fn decode(opcode: u8) -> DecodedOpcode {
 
 #[cfg(test)]
 mod tests {
-    use crate::instr::opcodes::{OpsSingleByte0, OpsSingleByte2};
     use crate::instr;
+    use crate::instr::opcodes::{OpsSingleByte0, OpsSingleByte2};
     use crate::num_traits::FromPrimitive;
 
     #[test]

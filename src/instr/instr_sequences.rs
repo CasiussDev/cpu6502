@@ -2,7 +2,7 @@ use crate::instr;
 use crate::registers::{SelectedRegister16, SelectedRegister8, StatusRegFlags};
 //use once_cell::unsync::Lazy;
 use lazy_static::lazy_static;
-use std::collections::HashMap;
+use std::collections;
 
 #[cfg(test)]
 use strum::IntoEnumIterator;
@@ -13,9 +13,13 @@ use strum_macros::EnumIter;
 #[cfg_attr(test, derive(EnumIter))]
 pub enum InstructionSequenceMode {
     Break,
+    StartIrq,
+    StartNmi,
     ReturnInterrupt,
+
     JumpSubroutine,
     ReturnSubroutine,
+
     Push,
     Pull,
     Implied,
@@ -47,7 +51,7 @@ pub enum InstructionSequenceMode {
     AbsoluteIndirectJump,
 }
 
-type SequenceMap = HashMap<InstructionSequenceMode, instr::MicroInstructionsVector>;
+type SequenceMap = collections::HashMap<InstructionSequenceMode, instr::MicroInstructionsVector>;
 
 //static SEQUENCES_DEFS: Lazy<SequenceMap> = Lazy::new(|| { create_instruction_mode_sequences() });
 lazy_static! {
@@ -65,7 +69,7 @@ impl Default for InstructionSequenceMode {
 }
 
 pub fn create_instruction_mode_sequences() -> SequenceMap {
-    HashMap::from([
+    let mut sequences_map = collections::HashMap::from([
         (
             InstructionSequenceMode::Break,
             vec![
@@ -110,6 +114,166 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 instr::MicroInstruction::SetStatusFlag {
                     flag: StatusRegFlags::BREAK,
                 },
+                instr::MicroInstruction::SetStatusFlag {
+                    flag: StatusRegFlags::IRQ_DISABLE,
+                },
+                instr::MicroInstruction::CopyRegister {
+                    dst: SelectedRegister8::AddrHigh,
+                    src: SelectedRegister8::StackPage,
+                },
+                instr::MicroInstruction::CopyRegister {
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::SP,
+                },
+                instr::MicroInstruction::WriteAddress {
+                    src: SelectedRegister8::Status,
+                },
+                instr::MicroInstruction::DecrementRegister {
+                    dst: SelectedRegister8::SP,
+                },
+                instr::MicroInstruction::YieldClock,
+                // Next clock
+                instr::MicroInstruction::CopyRegister16 {
+                    dst: SelectedRegister16::Addr,
+                    src: SelectedRegister16::InterruptAddrLow,
+                },
+                instr::MicroInstruction::ReadAddress {
+                    dst: SelectedRegister8::PCLow,
+                },
+                instr::MicroInstruction::YieldClock,
+                // Next clock
+                instr::MicroInstruction::CopyRegister16 {
+                    dst: SelectedRegister16::Addr,
+                    src: SelectedRegister16::InterruptAddrHigh,
+                },
+                instr::MicroInstruction::ReadAddress {
+                    dst: SelectedRegister8::PCHigh,
+                },
+                instr::MicroInstruction::YieldClock,
+                // Next clock
+            ],
+        ),
+        (
+            InstructionSequenceMode::StartIrq,
+            vec![
+                instr::MicroInstruction::ReadPC {
+                    dst: SelectedRegister8::Discard,
+                    increment: true,
+                },
+                instr::MicroInstruction::YieldClock,
+                // Next clock
+                instr::MicroInstruction::CopyRegister {
+                    dst: SelectedRegister8::AddrHigh,
+                    src: SelectedRegister8::StackPage,
+                },
+                instr::MicroInstruction::CopyRegister {
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::SP,
+                },
+                instr::MicroInstruction::WriteAddress {
+                    src: SelectedRegister8::PCHigh,
+                },
+                instr::MicroInstruction::DecrementRegister {
+                    dst: SelectedRegister8::SP,
+                },
+                instr::MicroInstruction::YieldClock,
+                // Next clock
+                instr::MicroInstruction::CopyRegister {
+                    dst: SelectedRegister8::AddrHigh,
+                    src: SelectedRegister8::StackPage,
+                },
+                instr::MicroInstruction::CopyRegister {
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::SP,
+                },
+                instr::MicroInstruction::WriteAddress {
+                    src: SelectedRegister8::PCLow,
+                },
+                instr::MicroInstruction::DecrementRegister {
+                    dst: SelectedRegister8::SP,
+                },
+                instr::MicroInstruction::YieldClock,
+                // Next clock
+                instr::MicroInstruction::SetStatusFlag {
+                    flag: StatusRegFlags::IRQ_DISABLE,
+                },
+                instr::MicroInstruction::CopyRegister {
+                    dst: SelectedRegister8::AddrHigh,
+                    src: SelectedRegister8::StackPage,
+                },
+                instr::MicroInstruction::CopyRegister {
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::SP,
+                },
+                instr::MicroInstruction::WriteAddress {
+                    src: SelectedRegister8::Status,
+                },
+                instr::MicroInstruction::DecrementRegister {
+                    dst: SelectedRegister8::SP,
+                },
+                instr::MicroInstruction::YieldClock,
+                // Next clock
+                instr::MicroInstruction::CopyRegister16 {
+                    dst: SelectedRegister16::Addr,
+                    src: SelectedRegister16::InterruptAddrLow,
+                },
+                instr::MicroInstruction::ReadAddress {
+                    dst: SelectedRegister8::PCLow,
+                },
+                instr::MicroInstruction::YieldClock,
+                // Next clock
+                instr::MicroInstruction::CopyRegister16 {
+                    dst: SelectedRegister16::Addr,
+                    src: SelectedRegister16::InterruptAddrHigh,
+                },
+                instr::MicroInstruction::ReadAddress {
+                    dst: SelectedRegister8::PCHigh,
+                },
+                instr::MicroInstruction::YieldClock,
+                // Next clock
+            ],
+        ),
+        (
+            InstructionSequenceMode::StartNmi,
+            vec![
+                instr::MicroInstruction::ReadPC {
+                    dst: SelectedRegister8::Discard,
+                    increment: true,
+                },
+                instr::MicroInstruction::YieldClock,
+                // Next clock
+                instr::MicroInstruction::CopyRegister {
+                    dst: SelectedRegister8::AddrHigh,
+                    src: SelectedRegister8::StackPage,
+                },
+                instr::MicroInstruction::CopyRegister {
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::SP,
+                },
+                instr::MicroInstruction::WriteAddress {
+                    src: SelectedRegister8::PCHigh,
+                },
+                instr::MicroInstruction::DecrementRegister {
+                    dst: SelectedRegister8::SP,
+                },
+                instr::MicroInstruction::YieldClock,
+                // Next clock
+                instr::MicroInstruction::CopyRegister {
+                    dst: SelectedRegister8::AddrHigh,
+                    src: SelectedRegister8::StackPage,
+                },
+                instr::MicroInstruction::CopyRegister {
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::SP,
+                },
+                instr::MicroInstruction::WriteAddress {
+                    src: SelectedRegister8::PCLow,
+                },
+                instr::MicroInstruction::DecrementRegister {
+                    dst: SelectedRegister8::SP,
+                },
+                instr::MicroInstruction::YieldClock,
+                // Next clock
                 instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
                     src: SelectedRegister8::StackPage,
@@ -168,8 +332,14 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                     dst: SelectedRegister8::AddrLow,
                     src: SelectedRegister8::SP,
                 },
+                instr::MicroInstruction::PushFlagToTmp {
+                    flag: StatusRegFlags::IRQ_DISABLE,
+                },
                 instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Status,
+                },
+                instr::MicroInstruction::PopFlagFromTmp {
+                    flag: StatusRegFlags::IRQ_DISABLE,
                 },
                 instr::MicroInstruction::IncrementRegister {
                     dst: SelectedRegister8::SP,
@@ -265,6 +435,17 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 },
                 instr::MicroInstruction::YieldClock,
                 // Next clock
+                instr::MicroInstruction::CopyRegister {
+                    dst: SelectedRegister8::AddrHigh,
+                    src: SelectedRegister8::StackPage,
+                },
+                instr::MicroInstruction::CopyRegister {
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::SP,
+                },
+                instr::MicroInstruction::ReadAddress {
+                    dst: SelectedRegister8::Discard,
+                },
                 instr::MicroInstruction::YieldClock,
                 // Next clock
                 instr::MicroInstruction::CopyRegister {
@@ -944,26 +1125,35 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 instr::MicroInstruction::YieldClock,
             ],
         ),
-    ])
+    ]);
+
+    for (mode, m_instrs) in sequences_map.iter_mut() {
+        let last = m_instrs.last_mut();
+        assert!(last.is_some(), "Sequence mode {:?} is empty", mode); //use this instead of expect to format
+        let last = last.unwrap();
+        assert!(matches!(
+            *last,
+            instr::MicroInstruction::YieldClock | instr::MicroInstruction::FinishInstruction
+        ));
+        *last = instr::MicroInstruction::FinishInstruction;
+    }
+
+    sequences_map
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::instr;
 
     #[test]
     fn instructionsequences_checklastmicroinstruction_yieldclock() {
-        for (mode, sequence) in MODES_SEQUENCES_DEFS.iter() {
-            let last_micro_instr = sequence.last().unwrap_or_else(|| {
-                panic!(
-                    "Sequence mode {:?} does not have any instr::MicroInstruction",
-                    mode
-                )
-            });
+        for (mode, m_instrs) in MODES_SEQUENCES_DEFS.iter() {
+            let last = *m_instrs.last().expect("Sequence mode is empty");
             assert_eq!(
-                *last_micro_instr,
-                instr::MicroInstruction::YieldClock,
-                "Sequence mode {:?} does not finish with YieldClock",
+                last,
+                instr::MicroInstruction::FinishInstruction,
+                "Sequence mode {:?} doesn't end with FinishInstruction",
                 mode
             );
         }
@@ -1001,10 +1191,10 @@ mod tests {
                     .position(|&instr| instr == instr::MicroInstruction::RunOperation);
 
                 if let Some(position) = runop_position {
-                    let last_memory_read_before_op = sequence[..position]
-                        .iter()
-                        .rev()
-                        .find(|&instr| matches!(instr, instr::MicroInstruction::ReadAddress { .. }));
+                    let last_memory_read_before_op =
+                        sequence[..position].iter().rev().find(|&instr| {
+                            matches!(instr, instr::MicroInstruction::ReadAddress { .. })
+                        });
 
                     assert_eq!(
                         last_memory_read_before_op,
@@ -1013,9 +1203,9 @@ mod tests {
                         })
                     );
 
-                    let next_memory_write_after_op = sequence[position..]
-                        .iter()
-                        .find(|&instr| matches!(instr, instr::MicroInstruction::WriteAddress { .. }));
+                    let next_memory_write_after_op = sequence[position..].iter().find(|&instr| {
+                        matches!(instr, instr::MicroInstruction::WriteAddress { .. })
+                    });
 
                     assert_eq!(
                         next_memory_write_after_op,
@@ -1025,6 +1215,27 @@ mod tests {
                     );
                 }
             }
+        }
+    }
+
+    #[test]
+    fn check_no_consecutive_yield() {
+        let sequences = &*MODES_SEQUENCES_DEFS;
+
+        for (mode, m_instrs) in sequences {
+            assert!(
+                m_instrs.windows(2).all(|w| !matches!(
+                    w[0],
+                    instr::MicroInstruction::YieldClock
+                        | instr::MicroInstruction::FinishInstruction
+                ) || !matches!(
+                    w[1],
+                    instr::MicroInstruction::YieldClock
+                        | instr::MicroInstruction::FinishInstruction
+                )),
+                "Sequence mode {:?} has consecutive YieldClock's",
+                mode
+            );
         }
     }
 }

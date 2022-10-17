@@ -1,6 +1,6 @@
-use crate::{alu, pinout};
 use crate::registers::register_file::{SelectedRegister16, SelectedRegister8};
 use crate::registers::{IndexRegister, RegisterFile, StatusRegFlags};
+use crate::{alu, pinout};
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum MicroInstruction {
@@ -58,11 +58,18 @@ pub enum MicroInstruction {
         flag_to_test: StatusRegFlags,
         branch_if_set: bool,
     },
+    PushFlagToTmp {
+        flag: StatusRegFlags,
+    },
+    PopFlagFromTmp {
+        flag: StatusRegFlags,
+    },
     AddIndexToAddress,
     FixAddress,
     RunOperation,
 
     YieldClock,
+    FinishInstruction,
 
     FixAddressOrRunOpAndFinish,
     FixAddressOrIncrementPC,
@@ -206,6 +213,7 @@ pub fn execute(
         }
         MicroInstruction::RunOperation => return ExecutionStatus::RunOp,
         MicroInstruction::YieldClock => return ExecutionStatus::YieldClock,
+        MicroInstruction::FinishInstruction => return ExecutionStatus::FinishInstruction,
         MicroInstruction::FixAddressOrRunOpAndFinish => {
             let addr_low_value = regs.addr.get_low_u8();
             let index_value = regs
@@ -262,6 +270,17 @@ pub fn execute(
                 regs.pc.inc();
                 return ExecutionStatus::FinishInstruction;
             }
+        }
+        MicroInstruction::PushFlagToTmp { flag } => {
+            if regs.status.are_all_flags_set(flag) {
+                regs.tmp.set_u8(1);
+            } else {
+                regs.tmp.set_u8(0);
+            }
+        }
+        MicroInstruction::PopFlagFromTmp { flag } => {
+            let flag_value = regs.tmp.get_u8() != 0;
+            regs.status.update_flags(flag, flag_value);
         }
     }
 

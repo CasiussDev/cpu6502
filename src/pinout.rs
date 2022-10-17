@@ -9,6 +9,8 @@ pub struct Pinout {
     data: u8,
     address: u16,
     mode: DataDirectionMode,
+    irq: bool,
+    nmi: bool,
 }
 
 impl Default for DataDirectionMode {
@@ -50,5 +52,29 @@ impl Pinout {
 
     pub fn get_address(&self) -> u16 {
         self.address
+    }
+
+    pub fn set_irq_input(&mut self) {
+        self.irq = true;
+    }
+
+    pub fn clear_irq_input(&mut self) {
+        self.irq = false;
+    }
+
+    pub fn set_nmi_input(&mut self) {
+        self.nmi = true;
+    }
+
+    pub fn clear_nmi_input(&mut self) {
+        self.nmi = false;
+    }
+
+    pub fn is_irq_set(&self) -> bool {
+        self.irq
+    }
+
+    pub fn is_nmi_set(&self) -> bool {
+        self.nmi
     }
 }

@@ -1,7 +1,13 @@
 use crate::instr;
 use crate::pinout::Pinout;
-use crate::registers::{IndexRegister, RegisterFile, SelectedRegister8};
+use crate::registers::{IndexRegister, RegisterFile, SelectedRegister8, StatusRegFlags};
 use std::slice::Iter;
+
+#[derive(PartialEq, Debug)]
+enum WaitingInterrupt {
+    NonMaskableInterrupt,
+    Interrupt,
+}
 
 pub struct Cpu {
     regs: RegisterFile,
@@ -10,10 +16,12 @@ pub struct Cpu {
     current_op: Option<Iter<'static, instr::MicroInstruction>>,
     data_destination: Option<SelectedRegister8>,
     index_register: Option<IndexRegister>,
+    waiting_interrupt: Option<WaitingInterrupt>,
     instr_ready: bool,
     running_op: bool,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum YieldStatus {
     ClockFinished,
     WaitingMemory,
@@ -34,6 +42,39 @@ impl Cpu {
         self.regs.set_selected_register8(data_destination, value);
         if data_destination == SelectedRegister8::IR {
             self.instr_ready = true;
+        }
+    }
+
+    pub fn set_nmi_pin(&mut self) {
+        self.pins.set_nmi_input();
+    }
+
+    pub fn clear_nmi_pin(&mut self) {
+        self.pins.clear_nmi_input();
+    }
+
+    pub fn set_irq_pin(&mut self) {
+        self.pins.set_irq_input();
+    }
+
+    pub fn clear_irq_pin(&mut self) {
+        self.pins.clear_irq_input();
+    }
+
+    fn is_waiting_interrupt(&self) -> Option<WaitingInterrupt> {
+        if self.pins.is_nmi_set() {
+            Some(WaitingInterrupt::NonMaskableInterrupt)
+        } else if self.pins.is_irq_set()
+            && (self.waiting_interrupt != Some(WaitingInterrupt::NonMaskableInterrupt))
+            && (self
+                .regs
+                .status
+                .are_any_flags_set(StatusRegFlags::IRQ_DISABLE)
+                == false)
+        {
+            Some(WaitingInterrupt::Interrupt)
+        } else {
+            None
         }
     }
 
@@ -79,7 +120,9 @@ impl Cpu {
     }
 
     pub fn run(&mut self) -> YieldStatus {
-        if self.instr_ready == true {
+        if self.current_sequence.is_none() && self.waiting_interrupt.is_some() {
+            self.service_interrupt();
+        } else if self.instr_ready == true {
             self.decode_instr();
         }
 
@@ -100,7 +143,9 @@ impl Cpu {
             }
 
             match run_status {
-                instr::ExecutionStatus::YieldClock => {}
+                instr::ExecutionStatus::YieldClock => {
+                    self.waiting_interrupt = self.is_waiting_interrupt();
+                }
                 instr::ExecutionStatus::Continue => {}
                 instr::ExecutionStatus::RunOp => {
                     self.running_op = true;
@@ -111,7 +156,10 @@ impl Cpu {
                     return YieldStatus::WaitingMemory;
                 }
                 instr::ExecutionStatus::RunOpAndFinish => {}
-                instr::ExecutionStatus::FinishInstruction => {}
+                instr::ExecutionStatus::FinishInstruction => {
+                    self.current_sequence = None;
+                    self.current_op = None;
+                }
             };
         }
 
@@ -133,5 +181,27 @@ impl Cpu {
         self.index_register = decoded_intr.index;
 
         self.instr_ready = false;
+    }
+
+    fn service_interrupt(&mut self) {
+        let sequence_mode = match self.waiting_interrupt {
+            None => {
+                panic!("service_interrupt was called witout any waiting interrupt");
+            }
+            Some(WaitingInterrupt::NonMaskableInterrupt) => {
+                instr::InstructionSequenceMode::StartNmi
+            }
+            Some(WaitingInterrupt::Interrupt) => instr::InstructionSequenceMode::StartIrq,
+        };
+
+        self.current_sequence = instr::get_sequences_map()
+            .get(&sequence_mode)
+            .map_or(None, |v| Some(v.iter()));
+
+        self.current_op = None;
+
+        self.index_register = None;
+
+        self.waiting_interrupt = None;
     }
 }
