@@ -1,5 +1,4 @@
-use crate::instructions::{ExecutionStatus, MicroInstruction};
-use crate::instructions;
+use crate::instr;
 use crate::pinout::Pinout;
 use crate::registers::{IndexRegister, RegisterFile, SelectedRegister8};
 use std::slice::Iter;
@@ -7,8 +6,8 @@ use std::slice::Iter;
 pub struct Cpu {
     regs: RegisterFile,
     pins: Pinout,
-    current_sequence: Option<Iter<'static, MicroInstruction>>,
-    current_op: Option<Iter<'static, MicroInstruction>>,
+    current_sequence: Option<Iter<'static, instr::MicroInstruction>>,
+    current_op: Option<Iter<'static, instr::MicroInstruction>>,
     data_destination: Option<SelectedRegister8>,
     index_register: Option<IndexRegister>,
     instr_ready: bool,
@@ -38,12 +37,12 @@ impl Cpu {
         }
     }
 
-    pub fn run_op(&mut self) -> ExecutionStatus {
-        let mut run_status = ExecutionStatus::Continue;
+    pub fn run_op(&mut self) -> instr::ExecutionStatus {
+        let mut run_status = instr::ExecutionStatus::Continue;
 
         if let Some(op) = &mut self.current_op {
             if let Some(&micro_instr) = op.next() {
-                run_status = instructions::execute(
+                run_status = instr::execute(
                     micro_instr,
                     self.index_register,
                     &mut self.regs,
@@ -61,11 +60,11 @@ impl Cpu {
         run_status
     }
 
-    pub fn run_sequence(&mut self) -> ExecutionStatus {
+    pub fn run_sequence(&mut self) -> instr::ExecutionStatus {
         let run_status;
         let sequence = &mut self.current_sequence.as_mut().unwrap();
         if let Some(&micro_instr) = sequence.next() {
-            run_status = instructions::execute(
+            run_status = instr::execute(
                 micro_instr,
                 self.index_register,
                 &mut self.regs,
@@ -73,7 +72,7 @@ impl Cpu {
             );
         } else {
             self.current_sequence = None;
-            run_status = ExecutionStatus::Continue;
+            run_status = instr::ExecutionStatus::Continue;
         }
 
         run_status
@@ -84,16 +83,16 @@ impl Cpu {
             self.decode_instr();
         }
 
-        let mut run_status = ExecutionStatus::Continue;
+        let mut run_status = instr::ExecutionStatus::Continue;
 
-        while run_status == ExecutionStatus::Continue {
+        while run_status == instr::ExecutionStatus::Continue {
             if self.running_op {
                 run_status = self.run_op();
             } else if self.current_sequence.is_some() {
                 run_status = self.run_sequence();
             } else {
-                run_status = instructions::execute(
-                    MicroInstruction::Fetch,
+                run_status = instr::execute(
+                    instr::MicroInstruction::Fetch,
                     None,
                     &mut self.regs,
                     &mut self.pins,
@@ -101,18 +100,18 @@ impl Cpu {
             }
 
             match run_status {
-                ExecutionStatus::YieldClock => {}
-                ExecutionStatus::Continue => {}
-                ExecutionStatus::RunOp => {
+                instr::ExecutionStatus::YieldClock => {}
+                instr::ExecutionStatus::Continue => {}
+                instr::ExecutionStatus::RunOp => {
                     self.running_op = true;
-                    run_status = ExecutionStatus::Continue;
+                    run_status = instr::ExecutionStatus::Continue;
                 }
-                ExecutionStatus::WaitMemory { dst } => {
+                instr::ExecutionStatus::WaitMemory { dst } => {
                     self.data_destination = dst;
                     return YieldStatus::WaitingMemory;
                 }
-                ExecutionStatus::RunOpAndFinish => {}
-                ExecutionStatus::FinishInstruction => {}
+                instr::ExecutionStatus::RunOpAndFinish => {}
+                instr::ExecutionStatus::FinishInstruction => {}
             };
         }
 
@@ -121,13 +120,13 @@ impl Cpu {
 
     fn decode_instr(&mut self) {
         let opcode = self.regs.ir.get_u8();
-        let decoded_intr = instructions::decode(opcode);
+        let decoded_intr = instr::decode(opcode);
 
-        self.current_sequence = instructions::get_sequences_map()
+        self.current_sequence = instr::get_sequences_map()
             .get(&decoded_intr.sequence)
             .map_or(None, |v| Some(v.iter()));
 
-        self.current_op = instructions::get_ops_map()
+        self.current_op = instr::get_ops_map()
             .get(&decoded_intr.operation)
             .map_or(None, |v| Some(v.iter()));
 

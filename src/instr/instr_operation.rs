@@ -1,5 +1,5 @@
 use crate::alu;
-use crate::instructions::microinstructions::{MicroInstruction, MicroInstructionsVector};
+use crate::instr;
 use crate::registers::{SelectedRegister8, StatusRegFlags};
 use lazy_static::lazy_static;
 use std::collections;
@@ -71,7 +71,7 @@ pub enum InstructionOp {
     BranchEqual,
 }
 
-type OpsMap = collections::HashMap<InstructionOp, MicroInstructionsVector>;
+type OpsMap = collections::HashMap<InstructionOp, instr::MicroInstructionsVector>;
 
 lazy_static! {
     static ref OPS_SEQUENCES_DEFS: OpsMap = create_instructionops_sequences();
@@ -92,223 +92,223 @@ pub fn create_instructionops_sequences() -> OpsMap {
         (InstructionOp::Nop, vec![]),
         (
             InstructionOp::IncrementMemory,
-            vec![MicroInstruction::AluUnaryOp {
+            vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Inc,
                 reg: SelectedRegister8::Tmp,
             }],
         ),
         (
             InstructionOp::IncrementX,
-            vec![MicroInstruction::AluUnaryOp {
+            vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Inc,
                 reg: SelectedRegister8::X,
             }],
         ),
         (
             InstructionOp::IncrementY,
-            vec![MicroInstruction::AluUnaryOp {
+            vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Inc,
                 reg: SelectedRegister8::Y,
             }],
         ),
         (
             InstructionOp::DecrementMemory,
-            vec![MicroInstruction::AluUnaryOp {
+            vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Dec,
                 reg: SelectedRegister8::Tmp,
             }],
         ),
         (
             InstructionOp::DecrementX,
-            vec![MicroInstruction::AluUnaryOp {
+            vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Dec,
                 reg: SelectedRegister8::X,
             }],
         ),
         (
             InstructionOp::DecrementY,
-            vec![MicroInstruction::AluUnaryOp {
+            vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Dec,
                 reg: SelectedRegister8::Y,
             }],
         ),
         (
             InstructionOp::ShiftLeftA,
-            vec![MicroInstruction::AluUnaryOp {
+            vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Asl,
                 reg: SelectedRegister8::A,
             }],
         ),
         (
             InstructionOp::ShiftRightA,
-            vec![MicroInstruction::AluUnaryOp {
+            vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Lsr,
                 reg: SelectedRegister8::A,
             }],
         ),
         (
             InstructionOp::RotateLeftA,
-            vec![MicroInstruction::AluUnaryOp {
+            vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Rol,
                 reg: SelectedRegister8::A,
             }],
         ),
         (
             InstructionOp::RotateRightA,
-            vec![MicroInstruction::AluUnaryOp {
+            vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Ror,
                 reg: SelectedRegister8::A,
             }],
         ),
         (
             InstructionOp::ShiftLeftMemory,
-            vec![MicroInstruction::AluUnaryOp {
+            vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Asl,
                 reg: SelectedRegister8::Tmp,
             }],
         ),
         (
             InstructionOp::ShiftRightMemory,
-            vec![MicroInstruction::AluUnaryOp {
+            vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Lsr,
                 reg: SelectedRegister8::Tmp,
             }],
         ),
         (
             InstructionOp::RotateLeftMemory,
-            vec![MicroInstruction::AluUnaryOp {
+            vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Rol,
                 reg: SelectedRegister8::Tmp,
             }],
         ),
         (
             InstructionOp::RotateRightMemory,
-            vec![MicroInstruction::AluUnaryOp {
+            vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Ror,
                 reg: SelectedRegister8::Tmp,
             }],
         ),
         (
             InstructionOp::ClearCarry,
-            vec![MicroInstruction::ClearStatusFlag {
+            vec![instr::MicroInstruction::ClearStatusFlag {
                 flag: StatusRegFlags::CARRY,
             }],
         ),
         (
             InstructionOp::SetCarry,
-            vec![MicroInstruction::SetStatusFlag {
+            vec![instr::MicroInstruction::SetStatusFlag {
                 flag: StatusRegFlags::CARRY,
             }],
         ),
         (
             InstructionOp::ClearDecimal,
-            vec![MicroInstruction::ClearStatusFlag {
+            vec![instr::MicroInstruction::ClearStatusFlag {
                 flag: StatusRegFlags::DECIMAL,
             }],
         ),
         (
             InstructionOp::SetDecimal,
-            vec![MicroInstruction::SetStatusFlag {
+            vec![instr::MicroInstruction::SetStatusFlag {
                 flag: StatusRegFlags::DECIMAL,
             }],
         ),
         (
             InstructionOp::ClearInterruptDisable,
-            vec![MicroInstruction::ClearStatusFlag {
+            vec![instr::MicroInstruction::ClearStatusFlag {
                 flag: StatusRegFlags::IRQ_DISABLE,
             }],
         ),
         (
             InstructionOp::SetInterruptDisable,
-            vec![MicroInstruction::SetStatusFlag {
+            vec![instr::MicroInstruction::SetStatusFlag {
                 flag: StatusRegFlags::IRQ_DISABLE,
             }],
         ),
         (
             InstructionOp::ClearOverflow,
-            vec![MicroInstruction::ClearStatusFlag {
+            vec![instr::MicroInstruction::ClearStatusFlag {
                 flag: StatusRegFlags::OVERFLOW,
             }],
         ),
         (
             InstructionOp::SetOverflow,
-            vec![MicroInstruction::SetStatusFlag {
+            vec![instr::MicroInstruction::SetStatusFlag {
                 flag: StatusRegFlags::OVERFLOW,
             }],
         ),
         (
             InstructionOp::TransferAccumulatorToX,
-            vec![MicroInstruction::CopyRegister {
+            vec![instr::MicroInstruction::CopyRegister {
                 src: SelectedRegister8::A,
                 dst: SelectedRegister8::X,
             }],
         ),
         (
             InstructionOp::TransferAccumulatorToY,
-            vec![MicroInstruction::CopyRegister {
+            vec![instr::MicroInstruction::CopyRegister {
                 src: SelectedRegister8::A,
                 dst: SelectedRegister8::Y,
             }],
         ),
         (
             InstructionOp::TransferStackPtrToX,
-            vec![MicroInstruction::CopyRegister {
+            vec![instr::MicroInstruction::CopyRegister {
                 src: SelectedRegister8::SP,
                 dst: SelectedRegister8::X,
             }],
         ),
         (
             InstructionOp::TransferXToAccumulator,
-            vec![MicroInstruction::CopyRegister {
+            vec![instr::MicroInstruction::CopyRegister {
                 src: SelectedRegister8::X,
                 dst: SelectedRegister8::A,
             }],
         ),
         (
             InstructionOp::TransferYToAccumulator,
-            vec![MicroInstruction::CopyRegister {
+            vec![instr::MicroInstruction::CopyRegister {
                 src: SelectedRegister8::Y,
                 dst: SelectedRegister8::A,
             }],
         ),
         (
             InstructionOp::TransferXToStackPtr,
-            vec![MicroInstruction::CopyRegister {
+            vec![instr::MicroInstruction::CopyRegister {
                 src: SelectedRegister8::X,
                 dst: SelectedRegister8::SP,
             }],
         ),
         (
             InstructionOp::PushA,
-            vec![MicroInstruction::WriteAddress {
+            vec![instr::MicroInstruction::WriteAddress {
                 src: SelectedRegister8::A,
             }],
         ),
         (
             InstructionOp::PushStatus,
-            vec![MicroInstruction::WriteAddress {
+            vec![instr::MicroInstruction::WriteAddress {
                 src: SelectedRegister8::Status,
             }],
         ),
         (
             InstructionOp::PullA,
-            vec![MicroInstruction::ReadAddress {
+            vec![instr::MicroInstruction::ReadAddress {
                 dst: SelectedRegister8::A,
             }],
         ),
         (
             InstructionOp::PullStatus,
-            vec![MicroInstruction::ReadAddress {
+            vec![instr::MicroInstruction::ReadAddress {
                 dst: SelectedRegister8::Status,
             }],
         ),
         (
             InstructionOp::Or,
             vec![
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::AluBinaryOp {
+                instr::MicroInstruction::AluBinaryOp {
                     op: alu::BinaryOp::Or,
                     operand: SelectedRegister8::Tmp,
                 },
@@ -317,10 +317,10 @@ pub fn create_instructionops_sequences() -> OpsMap {
         (
             InstructionOp::And,
             vec![
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::AluBinaryOp {
+                instr::MicroInstruction::AluBinaryOp {
                     op: alu::BinaryOp::And,
                     operand: SelectedRegister8::Tmp,
                 },
@@ -329,10 +329,10 @@ pub fn create_instructionops_sequences() -> OpsMap {
         (
             InstructionOp::Xor,
             vec![
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::AluBinaryOp {
+                instr::MicroInstruction::AluBinaryOp {
                     op: alu::BinaryOp::Xor,
                     operand: SelectedRegister8::Tmp,
                 },
@@ -341,10 +341,10 @@ pub fn create_instructionops_sequences() -> OpsMap {
         (
             InstructionOp::Add,
             vec![
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::AluBinaryOp {
+                instr::MicroInstruction::AluBinaryOp {
                     op: alu::BinaryOp::Add,
                     operand: SelectedRegister8::Tmp,
                 },
@@ -353,10 +353,10 @@ pub fn create_instructionops_sequences() -> OpsMap {
         (
             InstructionOp::Sub,
             vec![
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::AluBinaryOp {
+                instr::MicroInstruction::AluBinaryOp {
                     op: alu::BinaryOp::Sub,
                     operand: SelectedRegister8::Tmp,
                 },
@@ -365,10 +365,10 @@ pub fn create_instructionops_sequences() -> OpsMap {
         (
             InstructionOp::Cmp,
             vec![
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::AluBinaryOp {
+                instr::MicroInstruction::AluBinaryOp {
                     op: alu::BinaryOp::Cmp,
                     operand: SelectedRegister8::Tmp,
                 },
@@ -377,10 +377,10 @@ pub fn create_instructionops_sequences() -> OpsMap {
         (
             InstructionOp::Cpx,
             vec![
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::AluCompareIndex {
+                instr::MicroInstruction::AluCompareIndex {
                     index: SelectedRegister8::X,
                 },
             ],
@@ -388,107 +388,107 @@ pub fn create_instructionops_sequences() -> OpsMap {
         (
             InstructionOp::Cpy,
             vec![
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::AluCompareIndex {
+                instr::MicroInstruction::AluCompareIndex {
                     index: SelectedRegister8::Y,
                 },
             ],
         ),
         (
             InstructionOp::StoreA,
-            vec![MicroInstruction::WriteAddress {
+            vec![instr::MicroInstruction::WriteAddress {
                 src: SelectedRegister8::A,
             }],
         ),
         (
             InstructionOp::LoadA,
-            vec![MicroInstruction::ReadAddress {
+            vec![instr::MicroInstruction::ReadAddress {
                 dst: SelectedRegister8::A,
             }],
         ),
         (
             InstructionOp::StoreX,
-            vec![MicroInstruction::WriteAddress {
+            vec![instr::MicroInstruction::WriteAddress {
                 src: SelectedRegister8::X,
             }],
         ),
         (
             InstructionOp::LoadX,
-            vec![MicroInstruction::ReadAddress {
+            vec![instr::MicroInstruction::ReadAddress {
                 dst: SelectedRegister8::X,
             }],
         ),
         (
             InstructionOp::StoreY,
-            vec![MicroInstruction::WriteAddress {
+            vec![instr::MicroInstruction::WriteAddress {
                 src: SelectedRegister8::Y,
             }],
         ),
         (
             InstructionOp::LoadY,
-            vec![MicroInstruction::ReadAddress {
+            vec![instr::MicroInstruction::ReadAddress {
                 dst: SelectedRegister8::Y,
             }],
         ),
-        (InstructionOp::Bit, vec![MicroInstruction::BitInstr]),
+        (InstructionOp::Bit, vec![instr::MicroInstruction::BitInstr]),
         (
             InstructionOp::BitImmediate,
-            vec![MicroInstruction::BitInstrImmediate],
+            vec![instr::MicroInstruction::BitInstrImmediate],
         ),
         (
             InstructionOp::BranchPlus,
-            vec![MicroInstruction::TakeConditionalBranch {
+            vec![instr::MicroInstruction::TakeConditionalBranch {
                 flag_to_test: StatusRegFlags::NEGATIVE,
                 branch_if_set: false,
             }],
         ),
         (
             InstructionOp::BranchMinus,
-            vec![MicroInstruction::TakeConditionalBranch {
+            vec![instr::MicroInstruction::TakeConditionalBranch {
                 flag_to_test: StatusRegFlags::NEGATIVE,
                 branch_if_set: true,
             }],
         ),
         (
             InstructionOp::BranchOverflowClear,
-            vec![MicroInstruction::TakeConditionalBranch {
+            vec![instr::MicroInstruction::TakeConditionalBranch {
                 flag_to_test: StatusRegFlags::OVERFLOW,
                 branch_if_set: false,
             }],
         ),
         (
             InstructionOp::BranchOverflowSet,
-            vec![MicroInstruction::TakeConditionalBranch {
+            vec![instr::MicroInstruction::TakeConditionalBranch {
                 flag_to_test: StatusRegFlags::OVERFLOW,
                 branch_if_set: true,
             }],
         ),
         (
             InstructionOp::BranchCarryClear,
-            vec![MicroInstruction::TakeConditionalBranch {
+            vec![instr::MicroInstruction::TakeConditionalBranch {
                 flag_to_test: StatusRegFlags::CARRY,
                 branch_if_set: false,
             }],
         ),
         (
             InstructionOp::BranchCarrySet,
-            vec![MicroInstruction::TakeConditionalBranch {
+            vec![instr::MicroInstruction::TakeConditionalBranch {
                 flag_to_test: StatusRegFlags::CARRY,
                 branch_if_set: true,
             }],
         ),
         (
             InstructionOp::BranchNotEqual,
-            vec![MicroInstruction::TakeConditionalBranch {
+            vec![instr::MicroInstruction::TakeConditionalBranch {
                 flag_to_test: StatusRegFlags::ZERO,
                 branch_if_set: false,
             }],
         ),
         (
             InstructionOp::BranchEqual,
-            vec![MicroInstruction::TakeConditionalBranch {
+            vec![instr::MicroInstruction::TakeConditionalBranch {
                 flag_to_test: StatusRegFlags::ZERO,
                 branch_if_set: true,
             }],

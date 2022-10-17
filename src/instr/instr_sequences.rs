@@ -1,4 +1,4 @@
-use crate::instructions::microinstructions::{MicroInstruction, MicroInstructionsVector};
+use crate::instr;
 use crate::registers::{SelectedRegister16, SelectedRegister8, StatusRegFlags};
 //use once_cell::unsync::Lazy;
 use lazy_static::lazy_static;
@@ -47,7 +47,7 @@ pub enum InstructionSequenceMode {
     AbsoluteIndirectJump,
 }
 
-type SequenceMap = HashMap<InstructionSequenceMode, MicroInstructionsVector>;
+type SequenceMap = HashMap<InstructionSequenceMode, instr::MicroInstructionsVector>;
 
 //static SEQUENCES_DEFS: Lazy<SequenceMap> = Lazy::new(|| { create_instruction_mode_sequences() });
 lazy_static! {
@@ -69,879 +69,879 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
         (
             InstructionSequenceMode::Break,
             vec![
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::Discard,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
                     src: SelectedRegister8::StackPage,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
                     src: SelectedRegister8::SP,
                 },
-                MicroInstruction::WriteAddress {
+                instr::MicroInstruction::WriteAddress {
                     src: SelectedRegister8::PCHigh,
                 },
-                MicroInstruction::DecrementRegister {
+                instr::MicroInstruction::DecrementRegister {
                     dst: SelectedRegister8::SP,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
                     src: SelectedRegister8::StackPage,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
                     src: SelectedRegister8::SP,
                 },
-                MicroInstruction::WriteAddress {
+                instr::MicroInstruction::WriteAddress {
                     src: SelectedRegister8::PCLow,
                 },
-                MicroInstruction::DecrementRegister {
+                instr::MicroInstruction::DecrementRegister {
                     dst: SelectedRegister8::SP,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::SetStatusFlag {
+                instr::MicroInstruction::SetStatusFlag {
                     flag: StatusRegFlags::BREAK,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
                     src: SelectedRegister8::StackPage,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
                     src: SelectedRegister8::SP,
                 },
-                MicroInstruction::WriteAddress {
+                instr::MicroInstruction::WriteAddress {
                     src: SelectedRegister8::Status,
                 },
-                MicroInstruction::DecrementRegister {
+                instr::MicroInstruction::DecrementRegister {
                     dst: SelectedRegister8::SP,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::CopyRegister16 {
+                instr::MicroInstruction::CopyRegister16 {
                     dst: SelectedRegister16::Addr,
                     src: SelectedRegister16::InterruptAddrLow,
                 },
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::PCLow,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::CopyRegister16 {
+                instr::MicroInstruction::CopyRegister16 {
                     dst: SelectedRegister16::Addr,
                     src: SelectedRegister16::InterruptAddrHigh,
                 },
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::PCHigh,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
             ],
         ),
         (
             InstructionSequenceMode::ReturnInterrupt,
             vec![
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::Discard,
                     increment: false,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::IncrementRegister {
+                instr::MicroInstruction::IncrementRegister {
                     dst: SelectedRegister8::SP,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
                     src: SelectedRegister8::StackPage,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
                     src: SelectedRegister8::SP,
                 },
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Status,
                 },
-                MicroInstruction::IncrementRegister {
+                instr::MicroInstruction::IncrementRegister {
                     dst: SelectedRegister8::SP,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
                     src: SelectedRegister8::StackPage,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
                     src: SelectedRegister8::SP,
                 },
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::PCLow,
                 },
-                MicroInstruction::IncrementRegister {
+                instr::MicroInstruction::IncrementRegister {
                     dst: SelectedRegister8::SP,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
                     src: SelectedRegister8::StackPage,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
                     src: SelectedRegister8::SP,
                 },
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::PCHigh,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
             ],
         ),
         (
             InstructionSequenceMode::Push,
             vec![
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::Discard,
                     increment: false,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
                     src: SelectedRegister8::StackPage,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
                     src: SelectedRegister8::SP,
                 },
-                MicroInstruction::RunOperation,
-                MicroInstruction::DecrementRegister {
+                instr::MicroInstruction::RunOperation,
+                instr::MicroInstruction::DecrementRegister {
                     dst: SelectedRegister8::SP,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
             ],
         ),
         (
             InstructionSequenceMode::Pull,
             vec![
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::Discard,
                     increment: false,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::IncrementRegister {
+                instr::MicroInstruction::IncrementRegister {
                     dst: SelectedRegister8::SP,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
                     src: SelectedRegister8::StackPage,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
                     src: SelectedRegister8::SP,
                 },
-                MicroInstruction::RunOperation,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::RunOperation,
+                instr::MicroInstruction::YieldClock,
             ],
         ),
         (
             InstructionSequenceMode::JumpSubroutine,
             vec![
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::Tmp,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
                     src: SelectedRegister8::StackPage,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
                     src: SelectedRegister8::SP,
                 },
-                MicroInstruction::WriteAddress {
+                instr::MicroInstruction::WriteAddress {
                     src: SelectedRegister8::PCHigh,
                 },
-                MicroInstruction::DecrementRegister {
+                instr::MicroInstruction::DecrementRegister {
                     dst: SelectedRegister8::SP,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
                     src: SelectedRegister8::StackPage,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
                     src: SelectedRegister8::SP,
                 },
-                MicroInstruction::WriteAddress {
+                instr::MicroInstruction::WriteAddress {
                     src: SelectedRegister8::PCLow,
                 },
-                MicroInstruction::DecrementRegister {
+                instr::MicroInstruction::DecrementRegister {
                     dst: SelectedRegister8::SP,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::PCHigh,
                     increment: true,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::PCLow,
                     src: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
             ],
         ),
         (
             InstructionSequenceMode::ReturnSubroutine,
             vec![
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::Discard,
                     increment: false,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::IncrementRegister {
+                instr::MicroInstruction::IncrementRegister {
                     dst: SelectedRegister8::SP,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
                     src: SelectedRegister8::StackPage,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
                     src: SelectedRegister8::SP,
                 },
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::IncrementRegister {
+                instr::MicroInstruction::IncrementRegister {
                     dst: SelectedRegister8::SP,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
                     src: SelectedRegister8::StackPage,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
                     src: SelectedRegister8::SP,
                 },
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::PCHigh,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::PCLow,
                     src: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::IncrementRegister16 {
+                instr::MicroInstruction::IncrementRegister16 {
                     dst: SelectedRegister16::PC,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
             ],
         ),
         (
             InstructionSequenceMode::Implied,
             vec![
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::Discard,
                     increment: false,
                 },
-                MicroInstruction::RunOperation,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::RunOperation,
+                instr::MicroInstruction::YieldClock,
             ],
         ),
         (
             InstructionSequenceMode::Immediate,
             vec![
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
                     src: SelectedRegister8::PCLow,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrHigh,
                     src: SelectedRegister8::PCHigh,
                 },
-                MicroInstruction::IncrementRegister16 {
+                instr::MicroInstruction::IncrementRegister16 {
                     dst: SelectedRegister16::PC,
                 },
-                MicroInstruction::RunOperation,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::RunOperation,
+                instr::MicroInstruction::YieldClock,
             ],
         ),
         (
             InstructionSequenceMode::AbsoluteJump,
             vec![
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::PCHigh,
                     increment: true,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::PCLow,
                     src: SelectedRegister8::AddrLow,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
             ],
         ),
         (
             InstructionSequenceMode::Absolute,
             vec![
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::AddrHigh,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::RunOperation,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::RunOperation,
+                instr::MicroInstruction::YieldClock,
             ],
         ),
         (
             InstructionSequenceMode::AbsoluteReadModifyWrite,
             vec![
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::AddrHigh,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::WriteAddress {
+                instr::MicroInstruction::WriteAddress {
                     src: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::RunOperation,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::RunOperation,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::WriteAddress {
+                instr::MicroInstruction::WriteAddress {
                     src: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
             ],
         ),
         (
             InstructionSequenceMode::ZeroPage,
             vec![
-                MicroInstruction::ZeroRegister {
+                instr::MicroInstruction::ZeroRegister {
                     dst: SelectedRegister8::AddrHigh,
                 },
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::RunOperation,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::RunOperation,
+                instr::MicroInstruction::YieldClock,
             ],
         ),
         (
             InstructionSequenceMode::ZeroPageReadModifyWrite,
             vec![
-                MicroInstruction::ZeroRegister {
+                instr::MicroInstruction::ZeroRegister {
                     dst: SelectedRegister8::AddrHigh,
                 },
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::WriteAddress {
+                instr::MicroInstruction::WriteAddress {
                     src: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::RunOperation,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::RunOperation,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::WriteAddress {
+                instr::MicroInstruction::WriteAddress {
                     src: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
             ],
         ),
         (
             InstructionSequenceMode::ZeroPageIndx,
             vec![
-                MicroInstruction::ZeroRegister {
+                instr::MicroInstruction::ZeroRegister {
                     dst: SelectedRegister8::AddrHigh,
                 },
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Discard,
                 },
-                MicroInstruction::AddIndexToAddress,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::AddIndexToAddress,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::RunOperation,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::RunOperation,
+                instr::MicroInstruction::YieldClock,
             ],
         ),
         (
             InstructionSequenceMode::ZeroPageIdxReadModifyWrite,
             vec![
-                MicroInstruction::ZeroRegister {
+                instr::MicroInstruction::ZeroRegister {
                     dst: SelectedRegister8::AddrHigh,
                 },
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Discard,
                 },
-                MicroInstruction::AddIndexToAddress,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::AddIndexToAddress,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::WriteAddress {
+                instr::MicroInstruction::WriteAddress {
                     src: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::RunOperation,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::RunOperation,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::WriteAddress {
+                instr::MicroInstruction::WriteAddress {
                     src: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
             ],
         ),
         (
             InstructionSequenceMode::AbsoluteIdxRead,
             vec![
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::AddrHigh,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::AddIndexToAddress,
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::AddIndexToAddress,
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::FixAddressOrRunOpAndFinish,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::FixAddressOrRunOpAndFinish,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::RunOperation,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::RunOperation,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
             ],
         ),
         (
             InstructionSequenceMode::AbsoluteIdxReadModifyWrite,
             vec![
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::AddrHigh,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
-                MicroInstruction::AddIndexToAddress,
+                instr::MicroInstruction::YieldClock,
+                instr::MicroInstruction::AddIndexToAddress,
                 // Next clock
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Discard,
                 },
-                MicroInstruction::FixAddress,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::FixAddress,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::WriteAddress {
+                instr::MicroInstruction::WriteAddress {
                     src: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::RunOperation,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::RunOperation,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::WriteAddress {
+                instr::MicroInstruction::WriteAddress {
                     src: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
             ],
         ),
         (
             InstructionSequenceMode::AbsoluteIdxWrite,
             vec![
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::AddrHigh,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::AddIndexToAddress,
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::AddIndexToAddress,
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::FixAddress,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::FixAddress,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::RunOperation,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::RunOperation,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
             ],
         ),
         (
             InstructionSequenceMode::Relative,
             vec![
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::Tmp,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::IR,
                     increment: false,
                 },
-                MicroInstruction::RunOperation,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::RunOperation,
+                instr::MicroInstruction::YieldClock,
                 // Next clock
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::IR,
                     increment: false,
                 },
-                MicroInstruction::FixAddressOrIncrementPC,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::FixAddressOrIncrementPC,
+                instr::MicroInstruction::YieldClock,
             ],
         ),
         (
             InstructionSequenceMode::ZeroPageIdxIndirect,
             vec![
-                MicroInstruction::ZeroRegister {
+                instr::MicroInstruction::ZeroRegister {
                     dst: SelectedRegister8::AddrHigh,
                 },
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Discard,
                 },
-                MicroInstruction::AddIndexToAddress,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::AddIndexToAddress,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::IncrementRegister {
+                instr::MicroInstruction::IncrementRegister {
                     dst: SelectedRegister8::AddrLow,
                 },
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::AddrHigh,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
                     src: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::RunOperation,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::RunOperation,
+                instr::MicroInstruction::YieldClock,
             ],
         ),
         (
             InstructionSequenceMode::ZeroPageIdxIndirectReadModifyWrite,
             vec![
-                MicroInstruction::ZeroRegister {
+                instr::MicroInstruction::ZeroRegister {
                     dst: SelectedRegister8::AddrHigh,
                 },
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Discard,
                 },
-                MicroInstruction::AddIndexToAddress,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::AddIndexToAddress,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::IncrementRegister {
+                instr::MicroInstruction::IncrementRegister {
                     dst: SelectedRegister8::AddrLow,
                 },
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::AddrHigh,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
                     src: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::WriteAddress {
+                instr::MicroInstruction::WriteAddress {
                     src: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::RunOperation,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::RunOperation,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::WriteAddress {
+                instr::MicroInstruction::WriteAddress {
                     src: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
             ],
         ),
         (
             InstructionSequenceMode::ZeroPageIndirectIdxRead,
             vec![
-                MicroInstruction::ZeroRegister {
+                instr::MicroInstruction::ZeroRegister {
                     dst: SelectedRegister8::AddrHigh,
                 },
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::IncrementRegister {
+                instr::MicroInstruction::IncrementRegister {
                     dst: SelectedRegister8::AddrLow,
                 },
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::AddrHigh,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
                     src: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::AddIndexToAddress,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::AddIndexToAddress,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::FixAddressOrRunOpAndFinish,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::FixAddressOrRunOpAndFinish,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::RunOperation,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::RunOperation,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
             ],
         ),
         (
             InstructionSequenceMode::ZeroPageIndirectIdxReadModifyWrite,
             vec![
-                MicroInstruction::ZeroRegister {
+                instr::MicroInstruction::ZeroRegister {
                     dst: SelectedRegister8::AddrHigh,
                 },
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::IncrementRegister {
+                instr::MicroInstruction::IncrementRegister {
                     dst: SelectedRegister8::AddrLow,
                 },
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::AddrHigh,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
                     src: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::AddIndexToAddress,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::AddIndexToAddress,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Discard,
                 },
-                MicroInstruction::FixAddress,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::FixAddress,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::WriteAddress {
+                instr::MicroInstruction::WriteAddress {
                     src: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::RunOperation,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::RunOperation,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::WriteAddress {
+                instr::MicroInstruction::WriteAddress {
                     src: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
             ],
         ),
         (
             InstructionSequenceMode::ZeroPageIndirectIdxWrite,
             vec![
-                MicroInstruction::ZeroRegister {
+                instr::MicroInstruction::ZeroRegister {
                     dst: SelectedRegister8::AddrHigh,
                 },
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::AddrLow,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::IncrementRegister {
+                instr::MicroInstruction::IncrementRegister {
                     dst: SelectedRegister8::AddrLow,
                 },
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::AddrHigh,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
                     src: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::AddIndexToAddress,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::AddIndexToAddress,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Discard,
                 },
-                MicroInstruction::FixAddress,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::FixAddress,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::RunOperation,
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::RunOperation,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
             ],
         ),
         (
             InstructionSequenceMode::AbsoluteIndirectJump,
             vec![
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::Tmp,
                     increment: true,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::ReadPC {
+                instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::AddrHigh,
                     increment: true,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::AddrLow,
                     src: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
                 // Next Clock
-                MicroInstruction::IncrementRegister {
+                instr::MicroInstruction::IncrementRegister {
                     dst: SelectedRegister8::AddrLow,
                 },
-                MicroInstruction::ReadAddress {
+                instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::PCHigh,
                 },
-                MicroInstruction::CopyRegister {
+                instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::PCLow,
                     src: SelectedRegister8::Tmp,
                 },
-                MicroInstruction::YieldClock,
+                instr::MicroInstruction::YieldClock,
             ],
         ),
     ])
@@ -954,15 +954,15 @@ mod tests {
     #[test]
     fn instructionsequences_checklastmicroinstruction_yieldclock() {
         for (mode, sequence) in MODES_SEQUENCES_DEFS.iter() {
-            let last_microinstruction = sequence.last().unwrap_or_else(|| {
+            let last_micro_instr = sequence.last().unwrap_or_else(|| {
                 panic!(
-                    "Sequence mode {:?} does not have any microinstruction",
+                    "Sequence mode {:?} does not have any instr::MicroInstruction",
                     mode
                 )
             });
             assert_eq!(
-                *last_microinstruction,
-                MicroInstruction::YieldClock,
+                *last_micro_instr,
+                instr::MicroInstruction::YieldClock,
                 "Sequence mode {:?} does not finish with YieldClock",
                 mode
             );
@@ -998,28 +998,28 @@ mod tests {
             if let Some(sequence) = sequences.get(mode) {
                 let runop_position = sequence
                     .iter()
-                    .position(|&instr| instr == MicroInstruction::RunOperation);
+                    .position(|&instr| instr == instr::MicroInstruction::RunOperation);
 
                 if let Some(position) = runop_position {
                     let last_memory_read_before_op = sequence[..position]
                         .iter()
                         .rev()
-                        .find(|&instr| matches!(instr, MicroInstruction::ReadAddress { .. }));
+                        .find(|&instr| matches!(instr, instr::MicroInstruction::ReadAddress { .. }));
 
                     assert_eq!(
                         last_memory_read_before_op,
-                        Some(&MicroInstruction::ReadAddress {
+                        Some(&instr::MicroInstruction::ReadAddress {
                             dst: SelectedRegister8::Tmp
                         })
                     );
 
                     let next_memory_write_after_op = sequence[position..]
                         .iter()
-                        .find(|&instr| matches!(instr, MicroInstruction::WriteAddress { .. }));
+                        .find(|&instr| matches!(instr, instr::MicroInstruction::WriteAddress { .. }));
 
                     assert_eq!(
                         next_memory_write_after_op,
-                        Some(&MicroInstruction::WriteAddress {
+                        Some(&instr::MicroInstruction::WriteAddress {
                             src: SelectedRegister8::Tmp
                         })
                     );

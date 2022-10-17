@@ -1,6 +1,6 @@
 mod alu;
 mod cpu;
-mod instructions;
+mod instr;
 mod pinout;
 mod registers;
 
