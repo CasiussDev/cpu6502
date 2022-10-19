@@ -2,11 +2,6 @@ use super::StatusReg;
 use super::{Reg16, Reg8};
 use std::fmt;
 
-#[cfg(feature = "random")]
-use rand::distributions::{Distribution, Uniform};
-#[cfg(feature = "random")]
-use rand::rngs::ThreadRng;
-
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum SelectedRegister8 {
     A = 0xF0,
@@ -84,17 +79,6 @@ impl RegisterFile {
         self.status.reset();
 
         self.addr.set_u16(0x00FF);
-    }
-
-    #[cfg(feature = "random")]
-    pub fn reset_random(&mut self, rng: &mut ThreadRng, uniform: &Uniform<u16>) {
-        self.a.set_u8(uniform.sample(rng) as u8);
-        self.x.set_u8(uniform.sample(rng) as u8);
-        self.y.set_u8(uniform.sample(rng) as u8);
-        self.sp.set_u8(uniform.sample(rng) as u8);
-        self.pc.set_u16(uniform.sample(rng));
-        self.status.set_u8(uniform.sample(rng) as u8);
-        self.status.set_flags(StatusRegFlags::IRQ_DISABLE);
     }
 
     pub fn get_copy_selected_register16(&self, selection: SelectedRegister16) -> Reg16 {
@@ -241,55 +225,6 @@ impl fmt::Debug for RegisterFile {
 #[cfg(test)]
 mod tests {
     use crate::registers::{RegisterFile, SelectedRegister8};
-
-    #[cfg(feature = "random")]
-    use crate::registers::StatusRegFlags;
-    #[cfg(feature = "random")]
-    use rand::distributions::Uniform;
-
-    //#[test]
-    //fn registerfiles_reset_resultscorrect() {
-    //    // GIVEN
-    //    let mut zero_file = RegisterFile::default();
-    //
-    //    // WHEN
-    //    zero_file.reset();
-    //
-    //    // THEN
-    //    let mut status = StatusReg::new_from_u8(0);
-    //    status.set_flags(StatusRegFlags::IRQ_DISABLE);
-    //    assert_eq!(
-    //        zero_file,
-    //        RegisterFile {
-    //            a: Reg8 { value: 0 },
-    //            x: Reg8 { value: 0 },
-    //            y: Reg8 { value: 0 },
-    //            sp: Reg8 { value: 0 },
-    //            pc: Reg16 { value: 0 },
-    //            status,
-    //        }
-    //    )
-    //}
-
-    #[test]
-    #[cfg(feature = "random")]
-    fn registerfile_resetrandom_irqdisabled() {
-        let mut rng = rand::thread_rng();
-        let uniform = Uniform::new_inclusive(0_u16, u16::MAX);
-
-        // GIVEN
-        let mut random_file = RegisterFile::default();
-
-        for _ in 0..50 {
-            // WHEN
-            random_file.reset_random(&mut rng, &uniform);
-
-            // THEN
-            assert!(random_file
-                .status
-                .are_all_flags_set(StatusRegFlags::IRQ_DISABLE));
-        }
-    }
 
     #[test]
     fn registerfile_sethighlowbytes_pccontainscorrectaddress() {
