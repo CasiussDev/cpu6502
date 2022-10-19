@@ -15,6 +15,7 @@ pub enum InstructionSequenceMode {
     Break,
     StartIrq,
     StartNmi,
+    Reset,
     ReturnInterrupt,
 
     JumpSubroutine,
@@ -70,6 +71,83 @@ impl Default for InstructionSequenceMode {
 
 pub fn create_instruction_mode_sequences() -> SequenceMap {
     let mut sequences_map = collections::HashMap::from([
+        (
+            InstructionSequenceMode::Reset,
+            vec![
+                instr::MicroInstruction::ReadPC {
+                    dst: SelectedRegister8::Discard,
+                    increment: true,
+                },
+                instr::MicroInstruction::YieldClock,
+                // Next clock
+                instr::MicroInstruction::CopyRegister {
+                    dst: SelectedRegister8::AddrHigh,
+                    src: SelectedRegister8::StackPage,
+                },
+                instr::MicroInstruction::CopyRegister {
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::SP,
+                },
+                instr::MicroInstruction::ReadAddress {
+                    dst: SelectedRegister8::Discard,
+                },
+                instr::MicroInstruction::DecrementRegister {
+                    dst: SelectedRegister8::SP,
+                },
+                instr::MicroInstruction::YieldClock,
+                // Next clock
+                instr::MicroInstruction::CopyRegister {
+                    dst: SelectedRegister8::AddrHigh,
+                    src: SelectedRegister8::StackPage,
+                },
+                instr::MicroInstruction::CopyRegister {
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::SP,
+                },
+                instr::MicroInstruction::ReadAddress {
+                    dst: SelectedRegister8::Discard,
+                },
+                instr::MicroInstruction::DecrementRegister {
+                    dst: SelectedRegister8::SP,
+                },
+                instr::MicroInstruction::YieldClock,
+                // Next clock
+                instr::MicroInstruction::CopyRegister {
+                    dst: SelectedRegister8::AddrHigh,
+                    src: SelectedRegister8::StackPage,
+                },
+                instr::MicroInstruction::CopyRegister {
+                    dst: SelectedRegister8::AddrLow,
+                    src: SelectedRegister8::SP,
+                },
+                instr::MicroInstruction::WriteAddress {
+                    src: SelectedRegister8::Status,
+                },
+                instr::MicroInstruction::DecrementRegister {
+                    dst: SelectedRegister8::SP,
+                },
+                instr::MicroInstruction::YieldClock,
+                // Next clock
+                instr::MicroInstruction::CopyRegister16 {
+                    dst: SelectedRegister16::Addr,
+                    src: SelectedRegister16::ProgramStartAddrLow,
+                },
+                instr::MicroInstruction::ReadAddress {
+                    dst: SelectedRegister8::PCLow,
+                },
+                instr::MicroInstruction::YieldClock,
+                // Next clock
+                instr::MicroInstruction::CopyRegister16 {
+                    dst: SelectedRegister16::Addr,
+                    src: SelectedRegister16::ProgramStartAddrHigh,
+                },
+                instr::MicroInstruction::ReadAddress {
+                    dst: SelectedRegister8::PCHigh,
+                },
+                instr::MicroInstruction::YieldClock,
+                // Next clock
+            ],
+        ),
         (
             InstructionSequenceMode::Break,
             vec![
@@ -292,7 +370,7 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 // Next clock
                 instr::MicroInstruction::CopyRegister16 {
                     dst: SelectedRegister16::Addr,
-                    src: SelectedRegister16::InterruptAddrLow,
+                    src: SelectedRegister16::NMInterruptAddrLow,
                 },
                 instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::PCLow,
@@ -301,7 +379,7 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 // Next clock
                 instr::MicroInstruction::CopyRegister16 {
                     dst: SelectedRegister16::Addr,
-                    src: SelectedRegister16::InterruptAddrHigh,
+                    src: SelectedRegister16::NMInterruptAddHigh,
                 },
                 instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::PCHigh,

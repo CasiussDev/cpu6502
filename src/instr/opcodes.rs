@@ -568,7 +568,7 @@ mod tests {
         for i in 0_u8..=0b_0011_1111 {
             let opcode = i << 2;
 
-            if let Some(_) = OpsSingleByte0::from_u8(opcode) {
+            if OpsSingleByte0::from_u8(opcode).is_some() {
                 let decoded = super::decode(opcode);
                 println!("\t{:#04X}\t{:?}", opcode, decoded);
             }
@@ -577,7 +577,7 @@ mod tests {
         for i in 0_u8..=0b_0011_1111 {
             let opcode = (i << 2) + 2;
 
-            if let Some(_) = OpsSingleByte2::from_u8(opcode) {
+            if OpsSingleByte2::from_u8(opcode).is_some() {
                 let decoded = super::decode(opcode);
                 println!("\t{:#04X}\t{:?}", opcode, decoded);
             }

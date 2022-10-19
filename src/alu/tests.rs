@@ -353,7 +353,7 @@ mod tests {
             );
             assert_eq!(
                 status_register.are_all_flags_set(StatusRegFlags::NEGATIVE),
-                accumulator.get_i8().is_negative() == true
+                accumulator.get_i8().is_negative()
             );
         }
     }
@@ -384,7 +384,7 @@ mod tests {
             );
             assert_eq!(
                 status_register.are_all_flags_set(StatusRegFlags::NEGATIVE),
-                accumulator.get_i8().is_negative() == true
+                accumulator.get_i8().is_negative()
             );
         }
     }
@@ -411,7 +411,7 @@ mod tests {
                 );
                 assert_eq!(
                     status_register.are_all_flags_set(StatusRegFlags::NEGATIVE),
-                    accumulator.get_i8().is_negative() == true
+                    accumulator.get_i8().is_negative()
                 );
             }
         }
@@ -439,7 +439,7 @@ mod tests {
                 );
                 assert_eq!(
                     status_register.are_all_flags_set(StatusRegFlags::NEGATIVE),
-                    accumulator.get_i8().is_negative() == true
+                    accumulator.get_i8().is_negative()
                 );
             }
         }
@@ -467,7 +467,7 @@ mod tests {
                 );
                 assert_eq!(
                     status_register.are_all_flags_set(StatusRegFlags::NEGATIVE),
-                    accumulator.get_i8().is_negative() == true
+                    accumulator.get_i8().is_negative()
                 );
             }
         }

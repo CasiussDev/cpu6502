@@ -30,7 +30,7 @@ impl StatusReg {
     }
 
     pub fn reset(&mut self) {
-        self.flags.bits = 0;
+        self.flags.bits = 0x24;
     }
 
     pub fn get_u8(&self) -> u8 {
@@ -62,7 +62,6 @@ impl StatusReg {
         self.flags.contains(flags_to_check)
     }
 
-    #[allow(dead_code)]
     pub fn are_any_flags_set(&self, flags_to_check: StatusRegFlags) -> bool {
         self.flags.intersects(flags_to_check)
     }

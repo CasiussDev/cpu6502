@@ -1,6 +1,5 @@
 use super::StatusReg;
 use super::{Reg16, Reg8};
-use crate::registers::StatusRegFlags;
 use std::fmt;
 
 #[cfg(feature = "random")]
@@ -75,21 +74,16 @@ pub struct RegisterFile {
 }
 
 impl RegisterFile {
-    // TO DO: NES specific?
-    pub fn powerup(&mut self) {
-        self.status.set_u8(StatusRegFlags::STARTUP.bits());
+    pub fn reset(&mut self) {
         self.a.reset();
         self.x.reset();
         self.y.reset();
-        self.sp.set_u8(0xFD); // Stack init at 0xFF, then decremented by 3
-    }
+        self.pc.reset();
+        self.sp.reset();
+        self.ir.reset();
+        self.status.reset();
 
-    pub fn reset(&mut self) {
-        self.status.set_flags(StatusRegFlags::IRQ_DISABLE);
-
-        self.sp.dec();
-        self.sp.dec();
-        self.sp.dec();
+        self.addr.set_u16(0x00FF);
     }
 
     #[cfg(feature = "random")]

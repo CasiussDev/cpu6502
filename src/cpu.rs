@@ -1,4 +1,5 @@
 use crate::instr;
+use crate::instr::InstructionSequenceMode;
 use crate::pinout::Pinout;
 use crate::registers::{IndexRegister, RegisterFile, SelectedRegister8, StatusRegFlags};
 use std::slice::Iter;
@@ -9,6 +10,7 @@ enum WaitingInterrupt {
     Interrupt,
 }
 
+#[derive(Default, Debug)]
 pub struct Cpu {
     regs: RegisterFile,
     pins: Pinout,
@@ -21,7 +23,7 @@ pub struct Cpu {
     running_op: bool,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Eq, Debug)]
 pub enum YieldStatus {
     ClockFinished,
     WaitingMemory,
@@ -59,6 +61,18 @@ impl Cpu {
 
     pub fn clear_irq_pin(&mut self) {
         self.pins.clear_irq_input();
+    }
+
+    pub fn reset(&mut self) {
+        *self = Default::default();
+        self.regs.reset();
+        self.pins.reset();
+
+        self.current_sequence = instr::get_sequences_map()
+            .get(&InstructionSequenceMode::Reset)
+            .map(|v| v.iter());
+
+        assert!(self.current_sequence.is_some(), "There is no reset sequence");
     }
 
     fn is_waiting_interrupt(&self) -> Option<WaitingInterrupt> {
@@ -122,7 +136,7 @@ impl Cpu {
     pub fn run(&mut self) -> YieldStatus {
         if self.current_sequence.is_none() && self.waiting_interrupt.is_some() {
             self.service_interrupt();
-        } else if self.instr_ready == true {
+        } else if self.instr_ready {
             self.decode_instr();
         }
 
@@ -172,11 +186,11 @@ impl Cpu {
 
         self.current_sequence = instr::get_sequences_map()
             .get(&decoded_intr.sequence)
-            .map_or(None, |v| Some(v.iter()));
+            .map(|v| v.iter());
 
         self.current_op = instr::get_ops_map()
             .get(&decoded_intr.operation)
-            .map_or(None, |v| Some(v.iter()));
+            .map(|v| v.iter());
 
         self.index_register = decoded_intr.index;
 
@@ -196,7 +210,7 @@ impl Cpu {
 
         self.current_sequence = instr::get_sequences_map()
             .get(&sequence_mode)
-            .map_or(None, |v| Some(v.iter()));
+            .map(|v| v.iter());
 
         self.current_op = None;
 

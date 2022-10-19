@@ -112,7 +112,7 @@ fn execute_alu_compare_index(operand: SelectedRegister8, regs: &mut RegisterFile
     }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Eq, Debug)]
 pub enum ExecutionStatus {
     YieldClock,
     Continue,

@@ -1,10 +1,10 @@
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum DataDirectionMode {
     Read,
     Write,
 }
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Default, Debug)]
 pub struct Pinout {
     data: u8,
     address: u16,
@@ -20,6 +20,11 @@ impl Default for DataDirectionMode {
 }
 
 impl Pinout {
+    pub fn reset(&mut self) {
+        self.mode = DataDirectionMode::Read;
+        self.address = 0x00FF;
+    }
+
     pub fn set_address_output(&mut self, address: u16) {
         self.address = address;
     }
