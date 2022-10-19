@@ -1,0 +1,67 @@
+use cpu6502;
+use serde::Deserialize;
+use std::{collections, fs};
+
+#[derive(Deserialize, Debug)]
+struct OpcodeInfo {
+    opcode: u8,
+    mnemonics: Vec<String>,
+    addressingMode: Option<String>,
+    cycles: Option<u8>,
+    pageBoundaryCycle: Option<bool>,
+    illegal: bool,
+}
+
+#[test]
+fn test() {
+    let json_text = fs::read_to_string("testdata/all_6502.json")
+        .expect("Could not open testdata/all_6502.json");
+
+    let opcodes: Vec<OpcodeInfo> = serde_json::from_str(&json_text).expect("Could not parse json");
+
+    let opcode_data = opcodes.into_iter().filter(|e| e.illegal == false).map(|e| {
+        (
+            e.opcode,
+            e.cycles.unwrap(),
+            e.pageBoundaryCycle.unwrap_or(false),
+        )
+    });
+
+    let sequences = cpu6502::get_sequences_map();
+
+    for (opcode, mut expected_cycle_count, page_boundary) in opcode_data {
+        if page_boundary {
+            expected_cycle_count += 1;
+        }
+
+        let decoded = cpu6502::decode(opcode);
+        let sequence = sequences.get(&decoded.sequence).unwrap();
+
+        let cycles = sequence
+            .into_iter()
+            .filter(|&&e| {
+                matches!(
+                    e,
+                    cpu6502::MicroInstruction::YieldClock
+                        | cpu6502::MicroInstruction::FinishInstruction
+                )
+            })
+            .count();
+        let mut cycles = (cycles + 1) as u8; // +1 for fetch
+        if matches!(
+            decoded.operation,
+            cpu6502::InstructionOp::BranchPlus
+                | cpu6502::InstructionOp::BranchMinus
+                | cpu6502::InstructionOp::BranchOverflowClear
+                | cpu6502::InstructionOp::BranchOverflowSet
+                | cpu6502::InstructionOp::BranchCarryClear
+                | cpu6502::InstructionOp::BranchCarrySet
+                | cpu6502::InstructionOp::BranchNotEqual
+                | cpu6502::InstructionOp::BranchEqual
+        ) {
+            cycles -= 1;
+        }
+
+        assert_eq!(cycles, expected_cycle_count, "opcode {:#04X}", opcode);
+    }
+}

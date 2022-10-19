@@ -10,12 +10,7 @@ extern crate lazy_static;
 extern crate num_traits;
 
 pub use cpu::Cpu;
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
-}
+pub use instr::get_sequences_map;
+pub use instr::opcodes::decode;
+pub use instr::MicroInstruction;
+pub use instr::InstructionOp;

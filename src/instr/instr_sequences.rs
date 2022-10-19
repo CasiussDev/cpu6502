@@ -33,7 +33,7 @@ pub enum InstructionSequenceMode {
     ZeroPage,
     ZeroPageReadModifyWrite,
 
-    ZeroPageIndx,
+    ZeroPageIdx,
     ZeroPageIdxReadModifyWrite,
 
     AbsoluteIdxRead,
@@ -768,7 +768,7 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             ],
         ),
         (
-            InstructionSequenceMode::ZeroPageIndx,
+            InstructionSequenceMode::ZeroPageIdx,
             vec![
                 instr::MicroInstruction::ZeroRegister {
                     dst: SelectedRegister8::AddrHigh,

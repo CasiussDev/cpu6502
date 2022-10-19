@@ -257,7 +257,7 @@ fn sequence_mode_g1(op: OpsG1, addr_mode: AddrModeG1) -> instr::InstructionSeque
         AddrModeG1::Immediate => instr::InstructionSequenceMode::Immediate,
         AddrModeG1::Absolute => instr::InstructionSequenceMode::Absolute,
         AddrModeG1::ZeroPageIndxIndirect => instr::InstructionSequenceMode::ZeroPageIdxIndirect,
-        AddrModeG1::ZeroPageIdx => instr::InstructionSequenceMode::ZeroPageIndx,
+        AddrModeG1::ZeroPageIdx => instr::InstructionSequenceMode::ZeroPageIdx,
         AddrModeG1::AbsoluteIdxY | AddrModeG1::AbsoluteIdxX => match op {
             OpsG1::STA => instr::InstructionSequenceMode::AbsoluteIdxWrite,
             OpsG1::ORA
@@ -306,7 +306,7 @@ fn sequence_mode_g2(op: OpsG2, addr_mode: AddrModeG2) -> instr::InstructionSeque
                 AddrModeG2::ZeroPage => instr::InstructionSequenceMode::ZeroPage,
                 AddrModeG2::Accumulator => instr::InstructionSequenceMode::Implied, // Illegal
                 AddrModeG2::Absolute => instr::InstructionSequenceMode::Absolute,
-                AddrModeG2::ZeroPageIdx => instr::InstructionSequenceMode::ZeroPageIdxIndirect,
+                AddrModeG2::ZeroPageIdx => instr::InstructionSequenceMode::ZeroPageIdx,
                 AddrModeG2::AbsoluteIdxX => {
                     if op == OpsG2::STX {
                         instr::InstructionSequenceMode::AbsoluteIdxWrite // Illegal
@@ -333,7 +333,7 @@ fn sequence_mode_g3(op: OpsG3, addr_mode: AddrModeG3) -> instr::InstructionSeque
                 instr::InstructionSequenceMode::default()
             } // Illegal
             AddrModeG3::Absolute => instr::InstructionSequenceMode::Absolute,
-            AddrModeG3::ZeroPageIdx => instr::InstructionSequenceMode::ZeroPageIndx, // Illegal for BIT, Jumps and Cp
+            AddrModeG3::ZeroPageIdx => instr::InstructionSequenceMode::ZeroPageIdx, // Illegal for BIT, Jumps and Cp
             AddrModeG3::AbsoluteIdxX => instr::InstructionSequenceMode::AbsoluteIdxRead, // Only legal for LDY
         },
     }

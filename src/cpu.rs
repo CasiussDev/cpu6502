@@ -30,6 +30,22 @@ pub enum YieldStatus {
 }
 
 impl Cpu {
+    pub fn new() -> Self {
+        let mut cpu = Self {
+            regs: Default::default(),
+            pins: Default::default(),
+            current_sequence: None,
+            current_op: None,
+            data_destination: None,
+            index_register: None,
+            waiting_interrupt: None,
+            instr_ready: false,
+            running_op: false,
+        };
+        cpu.reset();
+        cpu
+    }
+
     pub fn read_data_pins(&self) -> u8 {
         self.pins.get_data()
     }
@@ -72,7 +88,10 @@ impl Cpu {
             .get(&InstructionSequenceMode::Reset)
             .map(|v| v.iter());
 
-        assert!(self.current_sequence.is_some(), "There is no reset sequence");
+        assert!(
+            self.current_sequence.is_some(),
+            "There is no reset sequence"
+        );
     }
 
     fn is_waiting_interrupt(&self) -> Option<WaitingInterrupt> {
