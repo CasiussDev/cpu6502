@@ -1,3 +1,4 @@
+#[cfg(test)]
 mod tests;
 
 use crate::registers::{Reg8, StatusReg, StatusRegFlags};

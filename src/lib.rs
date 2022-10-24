@@ -12,5 +12,5 @@ extern crate num_traits;
 pub use cpu::Cpu;
 pub use instr::get_sequences_map;
 pub use instr::opcodes::decode;
-pub use instr::MicroInstruction;
 pub use instr::InstructionOp;
+pub use instr::MicroInstruction;

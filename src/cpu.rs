@@ -19,6 +19,8 @@ pub struct Cpu {
     data_destination: Option<SelectedRegister8>,
     index_register: Option<IndexRegister>,
     waiting_interrupt: Option<WaitingInterrupt>,
+    cycle_count_since_reset: u64,
+    instr_count_since_reset: u64,
     instr_ready: bool,
     running_op: bool,
 }
@@ -31,19 +33,17 @@ pub enum YieldStatus {
 
 impl Cpu {
     pub fn new() -> Self {
-        let mut cpu = Self {
-            regs: Default::default(),
-            pins: Default::default(),
-            current_sequence: None,
-            current_op: None,
-            data_destination: None,
-            index_register: None,
-            waiting_interrupt: None,
-            instr_ready: false,
-            running_op: false,
-        };
+        let mut cpu = Self::default();
         cpu.reset();
         cpu
+    }
+
+    pub fn get_cycle_count_since_reset(&self) -> u64 {
+        self.cycle_count_since_reset
+    }
+
+    pub fn get_instr_count_since_reset(&self) -> u64 {
+        self.instr_count_since_reset
     }
 
     pub fn read_data_pins(&self) -> u8 {
@@ -92,6 +92,9 @@ impl Cpu {
             self.current_sequence.is_some(),
             "There is no reset sequence"
         );
+
+        self.cycle_count_since_reset = 0;
+        self.instr_count_since_reset = 0;
     }
 
     fn is_waiting_interrupt(&self) -> Option<WaitingInterrupt> {
@@ -178,6 +181,7 @@ impl Cpu {
             match run_status {
                 instr::ExecutionStatus::YieldClock => {
                     self.waiting_interrupt = self.is_waiting_interrupt();
+                    self.cycle_count_since_reset += 1;
                 }
                 instr::ExecutionStatus::Continue => {}
                 instr::ExecutionStatus::RunOp => {
@@ -192,6 +196,8 @@ impl Cpu {
                 instr::ExecutionStatus::FinishInstruction => {
                     self.current_sequence = None;
                     self.current_op = None;
+                    self.cycle_count_since_reset += 1;
+                    self.instr_count_since_reset += 1;
                 }
             };
         }

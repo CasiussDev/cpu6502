@@ -1,14 +1,17 @@
 use cpu6502;
 use serde::Deserialize;
-use std::{collections, fs};
+use std::fs;
 
 #[derive(Deserialize, Debug)]
+#[allow(dead_code)]
 struct OpcodeInfo {
     opcode: u8,
     mnemonics: Vec<String>,
-    addressingMode: Option<String>,
+    #[serde(rename = "addressingMode")]
+    addressing_mode: Option<String>,
     cycles: Option<u8>,
-    pageBoundaryCycle: Option<bool>,
+    #[serde(rename = "pageBoundaryCycle")]
+    page_boundary_cycle: Option<bool>,
     illegal: bool,
 }
 
@@ -23,7 +26,7 @@ fn test() {
         (
             e.opcode,
             e.cycles.unwrap(),
-            e.pageBoundaryCycle.unwrap_or(false),
+            e.page_boundary_cycle.unwrap_or(false),
         )
     });
 
