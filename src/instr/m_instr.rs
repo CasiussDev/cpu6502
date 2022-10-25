@@ -167,8 +167,11 @@ pub fn execute(
         }
         MicroInstruction::ZeroRegister { dst } => regs.set_selected_register8(dst, 0),
         MicroInstruction::IncrementRegister { dst } => {
-            let dst = regs.get_selected_register8(dst);
-            dst.inc();
+            //let dst = regs.get_selected_register8(dst);
+            //dst.inc();
+            let mut dst_reg = regs.get_copy_selected_register8(dst);
+            dst_reg.inc();
+            regs.set_selected_register8(dst, dst_reg.get_u8());
         }
         MicroInstruction::IncrementRegister16 { dst } => {
             let dst = regs.get_selected_register16(dst);

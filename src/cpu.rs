@@ -1,6 +1,6 @@
 use crate::instr;
 use crate::instr::InstructionSequenceMode;
-use crate::pinout::Pinout;
+use crate::pinout::{DataDirectionMode, Pinout};
 use crate::registers::{IndexRegister, RegisterFile, SelectedRegister8, StatusRegFlags};
 use std::slice::Iter;
 
@@ -52,6 +52,10 @@ impl Cpu {
 
     pub fn read_address_pins(&self) -> u16 {
         self.pins.get_address()
+    }
+
+    pub fn read_writing_to_memory_pin(&self) -> bool {
+        self.pins.get_data_direction() == DataDirectionMode::Write
     }
 
     pub fn set_data_pins(&mut self, value: u8) {

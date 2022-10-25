@@ -59,6 +59,10 @@ impl Pinout {
         self.address
     }
 
+    pub fn get_data_direction(&self) -> DataDirectionMode {
+        self.mode
+    }
+
     pub fn set_irq_input(&mut self) {
         self.irq = true;
     }
