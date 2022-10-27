@@ -3,6 +3,7 @@ use crate::instr;
 use crate::instr::InstructionSequenceMode;
 use crate::pinout::{DataDirectionMode, Pinout};
 use crate::registers::{IndexRegister, RegisterFile, SelectedRegister8, StatusRegFlags};
+use log::{debug, trace};
 use std::slice;
 
 #[derive(PartialEq, Debug)]
@@ -161,7 +162,7 @@ impl Cpu {
                     &mut self.regs,
                     &mut self.pins,
                 );
-                println!("{}", self.regs.as_log_line());
+                trace!("{}", self.regs.as_log_line());
             } else {
                 self.running_op = false;
                 self.current_op = None;
@@ -184,7 +185,7 @@ impl Cpu {
                 &mut self.regs,
                 &mut self.pins,
             );
-            println!("{}", self.regs.as_log_line());
+            trace!("{}", self.regs.as_log_line());
         } else {
             self.current_sequence = None;
             run_status = instr::ExecutionStatus::Continue;
@@ -194,7 +195,10 @@ impl Cpu {
     }
 
     pub fn run(&mut self) -> YieldStatus {
-        self.has_decoded = false;
+        #[cfg(feature = "integration_test")]
+        {
+            self.has_decoded = false;
+        }
 
         if self.current_sequence.is_none() {
             if self.waiting_interrupt.is_some() {
@@ -223,7 +227,7 @@ impl Cpu {
                     self.waiting_interrupt = self.is_waiting_interrupt();
                     self.cycle_count_since_reset += 1;
                     self.clock_half = BeforeMemory;
-                    println!("--------------");
+                    trace!("--------------");
                 }
                 instr::ExecutionStatus::Continue => {}
                 instr::ExecutionStatus::RunOp => {
@@ -246,8 +250,8 @@ impl Cpu {
                     self.cycle_count_since_reset += 1;
                     self.instr_count_since_reset += 1;
                     self.clock_half = BeforeMemory;
-                    println!("--------------");
-                    println!("--------------");
+                    trace!("--------------");
+                    trace!("--------------");
                 }
                 instr::ExecutionStatus::FinishInstructionBranch => {
                     self.current_sequence = None;
@@ -257,8 +261,8 @@ impl Cpu {
                     self.instr_count_since_reset += 1;
                     self.clock_half = BeforeMemory;
                     self.instr_ready = false;
-                    println!("--------------");
-                    println!("--------------");
+                    trace!("--------------");
+                    trace!("--------------");
                 }
             };
         }
@@ -281,9 +285,13 @@ impl Cpu {
         self.index_register = decoded_instr.index;
 
         self.instr_ready = false;
-        self.has_decoded = true;
 
-        println!("{:?}", decoded_instr)
+        #[cfg(feature = "integration_test")]
+        {
+            self.has_decoded = true;
+        }
+
+        debug!("{:?}", decoded_instr)
     }
 
     fn service_interrupt(&mut self) {

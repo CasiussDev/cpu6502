@@ -1,7 +1,8 @@
-use std::slice;
 use crate::registers::register_file::{SelectedRegister16, SelectedRegister8};
 use crate::registers::{IndexRegister, RegisterFile, StatusRegFlags};
 use crate::{alu, pinout};
+use log::trace;
+use std::slice;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum MicroInstruction {
@@ -85,7 +86,7 @@ pub enum MicroInstruction {
     FixAddressOrIncrementPC,
 }
 
-const FINISH_INSTR: [MicroInstruction;1] = [MicroInstruction::FinishInstruction;1];
+const FINISH_INSTR: [MicroInstruction; 1] = [MicroInstruction::FinishInstruction; 1];
 
 pub fn get_finish_intr_sequence() -> slice::Iter<'static, MicroInstruction> {
     FINISH_INSTR.iter()
@@ -145,7 +146,7 @@ pub fn execute(
     regs: &mut RegisterFile,
     pins: &mut pinout::Pinout,
 ) -> ExecutionStatus {
-    print!("\t{:?}", micro_instr);
+    trace!("\t{:?}", micro_instr);
     match micro_instr {
         MicroInstruction::Fetch => {
             pins.set_address_output(regs.pc.get_u16());

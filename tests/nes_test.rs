@@ -1,9 +1,11 @@
 use cpu6502::YieldStatus;
+use log::trace;
 use std::fs;
 use std::io;
 use std::io::{Read, Seek, SeekFrom, Write};
 
 extern crate disasm6502;
+extern crate simplelog;
 
 const START_PROG_ADDR_HIGH: u8 = 0xC0;
 const START_PROG_ADDR_LOW: u8 = 0x00;
@@ -57,7 +59,7 @@ impl TestComputer {
 
     pub fn run(&mut self, num_cycles: u64) {
         let mut log_file =
-            fs::File::create("testdata/output.log.txt").expect("cannot open output file");
+            fs::File::create("testdata/output.log.txt").expect("cannot open output log file");
 
         let mut instr_log = String::new();
 
@@ -83,7 +85,7 @@ impl TestComputer {
 
                 if write_to_memory {
                     self.memory[addr as usize] = self.cpu.read_data_pins();
-                    println!(
+                    trace!(
                         "\t\t\tWrite Memory[{:04X}] = {:02X}",
                         addr,
                         self.cpu.read_data_pins()
@@ -91,7 +93,7 @@ impl TestComputer {
                 } else {
                     let old_instr_ready = self.cpu.get_instr_ready();
                     self.cpu.set_data_pins(self.memory[addr as usize]);
-                    println!(
+                    trace!(
                         "\t\t\tRead Memory[{:04X}] = {:02X}",
                         addr,
                         self.cpu.read_data_pins()
@@ -107,25 +109,36 @@ impl TestComputer {
 
                         instr_log =
                             format!("{:04X} {} {}", addr, decoded.as_hex_str(), decoded.as_str());
-                        //println!("{:04X} {} {}", addr, decoded.as_hex_str(), decoded.as_str());
                     }
                 }
             }
-
-            //let status = self.cpu.run();
-            //assert_eq!(status, YieldStatus::ClockFinished);
         }
     }
 }
 
 #[test]
 fn nes_rom_test() {
+    let log_config = simplelog::ConfigBuilder::new()
+        .set_max_level(log::LevelFilter::Off)
+        .set_time_level(log::LevelFilter::Off)
+        .set_thread_level(log::LevelFilter::Off)
+        .set_target_level(log::LevelFilter::Off)
+        .set_location_level(log::LevelFilter::Off)
+        .build();
+
+    let trace_file = fs::File::create("testdata/trace.log.txt").expect("cannot open trace file");
+    simplelog::WriteLogger::init(
+        log::LevelFilter::Trace,
+        log_config,
+        trace_file,
+    )
+    .unwrap();
+
     let mut computer = TestComputer {
         cpu: Default::default(),
         memory: [0; MEMORY_64K],
     };
     computer.load_rom();
 
-    computer.run(15000);
-    //computer.run(150);
+    computer.run(14579);
 }
