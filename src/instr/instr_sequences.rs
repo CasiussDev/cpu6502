@@ -12,6 +12,7 @@ use strum_macros::EnumIter;
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 #[cfg_attr(test, derive(EnumIter))]
 pub enum InstructionSequenceMode {
+    FetchInstr,
     Break,
     StartIrq,
     StartNmi,
@@ -71,6 +72,13 @@ impl Default for InstructionSequenceMode {
 
 pub fn create_instruction_mode_sequences() -> SequenceMap {
     let mut sequences_map = collections::HashMap::from([
+        (
+            InstructionSequenceMode::FetchInstr,
+            vec![
+                instr::MicroInstruction::Fetch,
+                instr::MicroInstruction::YieldClock,
+            ],
+        ),
         (
             InstructionSequenceMode::Reset,
             vec![

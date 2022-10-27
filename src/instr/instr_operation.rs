@@ -286,21 +286,43 @@ pub fn create_instructionops_sequences() -> OpsMap {
         ),
         (
             InstructionOp::PushStatus,
-            vec![instr::MicroInstruction::WriteAddress {
-                src: SelectedRegister8::Status,
-            }],
+            vec![
+                instr::MicroInstruction::CopyRegister {
+                    src: SelectedRegister8::Status,
+                    dst: SelectedRegister8::Tmp,
+                },
+                instr::MicroInstruction::SetFlagsTmp {
+                    flags: StatusRegFlags::BREAK | StatusRegFlags::UNUSED,
+                },
+                instr::MicroInstruction::WriteAddress {
+                    src: SelectedRegister8::Tmp,
+                },
+            ],
         ),
         (
             InstructionOp::PullA,
-            vec![instr::MicroInstruction::ReadAddress {
-                dst: SelectedRegister8::A,
-            }],
+            vec![
+                instr::MicroInstruction::ReadAddress {
+                    dst: SelectedRegister8::A,
+                },
+                instr::MicroInstruction::UpdateStatusFlagsNZ {
+                    reg: SelectedRegister8::A,
+                },
+            ],
         ),
         (
             InstructionOp::PullStatus,
-            vec![instr::MicroInstruction::ReadAddress {
-                dst: SelectedRegister8::Status,
-            }],
+            vec![
+                instr::MicroInstruction::PushFlagToTmp {
+                    flag: StatusRegFlags::BREAK | StatusRegFlags::UNUSED,
+                },
+                instr::MicroInstruction::ReadAddress {
+                    dst: SelectedRegister8::Status,
+                },
+                instr::MicroInstruction::PopFlagFromTmp {
+                    flag: StatusRegFlags::BREAK | StatusRegFlags::UNUSED,
+                },
+            ],
         ),
         (
             InstructionOp::Or,
@@ -404,9 +426,14 @@ pub fn create_instructionops_sequences() -> OpsMap {
         ),
         (
             InstructionOp::LoadA,
-            vec![instr::MicroInstruction::ReadAddress {
-                dst: SelectedRegister8::A,
-            }],
+            vec![
+                instr::MicroInstruction::ReadAddress {
+                    dst: SelectedRegister8::A,
+                },
+                instr::MicroInstruction::UpdateStatusFlagsNZ {
+                    reg: SelectedRegister8::A,
+                },
+            ],
         ),
         (
             InstructionOp::StoreX,
@@ -416,9 +443,14 @@ pub fn create_instructionops_sequences() -> OpsMap {
         ),
         (
             InstructionOp::LoadX,
-            vec![instr::MicroInstruction::ReadAddress {
-                dst: SelectedRegister8::X,
-            }],
+            vec![
+                instr::MicroInstruction::ReadAddress {
+                    dst: SelectedRegister8::X,
+                },
+                instr::MicroInstruction::UpdateStatusFlagsNZ {
+                    reg: SelectedRegister8::X,
+                },
+            ],
         ),
         (
             InstructionOp::StoreY,
@@ -428,14 +460,32 @@ pub fn create_instructionops_sequences() -> OpsMap {
         ),
         (
             InstructionOp::LoadY,
-            vec![instr::MicroInstruction::ReadAddress {
-                dst: SelectedRegister8::Y,
-            }],
+            vec![
+                instr::MicroInstruction::ReadAddress {
+                    dst: SelectedRegister8::Y,
+                },
+                instr::MicroInstruction::UpdateStatusFlagsNZ {
+                    reg: SelectedRegister8::Y,
+                },
+            ],
         ),
-        (InstructionOp::Bit, vec![instr::MicroInstruction::BitInstr]),
+        (
+            InstructionOp::Bit,
+            vec![
+                instr::MicroInstruction::ReadAddress {
+                    dst: SelectedRegister8::Tmp,
+                },
+                instr::MicroInstruction::BitInstr,
+            ],
+        ),
         (
             InstructionOp::BitImmediate,
-            vec![instr::MicroInstruction::BitInstrImmediate],
+            vec![
+                instr::MicroInstruction::ReadAddress {
+                    dst: SelectedRegister8::Tmp,
+                },
+                instr::MicroInstruction::BitInstrImmediate,
+            ],
         ),
         (
             InstructionOp::BranchPlus,

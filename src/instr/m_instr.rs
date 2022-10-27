@@ -52,6 +52,9 @@ pub enum MicroInstruction {
     ClearStatusFlag {
         flag: StatusRegFlags,
     },
+    UpdateStatusFlagsNZ {
+        reg: SelectedRegister8,
+    },
     BitInstr,
     BitInstrImmediate,
     TakeConditionalBranch {
@@ -63,6 +66,12 @@ pub enum MicroInstruction {
     },
     PopFlagFromTmp {
         flag: StatusRegFlags,
+    },
+    SetFlagsTmp {
+        flags: StatusRegFlags,
+    },
+    ClearFlagsTmp {
+        flags: StatusRegFlags,
     },
     AddIndexToAddress,
     FixAddress,
@@ -120,6 +129,7 @@ pub enum ExecutionStatus {
     WaitMemory { dst: Option<SelectedRegister8> },
     RunOpAndFinish,
     FinishInstruction,
+    FinishInstructionBranch,
 }
 
 pub fn execute(
@@ -128,6 +138,7 @@ pub fn execute(
     regs: &mut RegisterFile,
     pins: &mut pinout::Pinout,
 ) -> ExecutionStatus {
+    print!("\t{:?}", micro_instr);
     match micro_instr {
         MicroInstruction::Fetch => {
             pins.set_address_output(regs.pc.get_u16());
@@ -234,11 +245,7 @@ pub fn execute(
         }
         MicroInstruction::FixAddressOrIncrementPC => {
             let addr_low_value = regs.addr.get_low_u8();
-            let index_value = regs
-                .get_copy_selected_register8(
-                    index_reg.expect("Index register not specified").into(),
-                )
-                .get_u8();
+            let index_value = regs.tmp.get_u8();
 
             if index_value > addr_low_value {
                 let addr_high_value = regs.addr.get_high_u8().wrapping_add(1);
@@ -267,7 +274,7 @@ pub fn execute(
                 let (pc_low_byte, carry) = regs.pc.get_low_u8().overflowing_add(regs.tmp.get_u8());
                 regs.pc.set_low_u8(pc_low_byte);
                 if carry == false {
-                    return ExecutionStatus::FinishInstruction;
+                    return ExecutionStatus::FinishInstructionBranch;
                 }
             } else {
                 regs.pc.inc();
@@ -275,15 +282,26 @@ pub fn execute(
             }
         }
         MicroInstruction::PushFlagToTmp { flag } => {
-            if regs.status.are_all_flags_set(flag) {
-                regs.tmp.set_u8(1);
-            } else {
-                regs.tmp.set_u8(0);
-            }
+            regs.tmp.set_u8(regs.tmp.get_u8() & flag.bits());
         }
         MicroInstruction::PopFlagFromTmp { flag } => {
-            let flag_value = regs.tmp.get_u8() != 0;
-            regs.status.update_flags(flag, flag_value);
+            let tmp_mask = flag.bits();
+            let status_mask = !tmp_mask;
+
+            let new_status = (regs.status.get_u8() & status_mask) | (regs.tmp.get_u8() | tmp_mask);
+            regs.status.set_u8(new_status);
+        }
+        MicroInstruction::SetFlagsTmp { flags } => {
+            let new_value = regs.tmp.get_u8() | flags.bits();
+            regs.tmp.set_u8(new_value);
+        }
+        MicroInstruction::ClearFlagsTmp { flags } => {
+            let new_value = regs.tmp.get_u8() & !flags.bits();
+            regs.tmp.set_u8(new_value);
+        }
+        MicroInstruction::UpdateStatusFlagsNZ { reg } => {
+            let value = regs.get_copy_selected_register8(reg).get_i8();
+            alu::update_status_nz(value, &mut regs.status);
         }
     }
 

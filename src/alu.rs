@@ -70,10 +70,15 @@ pub fn add(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusR
 }
 
 pub fn cmp(accumulator: &Reg8, operand: &Reg8, status_register: &mut StatusReg) {
-    cmp_internal(accumulator, operand, status_register);
+    cmp_internal(accumulator, operand, status_register, false);
 }
 
-fn cmp_internal(accumulator: &Reg8, operand: &Reg8, status_register: &mut StatusReg) -> i8 {
+fn cmp_internal(
+    accumulator: &Reg8,
+    operand: &Reg8,
+    status_register: &mut StatusReg,
+    update_overflow_bit: bool,
+) -> i8 {
     let (mut result, mut overflow) = accumulator.get_i8().overflowing_sub(operand.get_i8());
     let (_, mut carry) = accumulator.get_u8().overflowing_sub(operand.get_u8());
 
@@ -85,7 +90,9 @@ fn cmp_internal(accumulator: &Reg8, operand: &Reg8, status_register: &mut Status
         carry |= dec_carry;
     }
 
-    update_status_v(overflow, status_register);
+    if update_overflow_bit {
+        update_status_v(overflow, status_register);
+    }
     update_status_carry_sub(carry, status_register);
     update_status_nz(result, status_register);
 
@@ -96,7 +103,7 @@ pub fn sub(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusR
     if cfg!(feature = "decimal") && status_register.are_all_flags_set(StatusRegFlags::DECIMAL) {
         todo!();
     } else {
-        let result = cmp_internal(accumulator, operand, status_register);
+        let result = cmp_internal(accumulator, operand, status_register, true);
         accumulator.set_i8(result);
     }
 }

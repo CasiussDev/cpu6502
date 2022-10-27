@@ -1,3 +1,4 @@
+use crate::cpu::ClockHalf::{AfterMemory, BeforeMemory};
 use crate::instr;
 use crate::instr::InstructionSequenceMode;
 use crate::pinout::{DataDirectionMode, Pinout};
@@ -8,6 +9,12 @@ use std::slice::Iter;
 enum WaitingInterrupt {
     NonMaskableInterrupt,
     Interrupt,
+}
+
+#[derive(PartialEq, Debug)]
+enum ClockHalf {
+    BeforeMemory,
+    AfterMemory,
 }
 
 #[derive(Default, Debug)]
@@ -21,14 +28,24 @@ pub struct Cpu {
     waiting_interrupt: Option<WaitingInterrupt>,
     cycle_count_since_reset: u64,
     instr_count_since_reset: u64,
+    clock_half: ClockHalf,
     instr_ready: bool,
     running_op: bool,
+
+    #[cfg(feature = "integration_test")]
+    has_decoded: bool,
 }
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum YieldStatus {
     ClockFinished,
     WaitingMemory,
+}
+
+impl Default for ClockHalf {
+    fn default() -> Self {
+        ClockHalf::BeforeMemory
+    }
 }
 
 impl Cpu {
@@ -44,6 +61,21 @@ impl Cpu {
 
     pub fn get_instr_count_since_reset(&self) -> u64 {
         self.instr_count_since_reset
+    }
+
+    #[cfg(feature = "integration_test")]
+    pub fn get_instr_ready(&self) -> bool {
+        self.instr_ready
+    }
+
+    #[cfg(feature = "integration_test")]
+    pub fn has_decoded(&self) -> bool {
+        self.has_decoded
+    }
+
+    #[cfg(feature = "integration_test")]
+    pub fn get_regs_as_log_line(&self) -> String {
+        self.regs.as_log_line()
     }
 
     pub fn read_data_pins(&self) -> u8 {
@@ -129,6 +161,7 @@ impl Cpu {
                     &mut self.regs,
                     &mut self.pins,
                 );
+                println!("{}", self.regs.as_log_line());
             } else {
                 self.running_op = false;
                 self.current_op = None;
@@ -151,6 +184,7 @@ impl Cpu {
                 &mut self.regs,
                 &mut self.pins,
             );
+            println!("{}", self.regs.as_log_line());
         } else {
             self.current_sequence = None;
             run_status = instr::ExecutionStatus::Continue;
@@ -160,10 +194,14 @@ impl Cpu {
     }
 
     pub fn run(&mut self) -> YieldStatus {
-        if self.current_sequence.is_none() && self.waiting_interrupt.is_some() {
-            self.service_interrupt();
-        } else if self.instr_ready {
-            self.decode_instr();
+        self.has_decoded = false;
+
+        if self.current_sequence.is_none() {
+            if self.waiting_interrupt.is_some() {
+                self.service_interrupt();
+            } else if self.instr_ready && (self.clock_half == BeforeMemory) {
+                self.decode_instr();
+            }
         }
 
         let mut run_status = instr::ExecutionStatus::Continue;
@@ -174,18 +212,18 @@ impl Cpu {
             } else if self.current_sequence.is_some() {
                 run_status = self.run_sequence();
             } else {
-                run_status = instr::execute(
-                    instr::MicroInstruction::Fetch,
-                    None,
-                    &mut self.regs,
-                    &mut self.pins,
-                );
+                self.current_sequence = instr::get_sequences_map()
+                    .get(&InstructionSequenceMode::FetchInstr)
+                    .map(|v| v.iter());
+                run_status = self.run_sequence();
             }
 
             match run_status {
                 instr::ExecutionStatus::YieldClock => {
                     self.waiting_interrupt = self.is_waiting_interrupt();
                     self.cycle_count_since_reset += 1;
+                    self.clock_half = BeforeMemory;
+                    println!("--------------");
                 }
                 instr::ExecutionStatus::Continue => {}
                 instr::ExecutionStatus::RunOp => {
@@ -194,6 +232,7 @@ impl Cpu {
                 }
                 instr::ExecutionStatus::WaitMemory { dst } => {
                     self.data_destination = dst;
+                    self.clock_half = AfterMemory;
                     return YieldStatus::WaitingMemory;
                 }
                 instr::ExecutionStatus::RunOpAndFinish => {}
@@ -202,6 +241,19 @@ impl Cpu {
                     self.current_op = None;
                     self.cycle_count_since_reset += 1;
                     self.instr_count_since_reset += 1;
+                    self.clock_half = BeforeMemory;
+                    println!("--------------");
+                    println!("--------------");
+                }
+                instr::ExecutionStatus::FinishInstructionBranch => {
+                    self.current_sequence = None;
+                    self.current_op = None;
+                    self.cycle_count_since_reset += 1;
+                    self.instr_count_since_reset += 1;
+                    self.clock_half = BeforeMemory;
+                    self.instr_ready = false;
+                    println!("--------------");
+                    println!("--------------");
                 }
             };
         }
@@ -211,19 +263,22 @@ impl Cpu {
 
     fn decode_instr(&mut self) {
         let opcode = self.regs.ir.get_u8();
-        let decoded_intr = instr::decode(opcode);
+        let decoded_instr = instr::decode(opcode);
 
         self.current_sequence = instr::get_sequences_map()
-            .get(&decoded_intr.sequence)
+            .get(&decoded_instr.sequence)
             .map(|v| v.iter());
 
         self.current_op = instr::get_ops_map()
-            .get(&decoded_intr.operation)
+            .get(&decoded_instr.operation)
             .map(|v| v.iter());
 
-        self.index_register = decoded_intr.index;
+        self.index_register = decoded_instr.index;
 
         self.instr_ready = false;
+        self.has_decoded = true;
+
+        println!("{:?}", decoded_instr)
     }
 
     fn service_interrupt(&mut self) {

@@ -9,15 +9,15 @@ extern crate enum_primitive_derive;
 extern crate lazy_static;
 extern crate num_traits;
 
-//#[cfg(test)]
+#[cfg(feature = "integration_test")]
 pub use cpu::Cpu;
-//#[cfg(test)]
+#[cfg(feature = "integration_test")]
 pub use cpu::YieldStatus;
-//#[cfg(test)]
+#[cfg(feature = "integration_test")]
 pub use instr::get_sequences_map;
-//#[cfg(test)]
+#[cfg(feature = "integration_test")]
 pub use instr::opcodes::decode;
-//#[cfg(test)]
+#[cfg(feature = "integration_test")]
 pub use instr::InstructionOp;
-//#[cfg(test)]
+#[cfg(feature = "integration_test")]
 pub use instr::MicroInstruction;

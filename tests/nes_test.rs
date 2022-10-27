@@ -1,7 +1,10 @@
 use cpu6502::YieldStatus;
+use std::fmt::Debug;
 use std::fs;
 use std::io;
-use std::io::{Read, Seek, SeekFrom};
+use std::io::{Read, Seek, SeekFrom, Write};
+
+extern crate disasm6502;
 
 const START_PROG_ADDR_HIGH: u8 = 0xC0;
 const START_PROG_ADDR_LOW: u8 = 0x00;
@@ -54,11 +57,27 @@ impl TestComputer {
     }
 
     pub fn run(&mut self, num_cycles: u64) {
+        let mut log_file =
+            fs::File::create("testdata/output.log.txt").expect("cannot open output file");
+
+        let mut instr_log = String::new();
+
         self.cpu.reset();
 
         while self.cpu.get_cycle_count_since_reset() < num_cycles {
             let status = self.cpu.run();
             //assert_eq!(status, YieldStatus::WaitingMemory);
+
+            if self.cpu.has_decoded() {
+                writeln!(
+                    log_file,
+                    "{}\t{} CYC:{}",
+                    instr_log,
+                    self.cpu.get_regs_as_log_line(),
+                    self.cpu.get_cycle_count_since_reset()
+                )
+                .expect("cannot write to file");
+            }
 
             if status == YieldStatus::WaitingMemory {
                 let addr = self.cpu.read_address_pins();
@@ -67,7 +86,20 @@ impl TestComputer {
                 if write_to_memory {
                     self.memory[addr as usize] = self.cpu.read_data_pins();
                 } else {
+                    let old_instr_ready = self.cpu.get_instr_ready();
                     self.cpu.set_data_pins(self.memory[addr as usize]);
+                    if (old_instr_ready == false) && self.cpu.get_instr_ready() {
+                        let instructions = disasm6502::from_addr_array(
+                            &self.memory[(addr as usize)..(addr as usize + 6)],
+                            addr,
+                        )
+                        .expect("could not decode instr");
+                        let decoded = instructions.first().expect("empty instr vector");
+
+                        instr_log =
+                            format!("{:04X} {} {}", addr, decoded.as_hex_str(), decoded.as_str());
+                        //println!("{:04X} {} {}", addr, decoded.as_hex_str(), decoded.as_str());
+                    }
                 }
             }
 
@@ -85,5 +117,6 @@ fn nes_rom_test() {
     };
     computer.load_rom();
 
-    computer.run(5000);
+    computer.run(14575);
+    //computer.run(150);
 }

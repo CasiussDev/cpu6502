@@ -205,6 +205,17 @@ impl RegisterFile {
             SelectedRegister8::Discard => (),
         };
     }
+
+    pub fn as_log_line(&self) -> String {
+        format!(
+            "\t\tA:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
+            self.a.get_u8(),
+            self.x.get_u8(),
+            self.y.get_u8(),
+            self.status.get_u8(),
+            self.sp.get_u8()
+        )
+    }
 }
 
 impl fmt::Debug for RegisterFile {
