@@ -419,13 +419,15 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                     src: SelectedRegister8::SP,
                 },
                 instr::MicroInstruction::PushFlagToTmp {
-                    flag: StatusRegFlags::IRQ_DISABLE,
+                    //flag: StatusRegFlags::IRQ_DISABLE,
+                    flag: StatusRegFlags::BREAK | StatusRegFlags::UNUSED,
                 },
                 instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Status,
                 },
                 instr::MicroInstruction::PopFlagFromTmp {
-                    flag: StatusRegFlags::IRQ_DISABLE,
+                    //flag: StatusRegFlags::IRQ_DISABLE ,
+                    flag: StatusRegFlags::BREAK | StatusRegFlags::UNUSED,
                 },
                 instr::MicroInstruction::IncrementRegister {
                     dst: SelectedRegister8::SP,

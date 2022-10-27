@@ -239,6 +239,7 @@ impl Cpu {
                 instr::ExecutionStatus::FinishInstruction => {
                     self.current_sequence = None;
                     self.current_op = None;
+                    self.running_op = false;
                     self.cycle_count_since_reset += 1;
                     self.instr_count_since_reset += 1;
                     self.clock_half = BeforeMemory;
@@ -248,6 +249,7 @@ impl Cpu {
                 instr::ExecutionStatus::FinishInstructionBranch => {
                     self.current_sequence = None;
                     self.current_op = None;
+                    self.running_op = false;
                     self.cycle_count_since_reset += 1;
                     self.instr_count_since_reset += 1;
                     self.clock_half = BeforeMemory;

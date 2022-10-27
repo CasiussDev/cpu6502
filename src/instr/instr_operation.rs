@@ -238,38 +238,63 @@ pub fn create_instructionops_sequences() -> OpsMap {
         ),
         (
             InstructionOp::TransferAccumulatorToX,
-            vec![instr::MicroInstruction::CopyRegister {
-                src: SelectedRegister8::A,
-                dst: SelectedRegister8::X,
-            }],
+            vec![
+                instr::MicroInstruction::CopyRegister {
+                    src: SelectedRegister8::A,
+                    dst: SelectedRegister8::X,
+                },
+                instr::MicroInstruction::UpdateStatusFlagsNZ {
+                    reg: SelectedRegister8::X,
+                },
+            ],
         ),
         (
             InstructionOp::TransferAccumulatorToY,
-            vec![instr::MicroInstruction::CopyRegister {
-                src: SelectedRegister8::A,
-                dst: SelectedRegister8::Y,
-            }],
+            vec![
+                instr::MicroInstruction::CopyRegister {
+                    src: SelectedRegister8::A,
+                    dst: SelectedRegister8::Y,
+                },
+                instr::MicroInstruction::UpdateStatusFlagsNZ {
+                    reg: SelectedRegister8::Y,
+                },
+            ],
         ),
         (
             InstructionOp::TransferStackPtrToX,
-            vec![instr::MicroInstruction::CopyRegister {
-                src: SelectedRegister8::SP,
-                dst: SelectedRegister8::X,
-            }],
+            vec![
+                instr::MicroInstruction::CopyRegister {
+                    src: SelectedRegister8::SP,
+                    dst: SelectedRegister8::X,
+                },
+                instr::MicroInstruction::UpdateStatusFlagsNZ {
+                    reg: SelectedRegister8::X,
+                },
+            ],
         ),
         (
             InstructionOp::TransferXToAccumulator,
-            vec![instr::MicroInstruction::CopyRegister {
-                src: SelectedRegister8::X,
-                dst: SelectedRegister8::A,
-            }],
+            vec![
+                instr::MicroInstruction::CopyRegister {
+                    src: SelectedRegister8::X,
+                    dst: SelectedRegister8::A,
+                },
+                instr::MicroInstruction::UpdateStatusFlagsNZ {
+                    reg: SelectedRegister8::A,
+                },
+            ],
         ),
         (
             InstructionOp::TransferYToAccumulator,
-            vec![instr::MicroInstruction::CopyRegister {
-                src: SelectedRegister8::Y,
-                dst: SelectedRegister8::A,
-            }],
+            vec![
+                instr::MicroInstruction::CopyRegister {
+                    src: SelectedRegister8::Y,
+                    dst: SelectedRegister8::A,
+                },
+                instr::MicroInstruction::UpdateStatusFlagsNZ {
+                    reg: SelectedRegister8::A,
+                },
+            ],
         ),
         (
             InstructionOp::TransferXToStackPtr,

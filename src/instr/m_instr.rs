@@ -282,13 +282,13 @@ pub fn execute(
             }
         }
         MicroInstruction::PushFlagToTmp { flag } => {
-            regs.tmp.set_u8(regs.tmp.get_u8() & flag.bits());
+            regs.tmp.set_u8(regs.status.get_u8() & flag.bits());
         }
         MicroInstruction::PopFlagFromTmp { flag } => {
             let tmp_mask = flag.bits();
             let status_mask = !tmp_mask;
 
-            let new_status = (regs.status.get_u8() & status_mask) | (regs.tmp.get_u8() | tmp_mask);
+            let new_status = (regs.status.get_u8() & status_mask) | (regs.tmp.get_u8() & tmp_mask);
             regs.status.set_u8(new_status);
         }
         MicroInstruction::SetFlagsTmp { flags } => {

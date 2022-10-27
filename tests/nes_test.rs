@@ -66,7 +66,6 @@ impl TestComputer {
 
         while self.cpu.get_cycle_count_since_reset() < num_cycles {
             let status = self.cpu.run();
-            //assert_eq!(status, YieldStatus::WaitingMemory);
 
             if self.cpu.has_decoded() {
                 writeln!(
@@ -85,9 +84,20 @@ impl TestComputer {
 
                 if write_to_memory {
                     self.memory[addr as usize] = self.cpu.read_data_pins();
+                    println!(
+                        "\t\t\tWrite Memory[{:04X}] = {:02X}",
+                        addr,
+                        self.cpu.read_data_pins()
+                    );
                 } else {
                     let old_instr_ready = self.cpu.get_instr_ready();
                     self.cpu.set_data_pins(self.memory[addr as usize]);
+                    println!(
+                        "\t\t\tRead Memory[{:04X}] = {:02X}",
+                        addr,
+                        self.cpu.read_data_pins()
+                    );
+
                     if (old_instr_ready == false) && self.cpu.get_instr_ready() {
                         let instructions = disasm6502::from_addr_array(
                             &self.memory[(addr as usize)..(addr as usize + 6)],
@@ -117,6 +127,6 @@ fn nes_rom_test() {
     };
     computer.load_rom();
 
-    computer.run(14575);
+    computer.run(15000);
     //computer.run(150);
 }

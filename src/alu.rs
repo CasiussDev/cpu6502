@@ -70,40 +70,32 @@ pub fn add(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusR
 }
 
 pub fn cmp(accumulator: &Reg8, operand: &Reg8, status_register: &mut StatusReg) {
-    cmp_internal(accumulator, operand, status_register, false);
-}
-
-fn cmp_internal(
-    accumulator: &Reg8,
-    operand: &Reg8,
-    status_register: &mut StatusReg,
-    update_overflow_bit: bool,
-) -> i8 {
     let (mut result, mut overflow) = accumulator.get_i8().overflowing_sub(operand.get_i8());
     let (_, mut carry) = accumulator.get_u8().overflowing_sub(operand.get_u8());
 
-    if status_register.are_all_flags_set(StatusRegFlags::CARRY) == false {
-        let (_, dec_carry) = (result as u8).overflowing_sub(1);
-        let (new_result, dec_overflow) = result.overflowing_sub(1);
-        result = new_result;
-        overflow |= dec_overflow;
-        carry |= dec_carry;
-    }
-
-    if update_overflow_bit {
-        update_status_v(overflow, status_register);
-    }
     update_status_carry_sub(carry, status_register);
     update_status_nz(result, status_register);
-
-    result
 }
 
 pub fn sub(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusReg) {
     if cfg!(feature = "decimal") && status_register.are_all_flags_set(StatusRegFlags::DECIMAL) {
         todo!();
     } else {
-        let result = cmp_internal(accumulator, operand, status_register, true);
+        let (mut result, mut overflow) = accumulator.get_i8().overflowing_sub(operand.get_i8());
+        let (_, mut carry) = accumulator.get_u8().overflowing_sub(operand.get_u8());
+
+        if status_register.are_all_flags_set(StatusRegFlags::CARRY) == false {
+            let (_, dec_carry) = (result as u8).overflowing_sub(1);
+            let (new_result, dec_overflow) = result.overflowing_sub(1);
+            result = new_result;
+            overflow |= dec_overflow;
+            carry |= dec_carry;
+        }
+
+        update_status_v(overflow, status_register);
+        update_status_carry_sub(carry, status_register);
+        update_status_nz(result, status_register);
+
         accumulator.set_i8(result);
     }
 }
@@ -169,7 +161,7 @@ pub fn rotate_right(src_dst: &mut Reg8, status_register: &mut StatusReg) {
     src_dst.shift_right();
 
     if old_carry_bit_set {
-        let result = src_dst.get_u8() & 0x80;
+        let result = src_dst.get_u8() | 0x80;
         src_dst.set_u8(result);
     }
 
