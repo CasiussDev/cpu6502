@@ -3,7 +3,7 @@ use crate::instr;
 use crate::instr::InstructionSequenceMode;
 use crate::pinout::{DataDirectionMode, Pinout};
 use crate::registers::{IndexRegister, RegisterFile, SelectedRegister8, StatusRegFlags};
-use std::slice::Iter;
+use std::slice;
 
 #[derive(PartialEq, Debug)]
 enum WaitingInterrupt {
@@ -21,8 +21,8 @@ enum ClockHalf {
 pub struct Cpu {
     regs: RegisterFile,
     pins: Pinout,
-    current_sequence: Option<Iter<'static, instr::MicroInstruction>>,
-    current_op: Option<Iter<'static, instr::MicroInstruction>>,
+    current_sequence: Option<slice::Iter<'static, instr::MicroInstruction>>,
+    current_op: Option<slice::Iter<'static, instr::MicroInstruction>>,
     data_destination: Option<SelectedRegister8>,
     index_register: Option<IndexRegister>,
     waiting_interrupt: Option<WaitingInterrupt>,
@@ -235,7 +235,10 @@ impl Cpu {
                     self.clock_half = AfterMemory;
                     return YieldStatus::WaitingMemory;
                 }
-                instr::ExecutionStatus::RunOpAndFinish => {}
+                instr::ExecutionStatus::RunOpAndFinish => {
+                    self.running_op = true;
+                    self.current_sequence = Some(instr::get_finish_intr_sequence());
+                }
                 instr::ExecutionStatus::FinishInstruction => {
                     self.current_sequence = None;
                     self.current_op = None;

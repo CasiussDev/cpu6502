@@ -1,6 +1,8 @@
+use std::slice;
 use crate::registers::register_file::{SelectedRegister16, SelectedRegister8};
 use crate::registers::{IndexRegister, RegisterFile, StatusRegFlags};
 use crate::{alu, pinout};
+use crate::MicroInstruction::FinishInstruction;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum MicroInstruction {
@@ -82,6 +84,12 @@ pub enum MicroInstruction {
 
     FixAddressOrRunOpAndFinish,
     FixAddressOrIncrementPC,
+}
+
+const FINISH_INSTR: [MicroInstruction;1] = [MicroInstruction::FinishInstruction;1];
+
+pub fn get_finish_intr_sequence() -> slice::Iter<'static, MicroInstruction> {
+    FINISH_INSTR.iter()
 }
 
 pub type MicroInstructionsVector = Vec<MicroInstruction>;

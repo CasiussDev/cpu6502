@@ -70,7 +70,7 @@ impl TestComputer {
             if self.cpu.has_decoded() {
                 writeln!(
                     log_file,
-                    "{}\t{} CYC:{}",
+                    "{:<25}{} CYC:{}",
                     instr_log,
                     self.cpu.get_regs_as_log_line(),
                     self.cpu.get_cycle_count_since_reset()
