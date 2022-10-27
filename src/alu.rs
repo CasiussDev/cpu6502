@@ -70,11 +70,10 @@ pub fn add(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusR
 }
 
 pub fn cmp(accumulator: &Reg8, operand: &Reg8, status_register: &mut StatusReg) {
-    let (mut result, mut overflow) = accumulator.get_i8().overflowing_sub(operand.get_i8());
-    let (_, mut carry) = accumulator.get_u8().overflowing_sub(operand.get_u8());
+    let (result, carry) = accumulator.get_u8().overflowing_sub(operand.get_u8());
 
     update_status_carry_sub(carry, status_register);
-    update_status_nz(result, status_register);
+    update_status_nz(result as i8, status_register);
 }
 
 pub fn sub(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusReg) {

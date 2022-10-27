@@ -2,7 +2,6 @@ use std::slice;
 use crate::registers::register_file::{SelectedRegister16, SelectedRegister8};
 use crate::registers::{IndexRegister, RegisterFile, StatusRegFlags};
 use crate::{alu, pinout};
-use crate::MicroInstruction::FinishInstruction;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum MicroInstruction {

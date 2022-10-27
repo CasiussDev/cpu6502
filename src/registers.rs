@@ -26,6 +26,7 @@ impl Reg8 {
         Self { value }
     }
 
+    #[allow(dead_code)]
     pub fn new_i8(value: i8) -> Self {
         Self {
             value: (value as u8),
@@ -90,10 +91,12 @@ impl Reg16 {
         self.value = value;
     }
 
+    #[allow(dead_code)]
     pub fn get_i16(&self) -> i16 {
         self.value as i16
     }
 
+    #[allow(dead_code)]
     pub fn set_i16(&mut self, value: i16) {
         self.value = value as u16;
     }
@@ -107,10 +110,12 @@ impl Reg16 {
         self.value |= value as u16;
     }
 
+    #[allow(dead_code)]
     pub fn get_low_i8(&self) -> i8 {
         self.value as i8
     }
 
+    #[allow(dead_code)]
     pub fn set_low_i8(&mut self, value: i8) {
         self.value &= 0xFF00;
         self.value |= (value as u8) as u16;
@@ -125,10 +130,12 @@ impl Reg16 {
         self.value |= (value as u16) << 8;
     }
 
+    #[allow(dead_code)]
     pub fn get_high_i8(&self) -> i8 {
         self.value.to_be_bytes()[0] as i8
     }
 
+    #[allow(dead_code)]
     pub fn set_high_i8(&mut self, value: i8) {
         self.value &= 0x00FF;
         self.value |= (value as u16) << 8;
