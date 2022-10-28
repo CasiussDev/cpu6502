@@ -30,8 +30,8 @@ pub struct Cpu {
     data_destination: Option<SelectedRegister8>,
     index_register: Option<IndexRegister>,
     waiting_interrupt: Option<WaitingInterrupt>,
-    cycle_count_since_reset: u64,
-    instr_count_since_reset: u64,
+    cycle_count_since_reset: u128,
+    instr_count_since_reset: u128,
     clock_half: ClockHalf,
     instr_ready: bool,
     running_op: bool,
@@ -62,11 +62,11 @@ impl Cpu {
         cpu
     }
 
-    pub fn get_cycle_count_since_reset(&self) -> u64 {
+    pub fn get_cycle_count_since_reset(&self) -> u128 {
         self.cycle_count_since_reset
     }
 
-    pub fn get_instr_count_since_reset(&self) -> u64 {
+    pub fn get_instr_count_since_reset(&self) -> u128 {
         self.instr_count_since_reset
     }
 
