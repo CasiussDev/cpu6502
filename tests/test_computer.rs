@@ -1,4 +1,3 @@
-use log::trace;
 use std::io::{Read, Seek, SeekFrom};
 use std::{fs, io};
 
@@ -57,5 +56,17 @@ impl TestComputer {
 
         self.memory[START_PROG_PTR_HIGH] = START_PROG_ADDR_HIGH;
         self.memory[START_PROG_PTR_LOW] = START_PROG_ADDR_LOW;
+
+        let code_patch : Vec<u8> = vec![
+            0x68, 0x68, 0x68, 0x68, // 4 PLA
+            0xA9, 0x24, // LDA #$24
+            0x48, // PHA
+            0x28, // PLA
+            0x4C, 0xF5, 0xC5, // JMP $C5F5
+        ];
+
+        for (i, byte) in code_patch.into_iter().enumerate() {
+            self.memory[i + 0xC6BD] = byte;
+        }
     }
 }

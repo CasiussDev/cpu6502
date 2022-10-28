@@ -132197,7 +132197,7 @@ DecodedOpcode { sequence: Relative, operation: BranchNotEqual, index: None }
 DecodedOpcode { sequence: Pull, operation: PullStatus, index: None }
 	ReadPC { dst: Discard, increment: false }
 		A:AA X:97 Y:4E P:A5 SP:F8
-			Read Memory[C6BD] = 04
+			Read Memory[C6BD] = 68
 	YieldClock
 		A:AA X:97 Y:4E P:A5 SP:F8
 --------------
@@ -132225,7 +132225,7 @@ DecodedOpcode { sequence: Pull, operation: PullStatus, index: None }
 --------------
 	Fetch
 		A:AA X:97 Y:4E P:EF SP:F9
-			Read Memory[C6BD] = 04
+			Read Memory[C6BD] = 68
 	FinishInstruction
 		A:AA X:97 Y:4E P:EF SP:F9
 --------------
