@@ -1,8 +1,8 @@
 use cpu6502::YieldStatus;
 use log::trace;
-use std::fs;
 use std::io;
 use std::io::{Read, Seek, SeekFrom, Write};
+use std::fs;
 
 extern crate disasm6502;
 extern crate simplelog;
@@ -127,12 +127,7 @@ fn nes_rom_test() {
         .build();
 
     let trace_file = fs::File::create("testdata/trace.log.txt").expect("cannot open trace file");
-    simplelog::WriteLogger::init(
-        log::LevelFilter::Trace,
-        log_config,
-        trace_file,
-    )
-    .unwrap();
+    simplelog::WriteLogger::init(log::LevelFilter::Trace, log_config, trace_file).unwrap();
 
     let mut computer = TestComputer {
         cpu: Default::default(),
