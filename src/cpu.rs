@@ -1,10 +1,13 @@
+#[cfg(feature = "perf_time")]
+mod perf_time;
+
 use crate::cpu::ClockHalf::{AfterMemory, BeforeMemory};
 use crate::instr;
 use crate::instr::InstructionSequenceMode;
 use crate::pinout::{DataDirectionMode, Pinout};
 use crate::registers::{IndexRegister, RegisterFile, SelectedRegister8, StatusRegFlags};
 use log::{debug, trace};
-use std::slice;
+use std::{slice, time};
 
 #[derive(PartialEq, Debug)]
 enum WaitingInterrupt {
@@ -35,6 +38,9 @@ pub struct Cpu {
 
     #[cfg(feature = "integration_test")]
     has_decoded: bool,
+
+    #[cfg(feature = "perf_time")]
+    pub timers: perf_time::PerfTimer,
 }
 
 #[derive(PartialEq, Eq, Debug)]
@@ -195,6 +201,11 @@ impl Cpu {
     }
 
     pub fn run(&mut self) -> YieldStatus {
+        let mut _run_start;
+        #[cfg(feature = "perf_time")]
+        {
+            _run_start = time::Instant::now();
+        }
         #[cfg(feature = "integration_test")]
         {
             self.has_decoded = false;
@@ -237,6 +248,11 @@ impl Cpu {
                 instr::ExecutionStatus::WaitMemory { dst } => {
                     self.data_destination = dst;
                     self.clock_half = AfterMemory;
+                    #[cfg(feature = "perf_time")]
+                    {
+                        self.timers.running += _run_start.elapsed();
+                    }
+
                     return YieldStatus::WaitingMemory;
                 }
                 instr::ExecutionStatus::RunOpAndFinish => {
@@ -267,10 +283,20 @@ impl Cpu {
             };
         }
 
+        #[cfg(feature = "perf_time")]
+        {
+            self.timers.running += _run_start.elapsed();
+        }
         YieldStatus::ClockFinished
     }
 
     fn decode_instr(&mut self) {
+        let mut _decode_start;
+        #[cfg(feature = "perf_time")]
+        {
+            _decode_start = time::Instant::now();
+        }
+
         let opcode = self.regs.ir.get_u8();
         let decoded_instr = instr::decode(opcode);
 
@@ -291,7 +317,12 @@ impl Cpu {
             self.has_decoded = true;
         }
 
-        debug!("{:?}", decoded_instr)
+        debug!("{:?}", decoded_instr);
+
+        #[cfg(feature = "perf_time")]
+        {
+            self.timers.decoding += _decode_start.elapsed();
+        }
     }
 
     fn service_interrupt(&mut self) {

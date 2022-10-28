@@ -25,7 +25,8 @@ simplelog = "0.12.0"
 #log = "0.4"
 
 [features]
-default = ["integration_test"]
+default = ["integration_test", "perf_time"]
 decimal = []
 undoc_opcodes = []
 integration_test = []
+perf_time = []
