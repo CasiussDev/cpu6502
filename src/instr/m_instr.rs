@@ -1,8 +1,10 @@
 use crate::registers::register_file::{SelectedRegister16, SelectedRegister8};
 use crate::registers::{IndexRegister, RegisterFile, StatusRegFlags};
 use crate::{alu, pinout};
-use log::trace;
 use std::slice;
+
+#[cfg(feature = "logging")]
+use log::trace;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum MicroInstruction {
@@ -146,7 +148,10 @@ pub fn execute(
     regs: &mut RegisterFile,
     pins: &mut pinout::Pinout,
 ) -> ExecutionStatus {
-    trace!("\t{:?}", micro_instr);
+    #[cfg(feature = "logging")]
+    {
+        trace!("\t{:?}", micro_instr);
+    }
     match micro_instr {
         MicroInstruction::Fetch => {
             pins.set_address_output(regs.pc.get_u16());

@@ -1,13 +1,12 @@
-#[cfg(feature = "perf_time")]
-mod perf_time;
-
 use crate::cpu::ClockHalf::{AfterMemory, BeforeMemory};
 use crate::instr;
 use crate::instr::InstructionSequenceMode;
 use crate::pinout::{DataDirectionMode, Pinout};
 use crate::registers::{IndexRegister, RegisterFile, SelectedRegister8, StatusRegFlags};
-use log::{debug, trace};
 use std::{slice, time};
+
+#[cfg(feature = "logging")]
+use log::{debug, trace};
 
 #[derive(PartialEq, Debug)]
 enum WaitingInterrupt {
@@ -38,9 +37,6 @@ pub struct Cpu {
 
     #[cfg(feature = "integration_test")]
     has_decoded: bool,
-
-    #[cfg(feature = "perf_time")]
-    pub timers: perf_time::PerfTimer,
 }
 
 #[derive(PartialEq, Eq, Debug)]
@@ -168,7 +164,10 @@ impl Cpu {
                     &mut self.regs,
                     &mut self.pins,
                 );
-                trace!("{}", self.regs.as_log_line());
+                #[cfg(feature = "logging")]
+                {
+                    trace!("{}", self.regs.as_log_line());
+                }
             } else {
                 self.running_op = false;
                 self.current_op = None;
@@ -191,7 +190,10 @@ impl Cpu {
                 &mut self.regs,
                 &mut self.pins,
             );
-            trace!("{}", self.regs.as_log_line());
+            #[cfg(feature = "logging")]
+            {
+                trace!("{}", self.regs.as_log_line());
+            }
         } else {
             self.current_sequence = None;
             run_status = instr::ExecutionStatus::Continue;
@@ -201,11 +203,6 @@ impl Cpu {
     }
 
     pub fn run(&mut self) -> YieldStatus {
-        let mut _run_start;
-        #[cfg(feature = "perf_time")]
-        {
-            _run_start = time::Instant::now();
-        }
         #[cfg(feature = "integration_test")]
         {
             self.has_decoded = false;
@@ -238,7 +235,10 @@ impl Cpu {
                     self.waiting_interrupt = self.is_waiting_interrupt();
                     self.cycle_count_since_reset += 1;
                     self.clock_half = BeforeMemory;
-                    trace!("--------------");
+                    #[cfg(feature = "logging")]
+                    {
+                        trace!("--------------");
+                    }
                 }
                 instr::ExecutionStatus::Continue => {}
                 instr::ExecutionStatus::RunOp => {
@@ -248,10 +248,6 @@ impl Cpu {
                 instr::ExecutionStatus::WaitMemory { dst } => {
                     self.data_destination = dst;
                     self.clock_half = AfterMemory;
-                    #[cfg(feature = "perf_time")]
-                    {
-                        self.timers.running += _run_start.elapsed();
-                    }
 
                     return YieldStatus::WaitingMemory;
                 }
@@ -266,8 +262,11 @@ impl Cpu {
                     self.cycle_count_since_reset += 1;
                     self.instr_count_since_reset += 1;
                     self.clock_half = BeforeMemory;
-                    trace!("--------------");
-                    trace!("--------------");
+                    #[cfg(feature = "logging")]
+                    {
+                        trace!("--------------");
+                        trace!("--------------");
+                    }
                 }
                 instr::ExecutionStatus::FinishInstructionBranch => {
                     self.current_sequence = None;
@@ -277,25 +276,20 @@ impl Cpu {
                     self.instr_count_since_reset += 1;
                     self.clock_half = BeforeMemory;
                     self.instr_ready = false;
-                    trace!("--------------");
-                    trace!("--------------");
+                    #[cfg(feature = "logging")]
+                    {
+                        trace!("--------------");
+                        trace!("--------------");
+                    }
                 }
             };
         }
 
-        #[cfg(feature = "perf_time")]
-        {
-            self.timers.running += _run_start.elapsed();
-        }
         YieldStatus::ClockFinished
     }
 
     fn decode_instr(&mut self) {
-        let mut _decode_start;
-        #[cfg(feature = "perf_time")]
-        {
-            _decode_start = time::Instant::now();
-        }
+        let mut _decode_start: time::Instant;
 
         let opcode = self.regs.ir.get_u8();
         let decoded_instr = instr::decode(opcode);
@@ -317,11 +311,9 @@ impl Cpu {
             self.has_decoded = true;
         }
 
-        debug!("{:?}", decoded_instr);
-
-        #[cfg(feature = "perf_time")]
+        #[cfg(feature = "logging")]
         {
-            self.timers.decoding += _decode_start.elapsed();
+            debug!("{:?}", decoded_instr);
         }
     }
 

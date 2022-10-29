@@ -1,12 +1,11 @@
 mod test_computer;
 
-use cpu6502::YieldStatus;
 use crate::test_computer::TestComputer;
+use cpu6502::YieldStatus;
 
 extern crate disasm6502;
-extern crate simplelog;
 
-const NES_CLOCKS_SECOND : u128 = 1789773;
+const NES_CLOCKS_SECOND: u128 = 1789773;
 
 fn run(computer: &mut TestComputer, num_cycles: u128) {
     computer.cpu.reset();
@@ -32,5 +31,5 @@ fn perf_test() {
     let mut computer = TestComputer::new();
     computer.load_rom();
 
-    run(&mut computer, 5 * NES_CLOCKS_SECOND);
+    run(&mut computer, 10 * NES_CLOCKS_SECOND);
 }

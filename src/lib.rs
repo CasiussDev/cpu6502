@@ -7,8 +7,10 @@ mod registers;
 #[macro_use]
 extern crate enum_primitive_derive;
 extern crate lazy_static;
-extern crate log;
 extern crate num_traits;
+
+#[cfg(feature = "logging")]
+extern crate log;
 
 #[cfg(feature = "integration_test")]
 pub use cpu::Cpu;
