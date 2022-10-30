@@ -18,12 +18,18 @@ pub struct TestComputer {
     pub memory: [u8; MEMORY_64K],
 }
 
-impl TestComputer {
-    pub fn new() -> Self {
+impl Default for TestComputer {
+    fn default() -> Self {
         Self {
             cpu: Default::default(),
             memory: [0; MEMORY_64K],
         }
+    }
+}
+
+impl TestComputer {
+    pub fn new() -> Self {
+        Self::default()
     }
 
     pub fn load_rom(&mut self) {

@@ -1,4 +1,3 @@
-use cpu6502;
 use serde::Deserialize;
 use std::fs;
 
