@@ -1,15 +1,16 @@
 use crate::alu;
 use crate::instr;
 use crate::registers::{SelectedRegister8, StatusRegFlags};
+use enum_map::{enum_map, Enum};
 use lazy_static::lazy_static;
-use std::collections;
+use std::{collections, slice};
 
 #[cfg(test)]
 use strum::IntoEnumIterator;
 #[cfg(test)]
 use strum_macros::EnumIter;
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Enum, Debug)]
 #[cfg_attr(test, derive(EnumIter))]
 pub enum InstructionOp {
     Nop,
@@ -72,18 +73,95 @@ pub enum InstructionOp {
 }
 
 type OpsMap = collections::HashMap<InstructionOp, instr::MicroInstructionsVector>;
+type SequenceOpEnumMap = enum_map::EnumMap<InstructionOp, instr::MicroInstructionsVector>;
 
 lazy_static! {
     static ref OPS_SEQUENCES_DEFS: OpsMap = create_instructionops_sequences();
 }
 
-pub fn get_ops_map() -> &'static OpsMap {
-    &OPS_SEQUENCES_DEFS
+lazy_static! {
+    static ref OPS_SEQUENCES_ENUM_MAP: SequenceOpEnumMap =
+        create_instruction_op_sequences_enum_map();
+}
+
+pub fn get_sequence_for_op(op: InstructionOp) -> slice::Iter<'static, instr::MicroInstruction> {
+    //OPS_SEQUENCES_DEFS.get(&op).map(|x| x.iter()).unwrap()
+    if cfg!(feature = "enummaps") {
+        OPS_SEQUENCES_ENUM_MAP[op].iter()
+    } else {
+        OPS_SEQUENCES_DEFS.get(&op).unwrap().iter()
+    }
+}
+
+pub fn get_sequence_for_op_map(op: InstructionOp) -> slice::Iter<'static, instr::MicroInstruction> {
+    OPS_SEQUENCES_DEFS.get(&op).map(|x| x.iter()).unwrap()
 }
 
 impl Default for InstructionOp {
     fn default() -> Self {
         InstructionOp::Nop
+    }
+}
+
+pub fn create_instruction_op_sequences_enum_map() -> SequenceOpEnumMap {
+    enum_map! {
+        InstructionOp::Nop => get_sequence_for_op_map(InstructionOp::Nop).cloned().collect(),
+        InstructionOp::IncrementMemory => get_sequence_for_op_map(InstructionOp::IncrementMemory).cloned().collect(),
+        InstructionOp::IncrementX => get_sequence_for_op_map(InstructionOp::IncrementX).cloned().collect(),
+        InstructionOp::IncrementY => get_sequence_for_op_map(InstructionOp::IncrementY).cloned().collect(),
+        InstructionOp::DecrementMemory => get_sequence_for_op_map(InstructionOp::DecrementMemory).cloned().collect(),
+        InstructionOp::DecrementX => get_sequence_for_op_map(InstructionOp::DecrementX).cloned().collect(),
+        InstructionOp::DecrementY => get_sequence_for_op_map(InstructionOp::DecrementY).cloned().collect(),
+        InstructionOp::ClearCarry => get_sequence_for_op_map(InstructionOp::ClearCarry).cloned().collect(),
+        InstructionOp::SetCarry => get_sequence_for_op_map(InstructionOp::SetCarry).cloned().collect(),
+        InstructionOp::ClearDecimal => get_sequence_for_op_map(InstructionOp::ClearDecimal).cloned().collect(),
+        InstructionOp::SetDecimal => get_sequence_for_op_map(InstructionOp::SetDecimal).cloned().collect(),
+        InstructionOp::ClearInterruptDisable => get_sequence_for_op_map(InstructionOp::ClearInterruptDisable).cloned().collect(),
+        InstructionOp::SetInterruptDisable => get_sequence_for_op_map(InstructionOp::SetInterruptDisable).cloned().collect(),
+        InstructionOp::ClearOverflow => get_sequence_for_op_map(InstructionOp::ClearOverflow).cloned().collect(),
+        InstructionOp::SetOverflow => get_sequence_for_op_map(InstructionOp::SetOverflow).cloned().collect(),
+        InstructionOp::TransferAccumulatorToX => get_sequence_for_op_map(InstructionOp::TransferAccumulatorToX).cloned().collect(),
+        InstructionOp::TransferAccumulatorToY => get_sequence_for_op_map(InstructionOp::TransferAccumulatorToY).cloned().collect(),
+        InstructionOp::TransferStackPtrToX => get_sequence_for_op_map(InstructionOp::TransferStackPtrToX).cloned().collect(),
+        InstructionOp::TransferXToAccumulator => get_sequence_for_op_map(InstructionOp::TransferXToAccumulator).cloned().collect(),
+        InstructionOp::TransferYToAccumulator => get_sequence_for_op_map(InstructionOp::TransferYToAccumulator).cloned().collect(),
+        InstructionOp::TransferXToStackPtr => get_sequence_for_op_map(InstructionOp::TransferXToStackPtr).cloned().collect(),
+        InstructionOp::PushA => get_sequence_for_op_map(InstructionOp::PushA).cloned().collect(),
+        InstructionOp::PushStatus => get_sequence_for_op_map(InstructionOp::PushStatus).cloned().collect(),
+        InstructionOp::PullA => get_sequence_for_op_map(InstructionOp::PullA).cloned().collect(),
+        InstructionOp::PullStatus => get_sequence_for_op_map(InstructionOp::PullStatus).cloned().collect(),
+        InstructionOp::Or => get_sequence_for_op_map(InstructionOp::Or).cloned().collect(),
+        InstructionOp::And => get_sequence_for_op_map(InstructionOp::And).cloned().collect(),
+        InstructionOp::Xor => get_sequence_for_op_map(InstructionOp::Xor).cloned().collect(),
+        InstructionOp::Add => get_sequence_for_op_map(InstructionOp::Add).cloned().collect(),
+        InstructionOp::Sub => get_sequence_for_op_map(InstructionOp::Sub).cloned().collect(),
+        InstructionOp::Cmp => get_sequence_for_op_map(InstructionOp::Cmp).cloned().collect(),
+        InstructionOp::Cpx => get_sequence_for_op_map(InstructionOp::Cpx).cloned().collect(),
+        InstructionOp::Cpy => get_sequence_for_op_map(InstructionOp::Cpy).cloned().collect(),
+        InstructionOp::Bit => get_sequence_for_op_map(InstructionOp::Bit).cloned().collect(),
+        InstructionOp::BitImmediate => get_sequence_for_op_map(InstructionOp::BitImmediate).cloned().collect(),
+        InstructionOp::ShiftLeftA => get_sequence_for_op_map(InstructionOp::ShiftLeftA).cloned().collect(),
+        InstructionOp::ShiftRightA => get_sequence_for_op_map(InstructionOp::ShiftRightA).cloned().collect(),
+        InstructionOp::RotateLeftA => get_sequence_for_op_map(InstructionOp::RotateLeftA).cloned().collect(),
+        InstructionOp::RotateRightA => get_sequence_for_op_map(InstructionOp::RotateRightA).cloned().collect(),
+        InstructionOp::ShiftLeftMemory => get_sequence_for_op_map(InstructionOp::ShiftLeftMemory).cloned().collect(),
+        InstructionOp::ShiftRightMemory => get_sequence_for_op_map(InstructionOp::ShiftRightMemory).cloned().collect(),
+        InstructionOp::RotateLeftMemory => get_sequence_for_op_map(InstructionOp::RotateLeftMemory).cloned().collect(),
+        InstructionOp::RotateRightMemory => get_sequence_for_op_map(InstructionOp::RotateRightMemory).cloned().collect(),
+        InstructionOp::StoreA => get_sequence_for_op_map(InstructionOp::StoreA).cloned().collect(),
+        InstructionOp::LoadA => get_sequence_for_op_map(InstructionOp::LoadA).cloned().collect(),
+        InstructionOp::StoreX => get_sequence_for_op_map(InstructionOp::StoreX).cloned().collect(),
+        InstructionOp::LoadX => get_sequence_for_op_map(InstructionOp::LoadX).cloned().collect(),
+        InstructionOp::StoreY => get_sequence_for_op_map(InstructionOp::StoreY).cloned().collect(),
+        InstructionOp::LoadY => get_sequence_for_op_map(InstructionOp::LoadY).cloned().collect(),
+        InstructionOp::BranchPlus => get_sequence_for_op_map(InstructionOp::BranchPlus).cloned().collect(),
+        InstructionOp::BranchMinus => get_sequence_for_op_map(InstructionOp::BranchMinus).cloned().collect(),
+        InstructionOp::BranchOverflowClear => get_sequence_for_op_map(InstructionOp::BranchOverflowClear).cloned().collect(),
+        InstructionOp::BranchOverflowSet => get_sequence_for_op_map(InstructionOp::BranchOverflowSet).cloned().collect(),
+        InstructionOp::BranchCarryClear => get_sequence_for_op_map(InstructionOp::BranchCarryClear).cloned().collect(),
+        InstructionOp::BranchCarrySet => get_sequence_for_op_map(InstructionOp::BranchCarrySet).cloned().collect(),
+        InstructionOp::BranchNotEqual => get_sequence_for_op_map(InstructionOp::BranchNotEqual).cloned().collect(),
+        InstructionOp::BranchEqual => get_sequence_for_op_map(InstructionOp::BranchEqual).cloned().collect(),
     }
 }
 

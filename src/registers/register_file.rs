@@ -2,7 +2,7 @@ use super::StatusReg;
 use super::{Reg16, Reg8};
 use std::fmt;
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum SelectedRegister8 {
     A = 0xF0,
     X,
@@ -21,7 +21,7 @@ pub enum SelectedRegister8 {
     Discard,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum IndexRegister {
     X = SelectedRegister8::X as isize,
     Y = SelectedRegister8::Y as isize,
@@ -36,7 +36,7 @@ impl From<IndexRegister> for SelectedRegister8 {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum SelectedRegister16 {
     PC,
     Addr,

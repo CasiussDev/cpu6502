@@ -1,8 +1,6 @@
-use crate::cpu::ClockHalf::{AfterMemory, BeforeMemory};
-use crate::instr;
-use crate::instr::InstructionSequenceMode;
 use crate::pinout::{DataDirectionMode, Pinout};
 use crate::registers::{IndexRegister, RegisterFile, SelectedRegister8, StatusRegFlags};
+use crate::instr;
 use std::{slice, time};
 
 #[cfg(feature = "logging")]
@@ -55,6 +53,10 @@ impl Cpu {
     pub fn new() -> Self {
         let mut cpu = Self::default();
         cpu.reset();
+
+        let _ = instr::get_sequence_for_mode(instr::InstructionSequenceMode::FetchInstr);
+        let _ = instr::get_sequence_for_op(instr::InstructionOp::Add);
+
         cpu
     }
 
@@ -123,9 +125,7 @@ impl Cpu {
         self.regs.reset();
         self.pins.reset();
 
-        self.current_sequence = instr::get_sequences_map()
-            .get(&InstructionSequenceMode::Reset)
-            .map(|v| v.iter());
+        self.current_sequence = Some(instr::get_sequence_for_mode(instr::InstructionSequenceMode::Reset));
 
         assert!(
             self.current_sequence.is_some(),
@@ -211,7 +211,7 @@ impl Cpu {
         if self.current_sequence.is_none() {
             if self.waiting_interrupt.is_some() {
                 self.service_interrupt();
-            } else if self.instr_ready && (self.clock_half == BeforeMemory) {
+            } else if self.instr_ready && (self.clock_half == ClockHalf::BeforeMemory) {
                 self.decode_instr();
             }
         }
@@ -224,9 +224,9 @@ impl Cpu {
             } else if self.current_sequence.is_some() {
                 run_status = self.run_sequence();
             } else {
-                self.current_sequence = instr::get_sequences_map()
-                    .get(&InstructionSequenceMode::FetchInstr)
-                    .map(|v| v.iter());
+                self.current_sequence = Some(instr::get_sequence_for_mode(
+                    instr::InstructionSequenceMode::FetchInstr,
+                ));
                 run_status = self.run_sequence();
             }
 
@@ -234,7 +234,7 @@ impl Cpu {
                 instr::ExecutionStatus::YieldClock => {
                     self.waiting_interrupt = self.is_waiting_interrupt();
                     self.cycle_count_since_reset += 1;
-                    self.clock_half = BeforeMemory;
+                    self.clock_half = ClockHalf::BeforeMemory;
                     #[cfg(feature = "logging")]
                     {
                         trace!("--------------");
@@ -247,7 +247,7 @@ impl Cpu {
                 }
                 instr::ExecutionStatus::WaitMemory { dst } => {
                     self.data_destination = dst;
-                    self.clock_half = AfterMemory;
+                    self.clock_half = ClockHalf::AfterMemory;
 
                     return YieldStatus::WaitingMemory;
                 }
@@ -261,7 +261,7 @@ impl Cpu {
                     self.running_op = false;
                     self.cycle_count_since_reset += 1;
                     self.instr_count_since_reset += 1;
-                    self.clock_half = BeforeMemory;
+                    self.clock_half = ClockHalf::BeforeMemory;
                     #[cfg(feature = "logging")]
                     {
                         trace!("--------------");
@@ -274,7 +274,7 @@ impl Cpu {
                     self.running_op = false;
                     self.cycle_count_since_reset += 1;
                     self.instr_count_since_reset += 1;
-                    self.clock_half = BeforeMemory;
+                    self.clock_half = ClockHalf::BeforeMemory;
                     self.instr_ready = false;
                     #[cfg(feature = "logging")]
                     {
@@ -294,13 +294,9 @@ impl Cpu {
         let opcode = self.regs.ir.get_u8();
         let decoded_instr = instr::decode(opcode);
 
-        self.current_sequence = instr::get_sequences_map()
-            .get(&decoded_instr.sequence)
-            .map(|v| v.iter());
+        self.current_sequence = Some(instr::get_sequence_for_mode(decoded_instr.sequence));
 
-        self.current_op = instr::get_ops_map()
-            .get(&decoded_instr.operation)
-            .map(|v| v.iter());
+        self.current_op = Some(instr::get_sequence_for_op(decoded_instr.operation));
 
         self.index_register = decoded_instr.index;
 
@@ -328,9 +324,7 @@ impl Cpu {
             Some(WaitingInterrupt::Interrupt) => instr::InstructionSequenceMode::StartIrq,
         };
 
-        self.current_sequence = instr::get_sequences_map()
-            .get(&sequence_mode)
-            .map(|v| v.iter());
+        self.current_sequence = Some(instr::get_sequence_for_mode(sequence_mode));
 
         self.current_op = None;
 

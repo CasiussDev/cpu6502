@@ -30,15 +30,13 @@ fn test() {
         )
     });
 
-    let sequences = cpu6502::get_sequences_map();
-
     for (opcode, mut expected_cycle_count, page_boundary) in opcode_data {
         if page_boundary {
             expected_cycle_count += 1;
         }
 
         let decoded = cpu6502::decode(opcode);
-        let sequence = sequences.get(&decoded.sequence).unwrap();
+        let sequence = cpu6502::get_sequence_for_mode(decoded.sequence);
 
         let cycles = sequence
             .into_iter()

@@ -6,7 +6,7 @@ use std::slice;
 #[cfg(feature = "logging")]
 use log::trace;
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum MicroInstruction {
     Fetch,
     ReadPC {

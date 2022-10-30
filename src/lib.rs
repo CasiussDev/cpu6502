@@ -6,6 +6,7 @@ mod registers;
 
 #[macro_use]
 extern crate enum_primitive_derive;
+extern crate enum_map;
 extern crate lazy_static;
 extern crate num_traits;
 
@@ -17,7 +18,7 @@ pub use cpu::Cpu;
 #[cfg(feature = "integration_test")]
 pub use cpu::YieldStatus;
 #[cfg(feature = "integration_test")]
-pub use instr::get_sequences_map;
+pub use instr::get_sequence_for_mode;
 #[cfg(feature = "integration_test")]
 pub use instr::opcodes::decode;
 #[cfg(feature = "integration_test")]
