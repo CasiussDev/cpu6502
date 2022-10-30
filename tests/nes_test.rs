@@ -77,9 +77,20 @@ fn run(computer: &mut TestComputer, num_cycles: u128) {
             }
         }
     }
+
+    log_file.flush().expect("could not flush file writer");
 }
 
 fn check_results() {
+    let reference_file_len = fs::metadata("testdata/reference.log.txt")
+        .expect("could not read metadata of reference.log.txt")
+        .len();
+    let output_file_len = fs::metadata("testdata/output.log.txt")
+        .expect("could not read metadata of reference.log.txt")
+        .len();
+
+    assert_eq!(output_file_len, reference_file_len);
+
     let reference_file =
         fs::File::open("testdata/reference.log.txt").expect("could not open reference.log.txt");
     let output_file =

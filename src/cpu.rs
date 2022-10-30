@@ -1,6 +1,6 @@
+use crate::instr;
 use crate::pinout::{DataDirectionMode, Pinout};
 use crate::registers::{IndexRegister, RegisterFile, SelectedRegister8, StatusRegFlags};
-use crate::instr;
 use std::{slice, time};
 
 #[cfg(feature = "logging")]
@@ -125,7 +125,9 @@ impl Cpu {
         self.regs.reset();
         self.pins.reset();
 
-        self.current_sequence = Some(instr::get_sequence_for_mode(instr::InstructionSequenceMode::Reset));
+        self.current_sequence = Some(instr::get_sequence_for_mode(
+            instr::InstructionSequenceMode::Reset,
+        ));
 
         assert!(
             self.current_sequence.is_some(),
@@ -260,7 +262,6 @@ impl Cpu {
                     self.current_op = None;
                     self.running_op = false;
                     self.cycle_count_since_reset += 1;
-                    self.instr_count_since_reset += 1;
                     self.clock_half = ClockHalf::BeforeMemory;
                     #[cfg(feature = "logging")]
                     {
@@ -273,7 +274,6 @@ impl Cpu {
                     self.current_op = None;
                     self.running_op = false;
                     self.cycle_count_since_reset += 1;
-                    self.instr_count_since_reset += 1;
                     self.clock_half = ClockHalf::BeforeMemory;
                     self.instr_ready = false;
                     #[cfg(feature = "logging")]
@@ -301,6 +301,8 @@ impl Cpu {
         self.index_register = decoded_instr.index;
 
         self.instr_ready = false;
+
+        self.instr_count_since_reset += 1;
 
         #[cfg(feature = "integration_test")]
         {

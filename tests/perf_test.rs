@@ -27,9 +27,10 @@ fn run(computer: &mut TestComputer, num_cycles: u128) {
 }
 
 #[test]
+#[ignore]
 fn perf_test() {
     let mut computer = TestComputer::new();
     computer.load_rom();
 
-    run(&mut computer, 10 * NES_CLOCKS_SECOND);
+    run(&mut computer, 20 * NES_CLOCKS_SECOND);
 }
