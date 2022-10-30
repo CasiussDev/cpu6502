@@ -14,8 +14,10 @@ use std::{fs, io};
 use log::trace;
 
 fn run(computer: &mut TestComputer, num_cycles: u128) {
-    let mut log_file =
+    let log_file =
         fs::File::create("testdata/output.log.txt").expect("cannot open output log file");
+
+    let mut log_file = io::BufWriter::new(log_file);
 
     let mut instr_log = String::new();
 
