@@ -215,12 +215,10 @@ pub fn execute(
             regs.status.clear_flags(flag);
         }
         MicroInstruction::AddIndexToAddress => {
-            assert!(
-                index_reg.is_some(),
-                "index register not specified for MicroInstruction::AddIndexToAddress"
-            );
-            let index_reg = index_reg.unwrap();
-            let index_reg = regs.get_copy_selected_register8(index_reg.into());
+            let index_reg = index_reg
+                .expect("index register not specified for MicroInstruction::AddIndexToAddress")
+                .into();
+            let index_reg = regs.get_copy_selected_register8(index_reg);
             let addr_low = regs.addr.get_low_u8();
             let addr_low = addr_low.wrapping_add(index_reg.get_u8());
             regs.addr.set_low_u8(addr_low);
@@ -229,7 +227,9 @@ pub fn execute(
             let addr_low_value = regs.addr.get_low_u8();
             let index_value = regs
                 .get_copy_selected_register8(
-                    index_reg.expect("Index register not specified").into(),
+                    index_reg
+                        .expect("Index register not specified for MicroInstruction::FixAddress")
+                        .into(),
                 )
                 .get_u8();
 
@@ -245,7 +245,9 @@ pub fn execute(
             let addr_low_value = regs.addr.get_low_u8();
             let index_value = regs
                 .get_copy_selected_register8(
-                    index_reg.expect("Index register not specified").into(),
+                    index_reg
+                        .expect("Index register not specified MicroInstruction::FixAddressOrRunOpAndFinish")
+                        .into(),
                 )
                 .get_u8();
 

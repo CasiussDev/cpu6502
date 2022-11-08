@@ -143,32 +143,32 @@ impl RegisterFile {
     }
 
     pub fn set_selected_register16(&mut self, selection: SelectedRegister16, reg: Reg16) {
-        assert_ne!(
+        debug_assert_ne!(
             selection,
             SelectedRegister16::NMInterruptAddHigh,
             "Attempting to write a read only register"
         );
-        assert_ne!(
+        debug_assert_ne!(
             selection,
             SelectedRegister16::NMInterruptAddrLow,
             "Attempting to write a read only register"
         );
-        assert_ne!(
+        debug_assert_ne!(
             selection,
             SelectedRegister16::InterruptAddrHigh,
             "Attempting to write a read only register"
         );
-        assert_ne!(
+        debug_assert_ne!(
             selection,
             SelectedRegister16::InterruptAddrLow,
             "Attempting to write a read only register"
         );
-        assert_ne!(
+        debug_assert_ne!(
             selection,
             SelectedRegister16::ProgramStartAddrHigh,
             "Attempting to write a read only register"
         );
-        assert_ne!(
+        debug_assert_ne!(
             selection,
             SelectedRegister16::ProgramStartAddrLow,
             "Attempting to write a read only register"
@@ -182,7 +182,7 @@ impl RegisterFile {
     }
 
     pub fn set_selected_register8(&mut self, selection: SelectedRegister8, value: u8) {
-        assert_ne!(
+        debug_assert_ne!(
             selection,
             SelectedRegister8::StackPage,
             "Attempting to write a read only register"
