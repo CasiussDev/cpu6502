@@ -1,6 +1,12 @@
+#[cfg(feature = "decode_switch")]
+mod decode_switch;
+
 use crate::instr;
 use crate::registers::IndexRegister;
 use num_traits::FromPrimitive;
+
+#[cfg(feature = "decode_switch")]
+pub use decode_switch::decode;
 
 const OPCODE_GROUP_MASK: u8 = 0b_0000_0011;
 
@@ -422,6 +428,7 @@ fn illegal_instruction_g3(op: OpsG3, addr_mode: AddrModeG3) -> bool {
         || ((addr_mode == AddrModeG3::ZeroPageIdx) && !matches!(op, OpsG3::STY | OpsG3::LDY))
 }
 
+#[cfg(not(feature = "decode_switch"))]
 pub fn decode(opcode: u8) -> DecodedOpcode {
     let mut decoded_opcode = DecodedOpcode::default();
     match opcode & OPCODE_GROUP_MASK {

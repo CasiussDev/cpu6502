@@ -37,9 +37,10 @@ disasm6502 = "0.2.2"
 #log = "0.4"
 
 [features]
-default = ["integration_test", "enummaps"]
+default = ["integration_test", "enummaps", "decode_switch"]
 decimal = []
 undoc_opcodes = []
 integration_test = []
 logging = ["dep:log", "dep:simplelog"]
 enummaps = []
+decode_switch = []
