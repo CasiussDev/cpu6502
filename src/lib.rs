@@ -4,8 +4,10 @@ mod instr;
 mod pinout;
 mod registers;
 
+#[cfg(not(feature = "decode_switch"))]
 #[macro_use]
 extern crate enum_primitive_derive;
+
 extern crate enum_map;
 extern crate lazy_static;
 extern crate num_traits;
