@@ -1,6 +1,6 @@
 use super::*;
-use crate::num_traits::FromPrimitive;
 use crate::instr;
+use crate::num_traits::FromPrimitive;
 use crate::registers::IndexRegister;
 
 const OPCODE_GROUP_MASK: u8 = 0b_0000_0011;

@@ -86,7 +86,7 @@ impl RegisterFile {
             SelectedRegister16::Addr => self.addr,
             SelectedRegister16::PC => self.pc,
             //virtual registers
-            v => Reg16 { value: v as u16 },
+            v => Reg16::new(v as u16),
         }
     }
 
@@ -118,26 +118,14 @@ impl RegisterFile {
             SelectedRegister8::X => self.x,
             SelectedRegister8::Y => self.y,
             SelectedRegister8::SP => self.sp,
-            SelectedRegister8::Status => Reg8 {
-                value: self.status.get_u8(),
-            },
+            SelectedRegister8::Status => Reg8::new(self.status.get_u8()),
             SelectedRegister8::IR => self.ir,
             SelectedRegister8::Tmp => self.tmp,
-            SelectedRegister8::PCHigh => Reg8 {
-                value: self.pc.get_high_u8(),
-            },
-            SelectedRegister8::PCLow => Reg8 {
-                value: self.pc.get_low_u8(),
-            },
-            SelectedRegister8::AddrHigh => Reg8 {
-                value: self.addr.get_high_u8(),
-            },
-            SelectedRegister8::AddrLow => Reg8 {
-                value: self.addr.get_low_u8(),
-            },
-            SelectedRegister8::StackPage => Reg8 {
-                value: SelectedRegister8::StackPage as u8,
-            },
+            SelectedRegister8::PCHigh => Reg8::new(self.pc.get_high_u8()),
+            SelectedRegister8::PCLow => Reg8::new(self.pc.get_low_u8()),
+            SelectedRegister8::AddrHigh => Reg8::new(self.addr.get_high_u8()),
+            SelectedRegister8::AddrLow => Reg8::new(self.addr.get_low_u8()),
+            SelectedRegister8::StackPage => Reg8::new(SelectedRegister8::StackPage as u8),
             SelectedRegister8::Discard => Reg8::default(),
         }
     }
@@ -194,13 +182,13 @@ impl RegisterFile {
             SelectedRegister8::X => self.x = reg,
             SelectedRegister8::Y => self.y = reg,
             SelectedRegister8::SP => self.sp = reg,
-            SelectedRegister8::Status => self.status.set_u8(reg.value),
+            SelectedRegister8::Status => self.status.set_u8(value),
             SelectedRegister8::IR => self.ir = reg,
             SelectedRegister8::Tmp => self.tmp = reg,
-            SelectedRegister8::PCHigh => self.pc.set_high_u8(reg.value),
-            SelectedRegister8::PCLow => self.pc.set_low_u8(reg.value),
-            SelectedRegister8::AddrHigh => self.addr.set_high_u8(reg.value),
-            SelectedRegister8::AddrLow => self.addr.set_low_u8(reg.value),
+            SelectedRegister8::PCHigh => self.pc.set_high_u8(value),
+            SelectedRegister8::PCLow => self.pc.set_low_u8(value),
+            SelectedRegister8::AddrHigh => self.addr.set_high_u8(value),
+            SelectedRegister8::AddrLow => self.addr.set_low_u8(value),
             SelectedRegister8::StackPage => (),
             SelectedRegister8::Discard => (),
         };
