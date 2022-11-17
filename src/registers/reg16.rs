@@ -11,7 +11,6 @@ impl Reg16 {
         self.value = 0;
     }
 
-    #[allow(dead_code)]
     pub fn new(value: u16) -> Self {
         Self { value }
     }
