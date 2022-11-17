@@ -1,6 +1,7 @@
 {}
 
 use super::*;
+use crate::instr;
 use crate::registers::IndexRegister::X;
 use crate::registers::IndexRegister::Y;
 
