@@ -8,9 +8,7 @@ pub struct Reg8 {
 
 impl From<u8> for Reg8 {
     fn from(value: u8) -> Self {
-        Self {
-            value
-        }
+        Self { value }
     }
 }
 
@@ -22,9 +20,7 @@ impl From<Reg8> for u8 {
 
 impl From<i8> for Reg8 {
     fn from(value: i8) -> Self {
-        Self {
-            value: value as u8
-        }
+        Self { value: value as u8 }
     }
 }
 

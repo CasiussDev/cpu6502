@@ -8,9 +8,7 @@ pub struct Reg16 {
 
 impl From<u16> for Reg16 {
     fn from(value: u16) -> Self {
-        Self {
-            value
-        }
+        Self { value }
     }
 }
 
@@ -23,7 +21,7 @@ impl From<Reg16> for u16 {
 impl From<i16> for Reg16 {
     fn from(value: i16) -> Self {
         Self {
-            value: value as u16
+            value: value as u16,
         }
     }
 }

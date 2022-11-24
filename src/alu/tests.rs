@@ -17,10 +17,7 @@ fn operands_addwithoutcarry_resultscorrect() {
             alu::add(&mut accumulator, &operand, &mut status_register);
 
             // THEN
-            assert_eq!(
-                accumulator.to_u8(),
-                old_accumulator_value + operand.to_u8()
-            );
+            assert_eq!(accumulator.to_u8(), old_accumulator_value + operand.to_u8());
             assert!(!status_register.are_all_flags_set(StatusRegFlags::CARRY));
             assert_eq!(
                 status_register.are_all_flags_set(StatusRegFlags::ZERO),
@@ -86,10 +83,7 @@ fn operands_subwithoutborrow_resultscorrect() {
             alu::sub(&mut accumulator, &operand, &mut status_register);
 
             // THEN
-            assert_eq!(
-                accumulator.to_u8(),
-                old_accumulator_value - operand.to_u8()
-            );
+            assert_eq!(accumulator.to_u8(), old_accumulator_value - operand.to_u8());
             assert!(status_register.are_all_flags_set(StatusRegFlags::CARRY));
             assert_eq!(
                 status_register.are_all_flags_set(StatusRegFlags::ZERO),
