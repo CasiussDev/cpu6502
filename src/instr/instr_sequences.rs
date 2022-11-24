@@ -67,7 +67,7 @@ lazy_static! {
         create_instruction_mode_sequences_enum_map();
 }
 
-pub fn get_sequence_for_mode(
+pub fn sequence_for_mode(
     mode: InstructionSequenceMode,
 ) -> slice::Iter<'static, instr::MicroInstruction> {
     if cfg!(feature = "enummaps") {
@@ -77,7 +77,7 @@ pub fn get_sequence_for_mode(
     }
 }
 
-pub fn get_sequence_for_mode_map(
+pub fn sequence_for_mode_map(
     mode: InstructionSequenceMode,
 ) -> slice::Iter<'static, instr::MicroInstruction> {
     MODES_SEQUENCES_DEFS.get(&mode).map(|x| x.iter()).unwrap()
@@ -91,45 +91,45 @@ impl Default for InstructionSequenceMode {
 
 pub fn create_instruction_mode_sequences_enum_map() -> SequenceModeEnumMap {
     enum_map! {
-        InstructionSequenceMode::FetchInstr => get_sequence_for_mode_map(InstructionSequenceMode::FetchInstr).cloned().collect(),
-        InstructionSequenceMode::Break => get_sequence_for_mode_map(InstructionSequenceMode::Break).cloned().collect(),
-        InstructionSequenceMode::StartIrq => get_sequence_for_mode_map(InstructionSequenceMode::StartIrq).cloned().collect(),
-        InstructionSequenceMode::StartNmi => get_sequence_for_mode_map(InstructionSequenceMode::StartNmi).cloned().collect(),
-        InstructionSequenceMode::Reset => get_sequence_for_mode_map(InstructionSequenceMode::Reset).cloned().collect(),
-        InstructionSequenceMode::ReturnInterrupt => get_sequence_for_mode_map(InstructionSequenceMode::ReturnInterrupt).cloned().collect(),
+        InstructionSequenceMode::FetchInstr => sequence_for_mode_map(InstructionSequenceMode::FetchInstr).cloned().collect(),
+        InstructionSequenceMode::Break => sequence_for_mode_map(InstructionSequenceMode::Break).cloned().collect(),
+        InstructionSequenceMode::StartIrq => sequence_for_mode_map(InstructionSequenceMode::StartIrq).cloned().collect(),
+        InstructionSequenceMode::StartNmi => sequence_for_mode_map(InstructionSequenceMode::StartNmi).cloned().collect(),
+        InstructionSequenceMode::Reset => sequence_for_mode_map(InstructionSequenceMode::Reset).cloned().collect(),
+        InstructionSequenceMode::ReturnInterrupt => sequence_for_mode_map(InstructionSequenceMode::ReturnInterrupt).cloned().collect(),
 
-        InstructionSequenceMode::JumpSubroutine => get_sequence_for_mode_map(InstructionSequenceMode::JumpSubroutine).cloned().collect(),
-        InstructionSequenceMode::ReturnSubroutine => get_sequence_for_mode_map(InstructionSequenceMode::ReturnSubroutine).cloned().collect(),
+        InstructionSequenceMode::JumpSubroutine => sequence_for_mode_map(InstructionSequenceMode::JumpSubroutine).cloned().collect(),
+        InstructionSequenceMode::ReturnSubroutine => sequence_for_mode_map(InstructionSequenceMode::ReturnSubroutine).cloned().collect(),
 
-        InstructionSequenceMode::Push => get_sequence_for_mode_map(InstructionSequenceMode::Push).cloned().collect(),
-        InstructionSequenceMode::Pull => get_sequence_for_mode_map(InstructionSequenceMode::Pull).cloned().collect(),
-        InstructionSequenceMode::Implied => get_sequence_for_mode_map(InstructionSequenceMode::Implied).cloned().collect(),
-        InstructionSequenceMode::Immediate => get_sequence_for_mode_map(InstructionSequenceMode::Immediate).cloned().collect(),
+        InstructionSequenceMode::Push => sequence_for_mode_map(InstructionSequenceMode::Push).cloned().collect(),
+        InstructionSequenceMode::Pull => sequence_for_mode_map(InstructionSequenceMode::Pull).cloned().collect(),
+        InstructionSequenceMode::Implied => sequence_for_mode_map(InstructionSequenceMode::Implied).cloned().collect(),
+        InstructionSequenceMode::Immediate => sequence_for_mode_map(InstructionSequenceMode::Immediate).cloned().collect(),
 
-        InstructionSequenceMode::AbsoluteJump => get_sequence_for_mode_map(InstructionSequenceMode::AbsoluteJump).cloned().collect(),
-        InstructionSequenceMode::Absolute => get_sequence_for_mode_map(InstructionSequenceMode::Absolute).cloned().collect(),
-        InstructionSequenceMode::AbsoluteReadModifyWrite => get_sequence_for_mode_map(InstructionSequenceMode::AbsoluteReadModifyWrite).cloned().collect(),
+        InstructionSequenceMode::AbsoluteJump => sequence_for_mode_map(InstructionSequenceMode::AbsoluteJump).cloned().collect(),
+        InstructionSequenceMode::Absolute => sequence_for_mode_map(InstructionSequenceMode::Absolute).cloned().collect(),
+        InstructionSequenceMode::AbsoluteReadModifyWrite => sequence_for_mode_map(InstructionSequenceMode::AbsoluteReadModifyWrite).cloned().collect(),
 
-        InstructionSequenceMode::ZeroPage => get_sequence_for_mode_map(InstructionSequenceMode::ZeroPage).cloned().collect(),
-        InstructionSequenceMode::ZeroPageReadModifyWrite => get_sequence_for_mode_map(InstructionSequenceMode::ZeroPageReadModifyWrite).cloned().collect(),
+        InstructionSequenceMode::ZeroPage => sequence_for_mode_map(InstructionSequenceMode::ZeroPage).cloned().collect(),
+        InstructionSequenceMode::ZeroPageReadModifyWrite => sequence_for_mode_map(InstructionSequenceMode::ZeroPageReadModifyWrite).cloned().collect(),
 
-        InstructionSequenceMode::ZeroPageIdx => get_sequence_for_mode_map(InstructionSequenceMode::ZeroPageIdx).cloned().collect(),
-        InstructionSequenceMode::ZeroPageIdxReadModifyWrite => get_sequence_for_mode_map(InstructionSequenceMode::ZeroPageIdxReadModifyWrite).cloned().collect(),
+        InstructionSequenceMode::ZeroPageIdx => sequence_for_mode_map(InstructionSequenceMode::ZeroPageIdx).cloned().collect(),
+        InstructionSequenceMode::ZeroPageIdxReadModifyWrite => sequence_for_mode_map(InstructionSequenceMode::ZeroPageIdxReadModifyWrite).cloned().collect(),
 
-        InstructionSequenceMode::AbsoluteIdxRead => get_sequence_for_mode_map(InstructionSequenceMode::AbsoluteIdxRead).cloned().collect(),
-        InstructionSequenceMode::AbsoluteIdxReadModifyWrite => get_sequence_for_mode_map(InstructionSequenceMode::AbsoluteIdxReadModifyWrite).cloned().collect(),
-        InstructionSequenceMode::AbsoluteIdxWrite => get_sequence_for_mode_map(InstructionSequenceMode::AbsoluteIdxWrite).cloned().collect(),
+        InstructionSequenceMode::AbsoluteIdxRead => sequence_for_mode_map(InstructionSequenceMode::AbsoluteIdxRead).cloned().collect(),
+        InstructionSequenceMode::AbsoluteIdxReadModifyWrite => sequence_for_mode_map(InstructionSequenceMode::AbsoluteIdxReadModifyWrite).cloned().collect(),
+        InstructionSequenceMode::AbsoluteIdxWrite => sequence_for_mode_map(InstructionSequenceMode::AbsoluteIdxWrite).cloned().collect(),
 
-        InstructionSequenceMode::Relative => get_sequence_for_mode_map(InstructionSequenceMode::Relative).cloned().collect(),
+        InstructionSequenceMode::Relative => sequence_for_mode_map(InstructionSequenceMode::Relative).cloned().collect(),
 
-        InstructionSequenceMode::ZeroPageIdxIndirect => get_sequence_for_mode_map(InstructionSequenceMode::ZeroPageIdxIndirect).cloned().collect(),
-        InstructionSequenceMode::ZeroPageIdxIndirectReadModifyWrite => get_sequence_for_mode_map(InstructionSequenceMode::ZeroPageIdxIndirectReadModifyWrite).cloned().collect(),
+        InstructionSequenceMode::ZeroPageIdxIndirect => sequence_for_mode_map(InstructionSequenceMode::ZeroPageIdxIndirect).cloned().collect(),
+        InstructionSequenceMode::ZeroPageIdxIndirectReadModifyWrite => sequence_for_mode_map(InstructionSequenceMode::ZeroPageIdxIndirectReadModifyWrite).cloned().collect(),
 
-        InstructionSequenceMode::ZeroPageIndirectIdxRead => get_sequence_for_mode_map(InstructionSequenceMode::ZeroPageIndirectIdxRead).cloned().collect(),
-        InstructionSequenceMode::ZeroPageIndirectIdxReadModifyWrite => get_sequence_for_mode_map(InstructionSequenceMode::ZeroPageIndirectIdxReadModifyWrite).cloned().collect(),
-        InstructionSequenceMode::ZeroPageIndirectIdxWrite => get_sequence_for_mode_map(InstructionSequenceMode::ZeroPageIndirectIdxWrite).cloned().collect(),
+        InstructionSequenceMode::ZeroPageIndirectIdxRead => sequence_for_mode_map(InstructionSequenceMode::ZeroPageIndirectIdxRead).cloned().collect(),
+        InstructionSequenceMode::ZeroPageIndirectIdxReadModifyWrite => sequence_for_mode_map(InstructionSequenceMode::ZeroPageIndirectIdxReadModifyWrite).cloned().collect(),
+        InstructionSequenceMode::ZeroPageIndirectIdxWrite => sequence_for_mode_map(InstructionSequenceMode::ZeroPageIndirectIdxWrite).cloned().collect(),
 
-        InstructionSequenceMode::AbsoluteIndirectJump => get_sequence_for_mode_map(InstructionSequenceMode::AbsoluteIndirectJump).cloned().collect(),
+        InstructionSequenceMode::AbsoluteIndirectJump => sequence_for_mode_map(InstructionSequenceMode::AbsoluteIndirectJump).cloned().collect(),
     }
 }
 

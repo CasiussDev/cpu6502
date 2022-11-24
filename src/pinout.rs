@@ -51,15 +51,15 @@ impl Pinout {
         self.data = data;
     }
 
-    pub fn get_data(&self) -> u8 {
+    pub fn data(&self) -> u8 {
         self.data
     }
 
-    pub fn get_address(&self) -> u16 {
+    pub fn address(&self) -> u16 {
         self.address
     }
 
-    pub fn get_data_direction(&self) -> DataDirectionMode {
+    pub fn data_direction(&self) -> DataDirectionMode {
         self.mode
     }
 

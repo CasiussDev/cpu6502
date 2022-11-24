@@ -23,7 +23,7 @@ fn run(computer: &mut TestComputer, num_cycles: u128) {
 
     computer.cpu.reset();
 
-    while computer.cpu.get_cycle_count_since_reset() < num_cycles {
+    while computer.cpu.cycle_count_since_reset() < num_cycles {
         let status = computer.cpu.run();
 
         if computer.cpu.has_decoded() {
@@ -31,8 +31,8 @@ fn run(computer: &mut TestComputer, num_cycles: u128) {
                 log_file,
                 "{:<25}{} CYC:{}",
                 instr_log,
-                computer.cpu.get_regs_as_log_line(),
-                computer.cpu.get_cycle_count_since_reset()
+                computer.cpu.regs_as_log_line(),
+                computer.cpu.cycle_count_since_reset()
             )
             .expect("cannot write to file");
         }
@@ -52,7 +52,7 @@ fn run(computer: &mut TestComputer, num_cycles: u128) {
                     );
                 }
             } else {
-                let old_instr_ready = computer.cpu.get_instr_ready();
+                let old_instr_ready = computer.cpu.instr_ready();
                 computer.cpu.set_data_pins(computer.memory[addr as usize]);
                 #[cfg(feature = "logging")]
                 {
@@ -63,7 +63,7 @@ fn run(computer: &mut TestComputer, num_cycles: u128) {
                     );
                 }
 
-                if (old_instr_ready == false) && computer.cpu.get_instr_ready() {
+                if (old_instr_ready == false) && computer.cpu.instr_ready() {
                     let instructions = disasm6502::from_addr_array(
                         &computer.memory[(addr as usize)..(addr as usize + 6)],
                         addr,

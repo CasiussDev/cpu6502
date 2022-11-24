@@ -6,6 +6,34 @@ pub struct Reg8 {
     value: u8,
 }
 
+impl From<u8> for Reg8 {
+    fn from(value: u8) -> Self {
+        Self {
+            value
+        }
+    }
+}
+
+impl From<Reg8> for u8 {
+    fn from(value: Reg8) -> Self {
+        value.value
+    }
+}
+
+impl From<i8> for Reg8 {
+    fn from(value: i8) -> Self {
+        Self {
+            value: value as u8
+        }
+    }
+}
+
+impl From<Reg8> for i8 {
+    fn from(value: Reg8) -> Self {
+        value.value as i8
+    }
+}
+
 impl Reg8 {
     pub fn reset(&mut self) {
         self.value = 0;
@@ -15,23 +43,16 @@ impl Reg8 {
         Self { value }
     }
 
-    #[allow(dead_code)]
-    pub fn new_i8(value: i8) -> Self {
-        Self {
-            value: (value as u8),
-        }
-    }
-
-    pub fn get_u8(&self) -> u8 {
-        self.value as u8
+    pub fn to_u8(self) -> u8 {
+        self.into()
     }
 
     pub fn set_u8(&mut self, value: u8) {
         self.value = value;
     }
 
-    pub fn get_i8(&self) -> i8 {
-        self.value as i8
+    pub fn to_i8(self) -> i8 {
+        self.into()
     }
 
     pub fn set_i8(&mut self, value: i8) {
@@ -87,8 +108,8 @@ mod tests {
             register_i.set_i8(value as i8);
 
             // THEN
-            assert_eq!(register_u.get_u8(), value);
-            assert_eq!(register_i.get_i8(), value as i8);
+            assert_eq!(register_u.to_u8(), value);
+            assert_eq!(register_i.to_i8(), value as i8);
         }
     }
 }

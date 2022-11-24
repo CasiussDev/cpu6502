@@ -90,7 +90,7 @@ pub enum MicroInstruction {
 
 const FINISH_INSTR: [MicroInstruction; 1] = [MicroInstruction::FinishInstruction; 1];
 
-pub fn get_finish_intr_sequence() -> slice::Iter<'static, MicroInstruction> {
+pub fn finish_instr_sequence() -> slice::Iter<'static, MicroInstruction> {
     FINISH_INSTR.iter()
 }
 
@@ -98,7 +98,7 @@ pub type MicroInstructionsVector = Vec<MicroInstruction>;
 
 fn execute_alu_unary(op: alu::UnaryOp, selected_reg: SelectedRegister8, regs: &mut RegisterFile) {
     let mut status = regs.status;
-    let reg = regs.get_selected_register8(selected_reg);
+    let reg = regs.selected_register8(selected_reg);
     match op {
         alu::UnaryOp::Inc => alu::inc(reg, &mut status),
         alu::UnaryOp::Dec => alu::dec(reg, &mut status),
@@ -112,7 +112,7 @@ fn execute_alu_unary(op: alu::UnaryOp, selected_reg: SelectedRegister8, regs: &m
 
 fn execute_alu_binary(op: alu::BinaryOp, operand: SelectedRegister8, regs: &mut RegisterFile) {
     //let mut status = regs.status;
-    let operand = regs.get_copy_selected_register8(operand);
+    let operand = regs.copy_selected_register8(operand);
     match op {
         alu::BinaryOp::Add => alu::add(&mut regs.a, &operand, &mut regs.status),
         alu::BinaryOp::Sub => alu::sub(&mut regs.a, &operand, &mut regs.status),
@@ -154,7 +154,7 @@ pub fn execute(
     }
     match micro_instr {
         MicroInstruction::Fetch => {
-            pins.set_address_output(regs.pc.get_u16());
+            pins.set_address_output(regs.pc.to_u16());
             pins.set_data_direction(pinout::DataDirectionMode::Read);
             regs.pc.inc();
             return ExecutionStatus::WaitMemory {
@@ -162,7 +162,7 @@ pub fn execute(
             };
         }
         MicroInstruction::ReadPC { dst, increment } => {
-            pins.set_address_output(regs.pc.get_u16());
+            pins.set_address_output(regs.pc.to_u16());
             pins.set_data_direction(pinout::DataDirectionMode::Read);
             if increment {
                 regs.pc.inc();
@@ -170,39 +170,37 @@ pub fn execute(
             return ExecutionStatus::WaitMemory { dst: Some(dst) };
         }
         MicroInstruction::ReadAddress { dst } => {
-            pins.set_address_output(regs.addr.get_u16());
+            pins.set_address_output(regs.addr.to_u16());
             pins.set_data_direction(pinout::DataDirectionMode::Read);
             return ExecutionStatus::WaitMemory { dst: Some(dst) };
         }
         MicroInstruction::WriteAddress { src } => {
-            pins.set_address_output(regs.addr.get_u16());
+            pins.set_address_output(regs.addr.to_u16());
             pins.set_data_direction(pinout::DataDirectionMode::Write);
-            let data = regs.get_copy_selected_register8(src).get_u8();
+            let data = regs.copy_selected_register8(src).to_u8();
             pins.set_data_output(data);
             return ExecutionStatus::WaitMemory { dst: None };
         }
         MicroInstruction::CopyRegister { dst, src } => {
-            let src = regs.get_copy_selected_register8(src);
-            regs.set_selected_register8(dst, src.get_u8());
+            let src = regs.copy_selected_register8(src);
+            regs.set_selected_register8(dst, src.to_u8());
         }
         MicroInstruction::CopyRegister16 { dst, src } => {
-            let src = regs.get_copy_selected_register16(src);
+            let src = regs.copy_selected_register16(src);
             regs.set_selected_register16(dst, src);
         }
         MicroInstruction::ZeroRegister { dst } => regs.set_selected_register8(dst, 0),
         MicroInstruction::IncrementRegister { dst } => {
-            //let dst = regs.get_selected_register8(dst);
-            //dst.inc();
-            let mut dst_reg = regs.get_copy_selected_register8(dst);
+            let mut dst_reg = regs.copy_selected_register8(dst);
             dst_reg.inc();
-            regs.set_selected_register8(dst, dst_reg.get_u8());
+            regs.set_selected_register8(dst, dst_reg.to_u8());
         }
         MicroInstruction::IncrementRegister16 { dst } => {
-            let dst = regs.get_selected_register16(dst);
+            let dst = regs.selected_register16(dst);
             dst.inc();
         }
         MicroInstruction::DecrementRegister { dst } => {
-            let dst = regs.get_selected_register8(dst);
+            let dst = regs.selected_register8(dst);
             dst.dec();
         }
         MicroInstruction::AluUnaryOp { op, reg } => execute_alu_unary(op, reg, regs),
@@ -218,23 +216,23 @@ pub fn execute(
             let index_reg = index_reg
                 .expect("index register not specified for MicroInstruction::AddIndexToAddress")
                 .into();
-            let index_reg = regs.get_copy_selected_register8(index_reg);
-            let addr_low = regs.addr.get_low_u8();
-            let addr_low = addr_low.wrapping_add(index_reg.get_u8());
+            let index_reg = regs.copy_selected_register8(index_reg);
+            let addr_low = regs.addr.low_u8();
+            let addr_low = addr_low.wrapping_add(index_reg.to_u8());
             regs.addr.set_low_u8(addr_low);
         }
         MicroInstruction::FixAddress => {
-            let addr_low_value = regs.addr.get_low_u8();
+            let addr_low_value = regs.addr.low_u8();
             let index_value = regs
-                .get_copy_selected_register8(
+                .copy_selected_register8(
                     index_reg
                         .expect("Index register not specified for MicroInstruction::FixAddress")
                         .into(),
                 )
-                .get_u8();
+                .to_u8();
 
             if index_value > addr_low_value {
-                let addr_high_value = regs.addr.get_high_u8().wrapping_add(1);
+                let addr_high_value = regs.addr.high_u8().wrapping_add(1);
                 regs.addr.set_high_u8(addr_high_value);
             }
         }
@@ -242,36 +240,36 @@ pub fn execute(
         MicroInstruction::YieldClock => return ExecutionStatus::YieldClock,
         MicroInstruction::FinishInstruction => return ExecutionStatus::FinishInstruction,
         MicroInstruction::FixAddressOrRunOpAndFinish => {
-            let addr_low_value = regs.addr.get_low_u8();
+            let addr_low_value = regs.addr.low_u8();
             let index_value = regs
-                .get_copy_selected_register8(
+                .copy_selected_register8(
                     index_reg
                         .expect("Index register not specified MicroInstruction::FixAddressOrRunOpAndFinish")
                         .into(),
                 )
-                .get_u8();
+                .to_u8();
 
             if index_value > addr_low_value {
-                let addr_high_value = regs.addr.get_high_u8().wrapping_add(1);
+                let addr_high_value = regs.addr.high_u8().wrapping_add(1);
                 regs.addr.set_high_u8(addr_high_value);
             } else {
                 return ExecutionStatus::RunOpAndFinish;
             }
         }
         MicroInstruction::FixAddressOrIncrementPC => {
-            let addr_low_value = regs.addr.get_low_u8();
-            let index_value = regs.tmp.get_u8();
+            let addr_low_value = regs.addr.low_u8();
+            let index_value = regs.tmp.to_u8();
 
             if index_value > addr_low_value {
-                let addr_high_value = regs.addr.get_high_u8().wrapping_add(1);
+                let addr_high_value = regs.addr.high_u8().wrapping_add(1);
                 regs.addr.set_high_u8(addr_high_value);
             } else {
                 regs.pc.inc();
             }
         }
         MicroInstruction::BitInstr => {
-            let msb = regs.tmp.get_u8() & 0x80;
-            let smsb = regs.tmp.get_u8() & 0x40;
+            let msb = regs.tmp.to_u8() & 0x80;
+            let smsb = regs.tmp.to_u8() & 0x40;
             regs.status.update_flags(StatusRegFlags::NEGATIVE, msb != 0);
             regs.status
                 .update_flags(StatusRegFlags::OVERFLOW, smsb != 0);
@@ -286,7 +284,7 @@ pub fn execute(
         } => {
             let must_branch = regs.status.are_all_flags_set(flag_to_test) == branch_if_set;
             if must_branch {
-                let (pc_low_byte, carry) = regs.pc.get_low_u8().overflowing_add(regs.tmp.get_u8());
+                let (pc_low_byte, carry) = regs.pc.low_u8().overflowing_add(regs.tmp.to_u8());
                 regs.pc.set_low_u8(pc_low_byte);
                 if carry == false {
                     return ExecutionStatus::FinishInstructionBranch;
@@ -297,25 +295,25 @@ pub fn execute(
             }
         }
         MicroInstruction::PushFlagToTmp { flag } => {
-            regs.tmp.set_u8(regs.status.get_u8() & flag.bits());
+            regs.tmp.set_u8(regs.status.to_u8() & flag.bits());
         }
         MicroInstruction::PopFlagFromTmp { flag } => {
             let tmp_mask = flag.bits();
             let status_mask = !tmp_mask;
 
-            let new_status = (regs.status.get_u8() & status_mask) | (regs.tmp.get_u8() & tmp_mask);
+            let new_status = (regs.status.to_u8() & status_mask) | (regs.tmp.to_u8() & tmp_mask);
             regs.status.set_u8(new_status);
         }
         MicroInstruction::SetFlagsTmp { flags } => {
-            let new_value = regs.tmp.get_u8() | flags.bits();
+            let new_value = regs.tmp.to_u8() | flags.bits();
             regs.tmp.set_u8(new_value);
         }
         MicroInstruction::ClearFlagsTmp { flags } => {
-            let new_value = regs.tmp.get_u8() & !flags.bits();
+            let new_value = regs.tmp.to_u8() & !flags.bits();
             regs.tmp.set_u8(new_value);
         }
         MicroInstruction::UpdateStatusFlagsNZ { reg } => {
-            let value = regs.get_copy_selected_register8(reg).get_i8();
+            let value = regs.copy_selected_register8(reg).to_i8();
             alu::update_status_nz(value, &mut regs.status);
         }
     }

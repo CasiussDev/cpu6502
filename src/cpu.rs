@@ -54,22 +54,22 @@ impl Cpu {
         let mut cpu = Self::default();
         cpu.reset();
 
-        let _ = instr::get_sequence_for_mode(instr::InstructionSequenceMode::FetchInstr);
-        let _ = instr::get_sequence_for_op(instr::InstructionOp::Add);
+        let _ = instr::sequence_for_mode(instr::InstructionSequenceMode::FetchInstr);
+        let _ = instr::sequence_for_op(instr::InstructionOp::Add);
 
         cpu
     }
 
-    pub fn get_cycle_count_since_reset(&self) -> u128 {
+    pub fn cycle_count_since_reset(&self) -> u128 {
         self.cycle_count_since_reset
     }
 
-    pub fn get_instr_count_since_reset(&self) -> u128 {
+    pub fn instr_count_since_reset(&self) -> u128 {
         self.instr_count_since_reset
     }
 
     #[cfg(feature = "integration_test")]
-    pub fn get_instr_ready(&self) -> bool {
+    pub fn instr_ready(&self) -> bool {
         self.instr_ready
     }
 
@@ -79,20 +79,20 @@ impl Cpu {
     }
 
     #[cfg(feature = "integration_test")]
-    pub fn get_regs_as_log_line(&self) -> String {
+    pub fn regs_as_log_line(&self) -> String {
         self.regs.as_log_line()
     }
 
     pub fn read_data_pins(&self) -> u8 {
-        self.pins.get_data()
+        self.pins.data()
     }
 
     pub fn read_address_pins(&self) -> u16 {
-        self.pins.get_address()
+        self.pins.address()
     }
 
     pub fn read_writing_to_memory_pin(&self) -> bool {
-        self.pins.get_data_direction() == DataDirectionMode::Write
+        self.pins.data_direction() == DataDirectionMode::Write
     }
 
     pub fn set_data_pins(&mut self, value: u8) {
@@ -125,7 +125,7 @@ impl Cpu {
         self.regs.reset();
         self.pins.reset();
 
-        self.current_sequence = Some(instr::get_sequence_for_mode(
+        self.current_sequence = Some(instr::sequence_for_mode(
             instr::InstructionSequenceMode::Reset,
         ));
 
@@ -226,7 +226,7 @@ impl Cpu {
             } else if self.current_sequence.is_some() {
                 run_status = self.run_sequence();
             } else {
-                self.current_sequence = Some(instr::get_sequence_for_mode(
+                self.current_sequence = Some(instr::sequence_for_mode(
                     instr::InstructionSequenceMode::FetchInstr,
                 ));
                 run_status = self.run_sequence();
@@ -255,7 +255,7 @@ impl Cpu {
                 }
                 instr::ExecutionStatus::RunOpAndFinish => {
                     self.running_op = true;
-                    self.current_sequence = Some(instr::get_finish_intr_sequence());
+                    self.current_sequence = Some(instr::finish_instr_sequence());
                 }
                 instr::ExecutionStatus::FinishInstruction => {
                     self.current_sequence = None;
@@ -291,12 +291,12 @@ impl Cpu {
     fn decode_instr(&mut self) {
         let mut _decode_start: time::Instant;
 
-        let opcode = self.regs.ir.get_u8();
+        let opcode = self.regs.ir.to_u8();
         let decoded_instr = instr::decode(opcode);
 
-        self.current_sequence = Some(instr::get_sequence_for_mode(decoded_instr.sequence));
+        self.current_sequence = Some(instr::sequence_for_mode(decoded_instr.sequence));
 
-        self.current_op = Some(instr::get_sequence_for_op(decoded_instr.operation));
+        self.current_op = Some(instr::sequence_for_op(decoded_instr.operation));
 
         self.index_register = decoded_instr.index;
 
@@ -326,7 +326,7 @@ impl Cpu {
             Some(WaitingInterrupt::Interrupt) => instr::InstructionSequenceMode::StartIrq,
         };
 
-        self.current_sequence = Some(instr::get_sequence_for_mode(sequence_mode));
+        self.current_sequence = Some(instr::sequence_for_mode(sequence_mode));
 
         self.current_op = None;
 

@@ -50,8 +50,8 @@ pub fn add(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusR
         todo!();
     } else {
         // Compilers are smart enough to do a single addition!
-        let (mut result, mut carry) = accumulator.get_u8().overflowing_add(operand.get_u8());
-        let (_, mut overflow) = accumulator.get_i8().overflowing_add(operand.get_i8());
+        let (mut result, mut carry) = accumulator.to_u8().overflowing_add(operand.to_u8());
+        let (_, mut overflow) = accumulator.to_i8().overflowing_add(operand.to_i8());
 
         if status_register.are_all_flags_set(StatusRegFlags::CARRY) {
             let (_, inc_overflow) = (result as i8).overflowing_add(1);
@@ -70,7 +70,7 @@ pub fn add(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusR
 }
 
 pub fn cmp(accumulator: &Reg8, operand: &Reg8, status_register: &mut StatusReg) {
-    let (result, carry) = accumulator.get_u8().overflowing_sub(operand.get_u8());
+    let (result, carry) = accumulator.to_u8().overflowing_sub(operand.to_u8());
 
     update_status_carry_sub(carry, status_register);
     update_status_nz(result as i8, status_register);
@@ -80,8 +80,8 @@ pub fn sub(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusR
     if cfg!(feature = "decimal") && status_register.are_all_flags_set(StatusRegFlags::DECIMAL) {
         todo!();
     } else {
-        let (mut result, mut overflow) = accumulator.get_i8().overflowing_sub(operand.get_i8());
-        let (_, mut carry) = accumulator.get_u8().overflowing_sub(operand.get_u8());
+        let (mut result, mut overflow) = accumulator.to_i8().overflowing_sub(operand.to_i8());
+        let (_, mut carry) = accumulator.to_u8().overflowing_sub(operand.to_u8());
 
         if status_register.are_all_flags_set(StatusRegFlags::CARRY) == false {
             let (_, dec_carry) = (result as u8).overflowing_sub(1);
@@ -103,7 +103,7 @@ pub fn inc(src_dst: &mut Reg8, status_register: &mut StatusReg) {
     if cfg!(feature = "decimal") && status_register.are_all_flags_set(StatusRegFlags::DECIMAL) {
         todo!();
     } else {
-        let result = src_dst.get_u8().wrapping_add(1);
+        let result = src_dst.to_u8().wrapping_add(1);
 
         update_status_nz(result as i8, status_register);
 
@@ -115,7 +115,7 @@ pub fn dec(src_dst: &mut Reg8, status_register: &mut StatusReg) {
     if cfg!(feature = "decimal") && status_register.are_all_flags_set(StatusRegFlags::DECIMAL) {
         todo!();
     } else {
-        let result = src_dst.get_i8().wrapping_sub(1);
+        let result = src_dst.to_i8().wrapping_sub(1);
 
         update_status_nz(result as i8, status_register);
 
@@ -124,52 +124,52 @@ pub fn dec(src_dst: &mut Reg8, status_register: &mut StatusReg) {
 }
 
 pub fn shift_left(src_dst: &mut Reg8, status_register: &mut StatusReg) {
-    let msb = src_dst.get_u8() & 0x80;
+    let msb = src_dst.to_u8() & 0x80;
     src_dst.shift_left();
 
-    update_status_nz(src_dst.get_i8(), status_register);
+    update_status_nz(src_dst.to_i8(), status_register);
     status_register.update_flags(StatusRegFlags::CARRY, msb != 0);
 }
 
 pub fn shift_right(src_dst: &mut Reg8, status_register: &mut StatusReg) {
-    let lsb = src_dst.get_u8() & 0x01;
+    let lsb = src_dst.to_u8() & 0x01;
     src_dst.shift_right();
 
-    update_status_nz(src_dst.get_i8(), status_register);
+    update_status_nz(src_dst.to_i8(), status_register);
     status_register.update_flags(StatusRegFlags::CARRY, lsb != 0);
 }
 
 pub fn rotate_left(src_dst: &mut Reg8, status_register: &mut StatusReg) {
     let old_carry_bit_set = status_register.are_all_flags_set(StatusRegFlags::CARRY);
 
-    let msb = src_dst.get_u8() & 0x80;
+    let msb = src_dst.to_u8() & 0x80;
     src_dst.shift_left();
 
     if old_carry_bit_set {
         src_dst.inc();
     }
 
-    update_status_nz(src_dst.get_i8(), status_register);
+    update_status_nz(src_dst.to_i8(), status_register);
     status_register.update_flags(StatusRegFlags::CARRY, msb != 0);
 }
 
 pub fn rotate_right(src_dst: &mut Reg8, status_register: &mut StatusReg) {
     let old_carry_bit_set = status_register.are_all_flags_set(StatusRegFlags::CARRY);
 
-    let lsb = src_dst.get_u8() & 0x01;
+    let lsb = src_dst.to_u8() & 0x01;
     src_dst.shift_right();
 
     if old_carry_bit_set {
-        let result = src_dst.get_u8() | 0x80;
+        let result = src_dst.to_u8() | 0x80;
         src_dst.set_u8(result);
     }
 
-    update_status_nz(src_dst.get_i8(), status_register);
+    update_status_nz(src_dst.to_i8(), status_register);
     status_register.update_flags(StatusRegFlags::CARRY, lsb != 0);
 }
 
 pub fn and(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusReg) {
-    let result = accumulator.get_u8() & operand.get_u8();
+    let result = accumulator.to_u8() & operand.to_u8();
 
     update_status_nz(result as i8, status_register);
 
@@ -177,7 +177,7 @@ pub fn and(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusR
 }
 
 pub fn or(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusReg) {
-    let result = accumulator.get_u8() | operand.get_u8();
+    let result = accumulator.to_u8() | operand.to_u8();
 
     update_status_nz(result as i8, status_register);
 
@@ -185,7 +185,7 @@ pub fn or(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusRe
 }
 
 pub fn xor(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusReg) {
-    let result = accumulator.get_u8() ^ operand.get_u8();
+    let result = accumulator.to_u8() ^ operand.to_u8();
 
     update_status_nz(result as i8, status_register);
 
@@ -193,6 +193,6 @@ pub fn xor(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusR
 }
 
 pub fn bit_compare(accumulator: Reg8, operand: Reg8, status_register: &mut StatusReg) {
-    let and = accumulator.get_u8() & operand.get_u8();
+    let and = accumulator.to_u8() & operand.to_u8();
     status_register.update_flags(StatusRegFlags::ZERO, and == 0);
 }

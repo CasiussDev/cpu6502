@@ -18,17 +18,17 @@ fn operands_addwithoutcarry_resultscorrect() {
 
             // THEN
             assert_eq!(
-                accumulator.get_u8(),
-                old_accumulator_value + operand.get_u8()
+                accumulator.to_u8(),
+                old_accumulator_value + operand.to_u8()
             );
             assert!(!status_register.are_all_flags_set(StatusRegFlags::CARRY));
             assert_eq!(
                 status_register.are_all_flags_set(StatusRegFlags::ZERO),
-                accumulator.get_u8() == 0
+                accumulator.to_u8() == 0
             );
             assert_eq!(
                 status_register.are_all_flags_set(StatusRegFlags::NEGATIVE),
-                accumulator.get_i8() < 0
+                accumulator.to_i8() < 0
             );
         }
     }
@@ -53,17 +53,17 @@ fn operands_addwithcarry_resultscorrect() {
 
             // THEN
             assert_eq!(
-                accumulator.get_u8(),
-                old_accumulator_value + operand.get_u8() + 1
+                accumulator.to_u8(),
+                old_accumulator_value + operand.to_u8() + 1
             );
             assert!(!status_register.are_all_flags_set(StatusRegFlags::CARRY));
             assert_eq!(
                 status_register.are_all_flags_set(StatusRegFlags::ZERO),
-                accumulator.get_u8() == 0
+                accumulator.to_u8() == 0
             );
             assert_eq!(
                 status_register.are_all_flags_set(StatusRegFlags::NEGATIVE),
-                accumulator.get_i8() < 0
+                accumulator.to_i8() < 0
             );
         }
     }
@@ -87,17 +87,17 @@ fn operands_subwithoutborrow_resultscorrect() {
 
             // THEN
             assert_eq!(
-                accumulator.get_u8(),
-                old_accumulator_value - operand.get_u8()
+                accumulator.to_u8(),
+                old_accumulator_value - operand.to_u8()
             );
             assert!(status_register.are_all_flags_set(StatusRegFlags::CARRY));
             assert_eq!(
                 status_register.are_all_flags_set(StatusRegFlags::ZERO),
-                accumulator.get_u8() == 0
+                accumulator.to_u8() == 0
             );
             assert_eq!(
                 status_register.are_all_flags_set(StatusRegFlags::NEGATIVE),
-                accumulator.get_i8() < 0
+                accumulator.to_i8() < 0
             );
         }
     }
@@ -121,17 +121,17 @@ fn operands_subwithborrow_resultscorrect() {
 
             // THEN
             assert_eq!(
-                accumulator.get_u8(),
-                old_accumulator_value - operand.get_u8() - 1
+                accumulator.to_u8(),
+                old_accumulator_value - operand.to_u8() - 1
             );
             assert!(status_register.are_all_flags_set(StatusRegFlags::CARRY));
             assert_eq!(
                 status_register.are_all_flags_set(StatusRegFlags::ZERO),
-                accumulator.get_u8() == 0
+                accumulator.to_u8() == 0
             );
             assert_eq!(
                 status_register.are_all_flags_set(StatusRegFlags::NEGATIVE),
-                accumulator.get_i8() < 0
+                accumulator.to_i8() < 0
             );
         }
     }
@@ -154,17 +154,17 @@ fn operands_addcausecarry_resultscorrect() {
 
             // THEN
             assert_eq!(
-                accumulator.get_u8(),
-                old_accumulator_value.wrapping_add(operand.get_u8())
+                accumulator.to_u8(),
+                old_accumulator_value.wrapping_add(operand.to_u8())
             );
             assert!(status_register.are_all_flags_set(StatusRegFlags::CARRY));
             assert_eq!(
                 status_register.are_all_flags_set(StatusRegFlags::ZERO),
-                accumulator.get_u8() == 0
+                accumulator.to_u8() == 0
             );
             assert_eq!(
                 status_register.are_all_flags_set(StatusRegFlags::NEGATIVE),
-                accumulator.get_i8() < 0
+                accumulator.to_i8() < 0
             );
         }
     }
@@ -188,17 +188,17 @@ fn operands_subcauseborrow_resultscorrect() {
 
             // THEN
             assert_eq!(
-                accumulator.get_u8(),
-                old_accumulator_value.wrapping_sub(operand.get_u8())
+                accumulator.to_u8(),
+                old_accumulator_value.wrapping_sub(operand.to_u8())
             );
             assert!(!status_register.are_all_flags_set(StatusRegFlags::CARRY));
             assert_eq!(
                 status_register.are_all_flags_set(StatusRegFlags::ZERO),
-                accumulator.get_u8() == 0
+                accumulator.to_u8() == 0
             );
             assert_eq!(
                 status_register.are_all_flags_set(StatusRegFlags::NEGATIVE),
-                accumulator.get_i8() < 0
+                accumulator.to_i8() < 0
             );
         }
     }
@@ -218,8 +218,8 @@ fn perform_operands_add_overflowflagcorrect(mut op1: Reg8, op2: Reg8, expect_ove
 fn signedpositiveoperands_add_overflowflagcorrect() {
     for op1 in 0..=i8::MAX {
         for op2 in 0..=(i8::MAX - op1) {
-            let accumulator = Reg8::new_i8(op1);
-            let operand = Reg8::new_i8(op2);
+            let accumulator = op1.into();
+            let operand = op2.into();
 
             perform_operands_add_overflowflagcorrect(accumulator, operand, false);
         }
@@ -227,8 +227,8 @@ fn signedpositiveoperands_add_overflowflagcorrect() {
 
     for op1 in 1..=i8::MAX {
         for op2 in (i8::MAX - op1 + 1)..=i8::MAX {
-            let accumulator = Reg8::new_i8(op1);
-            let operand = Reg8::new_i8(op2);
+            let accumulator = op1.into();
+            let operand = op2.into();
 
             perform_operands_add_overflowflagcorrect(accumulator, operand, true);
         }
@@ -239,8 +239,8 @@ fn signedpositiveoperands_add_overflowflagcorrect() {
 fn signednegativeoperands_add_overflowflagcorrect() {
     for op1 in (i8::MIN + 1)..=-1 {
         for op2 in (i8::MIN - op1 + 1)..=-1 {
-            let accumulator = Reg8::new_i8(op1);
-            let operand = Reg8::new_i8(op2);
+            let accumulator = op1.into();
+            let operand = op2.into();
 
             perform_operands_add_overflowflagcorrect(accumulator, operand, false);
         }
@@ -248,8 +248,8 @@ fn signednegativeoperands_add_overflowflagcorrect() {
 
     for op1 in i8::MIN..=-1 {
         for op2 in i8::MIN..=(i8::MIN - op1 - 1) {
-            let accumulator = Reg8::new_i8(op1);
-            let operand = Reg8::new_i8(op2);
+            let accumulator = op1.into();
+            let operand = op2.into();
 
             perform_operands_add_overflowflagcorrect(accumulator, operand, true);
         }
@@ -260,8 +260,8 @@ fn signednegativeoperands_add_overflowflagcorrect() {
 fn differentsignoperands_add_overflowflagcorrect() {
     for op1 in 0..=i8::MAX {
         for op2 in i8::MIN..=-1 {
-            let accumulator = Reg8::new_i8(op1);
-            let operand = Reg8::new_i8(op2);
+            let accumulator = op1.into();
+            let operand = op2.into();
 
             perform_operands_add_overflowflagcorrect(accumulator, operand, false);
             perform_operands_add_overflowflagcorrect(operand, accumulator, false);
@@ -284,8 +284,8 @@ fn perform_operands_sub_overflowflagcorrect(mut op1: Reg8, op2: Reg8, expect_ove
 fn signedpositiveoperands_sub_overflowflagcorrect() {
     for op1 in 0..=i8::MAX {
         for op2 in 0..=i8::MAX {
-            let accumulator = Reg8::new_i8(op1);
-            let operand = Reg8::new_i8(op2);
+            let accumulator = op1.into();
+            let operand = op2.into();
 
             perform_operands_sub_overflowflagcorrect(accumulator, operand, false);
         }
@@ -296,8 +296,8 @@ fn signedpositiveoperands_sub_overflowflagcorrect() {
 fn signednegativeoperands_sub_overflowflagcorrect() {
     for op1 in i8::MIN..=-1 {
         for op2 in i8::MIN..=-1 {
-            let accumulator = Reg8::new_i8(op1);
-            let operand = Reg8::new_i8(op2);
+            let accumulator = op1.into();
+            let operand = op2.into();
 
             perform_operands_sub_overflowflagcorrect(accumulator, operand, false);
         }
@@ -308,8 +308,8 @@ fn signednegativeoperands_sub_overflowflagcorrect() {
 fn differentsignoperands_sub_overflowflagcorrect() {
     for op1 in 0..i8::MAX {
         for op2 in (i8::MIN + op1 + 1)..=-1 {
-            let accumulator = Reg8::new_i8(op1);
-            let operand = Reg8::new_i8(op2);
+            let accumulator = op1.into();
+            let operand = op2.into();
 
             perform_operands_sub_overflowflagcorrect(accumulator, operand, false);
         }
@@ -317,8 +317,8 @@ fn differentsignoperands_sub_overflowflagcorrect() {
 
     for op1 in i8::MIN..=-1 {
         for op2 in 0..=(i8::MAX + op1 + 1) {
-            let accumulator = Reg8::new_i8(op1);
-            let operand = Reg8::new_i8(op2);
+            let accumulator = op1.into();
+            let operand = op2.into();
 
             perform_operands_sub_overflowflagcorrect(accumulator, operand, false);
         }
@@ -340,18 +340,18 @@ fn operand_inc_resultscorrect() {
         alu::inc(&mut accumulator, &mut status_register);
 
         // THEN
-        assert_eq!(accumulator.get_u8(), op1.wrapping_add(1));
+        assert_eq!(accumulator.to_u8(), op1.wrapping_add(1));
         assert_eq!(
-            status_register.get_u8() & 0x7D,
-            old_status_register.get_u8() & 0x7D
+            status_register.to_u8() & 0x7D,
+            old_status_register.to_u8() & 0x7D
         );
         assert_eq!(
             status_register.are_all_flags_set(StatusRegFlags::ZERO),
-            accumulator.get_u8() == 0
+            accumulator.to_u8() == 0
         );
         assert_eq!(
             status_register.are_all_flags_set(StatusRegFlags::NEGATIVE),
-            accumulator.get_i8().is_negative()
+            accumulator.to_i8().is_negative()
         );
     }
 }
@@ -371,18 +371,18 @@ fn operand_dec_resultscorrect() {
         alu::dec(&mut accumulator, &mut status_register);
 
         // THEN
-        assert_eq!(accumulator.get_u8(), op1.wrapping_sub(1));
+        assert_eq!(accumulator.to_u8(), op1.wrapping_sub(1));
         assert_eq!(
-            status_register.get_u8() & 0x7D,
-            old_status_register.get_u8() & 0x7D
+            status_register.to_u8() & 0x7D,
+            old_status_register.to_u8() & 0x7D
         );
         assert_eq!(
             status_register.are_all_flags_set(StatusRegFlags::ZERO),
-            accumulator.get_u8() == 0
+            accumulator.to_u8() == 0
         );
         assert_eq!(
             status_register.are_all_flags_set(StatusRegFlags::NEGATIVE),
-            accumulator.get_i8().is_negative()
+            accumulator.to_i8().is_negative()
         );
     }
 }
@@ -402,14 +402,14 @@ fn operands_and_resultscorrect() {
             alu::and(&mut accumulator, &operand, &mut status_register);
 
             // THEN
-            assert_eq!(accumulator.get_u8(), op1 & op2);
+            assert_eq!(accumulator.to_u8(), op1 & op2);
             assert_eq!(
                 status_register.are_all_flags_set(StatusRegFlags::ZERO),
-                accumulator.get_u8() == 0
+                accumulator.to_u8() == 0
             );
             assert_eq!(
                 status_register.are_all_flags_set(StatusRegFlags::NEGATIVE),
-                accumulator.get_i8().is_negative()
+                accumulator.to_i8().is_negative()
             );
         }
     }
@@ -430,14 +430,14 @@ fn operands_or_resultscorrect() {
             alu::or(&mut accumulator, &operand, &mut status_register);
 
             // THEN
-            assert_eq!(accumulator.get_u8(), op1 | op2);
+            assert_eq!(accumulator.to_u8(), op1 | op2);
             assert_eq!(
                 status_register.are_all_flags_set(StatusRegFlags::ZERO),
-                accumulator.get_u8() == 0
+                accumulator.to_u8() == 0
             );
             assert_eq!(
                 status_register.are_all_flags_set(StatusRegFlags::NEGATIVE),
-                accumulator.get_i8().is_negative()
+                accumulator.to_i8().is_negative()
             );
         }
     }
@@ -458,14 +458,14 @@ fn operands_xor_resultscorrect() {
             alu::xor(&mut accumulator, &operand, &mut status_register);
 
             // THEN
-            assert_eq!(accumulator.get_u8(), op1 ^ op2);
+            assert_eq!(accumulator.to_u8(), op1 ^ op2);
             assert_eq!(
                 status_register.are_all_flags_set(StatusRegFlags::ZERO),
-                accumulator.get_u8() == 0
+                accumulator.to_u8() == 0
             );
             assert_eq!(
                 status_register.are_all_flags_set(StatusRegFlags::NEGATIVE),
-                accumulator.get_i8().is_negative()
+                accumulator.to_i8().is_negative()
             );
         }
     }

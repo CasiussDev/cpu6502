@@ -6,6 +6,34 @@ pub struct Reg16 {
     value: u16,
 }
 
+impl From<u16> for Reg16 {
+    fn from(value: u16) -> Self {
+        Self {
+            value
+        }
+    }
+}
+
+impl From<Reg16> for u16 {
+    fn from(value: Reg16) -> Self {
+        value.value
+    }
+}
+
+impl From<i16> for Reg16 {
+    fn from(value: i16) -> Self {
+        Self {
+            value: value as u16
+        }
+    }
+}
+
+impl From<Reg16> for i16 {
+    fn from(value: Reg16) -> Self {
+        value.value as i16
+    }
+}
+
 impl Reg16 {
     pub fn reset(&mut self) {
         self.value = 0;
@@ -15,15 +43,8 @@ impl Reg16 {
         Self { value }
     }
 
-    #[allow(dead_code)]
-    pub fn new_i16(value: i16) -> Self {
-        Self {
-            value: (value as u16),
-        }
-    }
-
-    pub fn get_u16(&self) -> u16 {
-        self.value as u16
+    pub fn to_u16(self) -> u16 {
+        self.into()
     }
 
     pub fn set_u16(&mut self, value: u16) {
@@ -31,8 +52,8 @@ impl Reg16 {
     }
 
     #[allow(dead_code)]
-    pub fn get_i16(&self) -> i16 {
-        self.value as i16
+    pub fn to_i16(self) -> i16 {
+        self.into()
     }
 
     #[allow(dead_code)]
@@ -40,7 +61,7 @@ impl Reg16 {
         self.value = value as u16;
     }
 
-    pub fn get_low_u8(&self) -> u8 {
+    pub fn low_u8(&self) -> u8 {
         self.value as u8
     }
 
@@ -50,7 +71,7 @@ impl Reg16 {
     }
 
     #[allow(dead_code)]
-    pub fn get_low_i8(&self) -> i8 {
+    pub fn low_i8(&self) -> i8 {
         self.value as i8
     }
 
@@ -60,7 +81,7 @@ impl Reg16 {
         self.value |= (value as u8) as u16;
     }
 
-    pub fn get_high_u8(&self) -> u8 {
+    pub fn high_u8(&self) -> u8 {
         self.value.to_be_bytes()[0] as u8
     }
 
@@ -70,7 +91,7 @@ impl Reg16 {
     }
 
     #[allow(dead_code)]
-    pub fn get_high_i8(&self) -> i8 {
+    pub fn high_i8(&self) -> i8 {
         self.value.to_be_bytes()[0] as i8
     }
 
@@ -122,8 +143,8 @@ mod tests {
             register_i.set_i16(value as i16);
 
             // THEN
-            assert_eq!(register_u.get_u16(), value);
-            assert_eq!(register_i.get_i16(), value as i16);
+            assert_eq!(register_u.to_u16(), value);
+            assert_eq!(register_i.to_i16(), value as i16);
         }
     }
 
@@ -148,12 +169,12 @@ mod tests {
             register_i.set_low_i8(low as i8);
 
             // THEN
-            assert_eq!(register_u.get_u16(), value);
-            assert_eq!(register_u.get_high_u8(), high);
-            assert_eq!(register_u.get_low_u8(), low);
-            assert_eq!(register_i.get_i16(), value as i16);
-            assert_eq!(register_u.get_high_i8(), high as i8);
-            assert_eq!(register_u.get_low_i8(), low as i8);
+            assert_eq!(register_u.to_u16(), value);
+            assert_eq!(register_u.high_u8(), high);
+            assert_eq!(register_u.low_u8(), low);
+            assert_eq!(register_i.to_i16(), value as i16);
+            assert_eq!(register_u.high_i8(), high as i8);
+            assert_eq!(register_u.low_i8(), low as i8);
         }
     }
 }

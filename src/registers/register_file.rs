@@ -81,7 +81,7 @@ impl RegisterFile {
         self.addr.set_u16(0x00FF);
     }
 
-    pub fn get_copy_selected_register16(&self, selection: SelectedRegister16) -> Reg16 {
+    pub fn copy_selected_register16(&self, selection: SelectedRegister16) -> Reg16 {
         match selection {
             SelectedRegister16::Addr => self.addr,
             SelectedRegister16::PC => self.pc,
@@ -90,7 +90,7 @@ impl RegisterFile {
         }
     }
 
-    pub fn get_selected_register16(&mut self, selection: SelectedRegister16) -> &mut Reg16 {
+    pub fn selected_register16(&mut self, selection: SelectedRegister16) -> &mut Reg16 {
         match selection {
             SelectedRegister16::Addr => &mut self.addr,
             SelectedRegister16::PC => &mut self.pc,
@@ -99,7 +99,7 @@ impl RegisterFile {
         }
     }
 
-    pub fn get_selected_register8(&mut self, selection: SelectedRegister8) -> &mut Reg8 {
+    pub fn selected_register8(&mut self, selection: SelectedRegister8) -> &mut Reg8 {
         match selection {
             SelectedRegister8::A => &mut self.a,
             SelectedRegister8::X => &mut self.x,
@@ -112,19 +112,19 @@ impl RegisterFile {
         }
     }
 
-    pub fn get_copy_selected_register8(&self, selection: SelectedRegister8) -> Reg8 {
+    pub fn copy_selected_register8(&self, selection: SelectedRegister8) -> Reg8 {
         match selection {
             SelectedRegister8::A => self.a,
             SelectedRegister8::X => self.x,
             SelectedRegister8::Y => self.y,
             SelectedRegister8::SP => self.sp,
-            SelectedRegister8::Status => Reg8::new(self.status.get_u8()),
+            SelectedRegister8::Status => Reg8::new(self.status.to_u8()),
             SelectedRegister8::IR => self.ir,
             SelectedRegister8::Tmp => self.tmp,
-            SelectedRegister8::PCHigh => Reg8::new(self.pc.get_high_u8()),
-            SelectedRegister8::PCLow => Reg8::new(self.pc.get_low_u8()),
-            SelectedRegister8::AddrHigh => Reg8::new(self.addr.get_high_u8()),
-            SelectedRegister8::AddrLow => Reg8::new(self.addr.get_low_u8()),
+            SelectedRegister8::PCHigh => Reg8::new(self.pc.high_u8()),
+            SelectedRegister8::PCLow => Reg8::new(self.pc.low_u8()),
+            SelectedRegister8::AddrHigh => Reg8::new(self.addr.high_u8()),
+            SelectedRegister8::AddrLow => Reg8::new(self.addr.low_u8()),
             SelectedRegister8::StackPage => Reg8::new(SelectedRegister8::StackPage as u8),
             SelectedRegister8::Discard => Reg8::default(),
         }
@@ -197,11 +197,11 @@ impl RegisterFile {
     pub fn as_log_line(&self) -> String {
         format!(
             "\t\tA:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
-            self.a.get_u8(),
-            self.x.get_u8(),
-            self.y.get_u8(),
-            self.status.get_u8(),
-            self.sp.get_u8()
+            self.a.to_u8(),
+            self.x.to_u8(),
+            self.y.to_u8(),
+            self.status.to_u8(),
+            self.sp.to_u8()
         )
     }
 }
@@ -238,7 +238,7 @@ mod tests {
         register_file.set_selected_register8(SelectedRegister8::AddrLow, 0xCE);
 
         // THEN
-        assert_eq!(register_file.pc.get_u16(), 0xCAFE);
-        assert_eq!(register_file.addr.get_u16(), 0xFACE);
+        assert_eq!(register_file.pc.to_u16(), 0xCAFE);
+        assert_eq!(register_file.addr.to_u16(), 0xFACE);
     }
 }

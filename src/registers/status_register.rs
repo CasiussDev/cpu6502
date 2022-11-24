@@ -21,25 +21,33 @@ pub struct StatusReg {
     flags: StatusRegFlags,
 }
 
-impl StatusReg {
-    #[allow(dead_code)]
-    pub fn new_from_u8(flags: u8) -> Self {
+impl From<u8> for StatusReg {
+    fn from(value: u8) -> Self {
         Self {
-            flags: unsafe { StatusRegFlags::from_bits_unchecked(flags) },
+            // SAFETY: all u8 values are legal
+            flags: unsafe { StatusRegFlags::from_bits_unchecked(value) },
         }
     }
+}
 
+impl From<StatusReg> for u8 {
+    fn from(value: StatusReg) -> Self {
+        value.flags.bits
+    }
+}
+
+impl StatusReg {
     pub fn reset(&mut self) {
         self.flags.bits = 0x24;
     }
 
-    pub fn get_u8(&self) -> u8 {
-        self.flags.bits
+    pub fn to_u8(self) -> u8 {
+        self.into()
     }
 
     pub fn set_u8(&mut self, value: u8) {
         // All combinations are accepted, even if some flags could be ignored
-        self.flags = unsafe { StatusRegFlags::from_bits_unchecked(value) };
+        self.flags.bits = value;
     }
 
     pub fn set_flags(&mut self, flags_to_set: StatusRegFlags) {

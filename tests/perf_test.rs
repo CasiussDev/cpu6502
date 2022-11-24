@@ -10,7 +10,7 @@ const NES_CLOCKS_SECOND: u128 = 1789773;
 fn run(computer: &mut TestComputer, num_cycles: u128) {
     computer.cpu.reset();
 
-    while computer.cpu.get_cycle_count_since_reset() < num_cycles {
+    while computer.cpu.cycle_count_since_reset() < num_cycles {
         let status = computer.cpu.run();
 
         if status == YieldStatus::WaitingMemory {

@@ -35,7 +35,7 @@ fn test() {
         }
 
         let decoded = cpu6502::decode(opcode);
-        let sequence = cpu6502::get_sequence_for_mode(decoded.sequence);
+        let sequence = cpu6502::sequence_for_mode(decoded.sequence);
 
         let cycles = sequence
             .into_iter()
