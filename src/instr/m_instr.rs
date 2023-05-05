@@ -1,5 +1,5 @@
 use crate::registers::register_file::{SelectedRegister16, SelectedRegister8};
-use crate::registers::{IndexRegister, RegisterFile, StatusRegFlags};
+use crate::registers::{IndexRegister, ReferenceableRegister8, RegisterFile, StatusRegFlags};
 use crate::{alu, pinout};
 use std::slice;
 
@@ -41,7 +41,7 @@ pub enum MicroInstruction {
     },
     AluUnaryOp {
         op: alu::UnaryOp,
-        reg: SelectedRegister8,
+        reg: ReferenceableRegister8,
     },
     AluBinaryOp {
         op: alu::BinaryOp,
@@ -96,7 +96,7 @@ pub fn finish_instr_sequence() -> slice::Iter<'static, MicroInstruction> {
 
 pub type MicroInstructionsVector = Vec<MicroInstruction>;
 
-fn execute_alu_unary(op: alu::UnaryOp, selected_reg: SelectedRegister8, regs: &mut RegisterFile) {
+fn execute_alu_unary(op: alu::UnaryOp, selected_reg: ReferenceableRegister8, regs: &mut RegisterFile) {
     let mut status = regs.status;
     let reg = regs.selected_register8(selected_reg);
     match op {
@@ -200,8 +200,9 @@ pub fn execute(
             dst.inc();
         }
         MicroInstruction::DecrementRegister { dst } => {
-            let dst = regs.selected_register8(dst);
-            dst.dec();
+            let mut dst_reg = regs.copy_selected_register8(dst);
+            dst_reg.dec();
+            regs.set_selected_register8(dst, dst_reg.to_u8());
         }
         MicroInstruction::AluUnaryOp { op, reg } => execute_alu_unary(op, reg, regs),
         MicroInstruction::AluBinaryOp { op, operand } => execute_alu_binary(op, operand, regs),

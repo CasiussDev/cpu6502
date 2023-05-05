@@ -27,11 +27,34 @@ pub enum IndexRegister {
     Y = SelectedRegister8::Y as isize,
 }
 
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+pub enum ReferenceableRegister8 {
+    A = SelectedRegister8::A as isize,
+    X,
+    Y,
+    SP,
+    IR,
+    Tmp,
+}
+
 impl From<IndexRegister> for SelectedRegister8 {
     fn from(index_reg: IndexRegister) -> Self {
         match index_reg {
             IndexRegister::X => SelectedRegister8::X,
             IndexRegister::Y => SelectedRegister8::Y,
+        }
+    }
+}
+
+impl From<ReferenceableRegister8> for SelectedRegister8 {
+    fn from(index_reg: ReferenceableRegister8) -> Self {
+        match index_reg {
+            ReferenceableRegister8::A => SelectedRegister8::A,
+            ReferenceableRegister8::X => SelectedRegister8::X,
+            ReferenceableRegister8::Y => SelectedRegister8::Y,
+            ReferenceableRegister8::SP => SelectedRegister8::SP,
+            ReferenceableRegister8::IR => SelectedRegister8::IR,
+            ReferenceableRegister8::Tmp => SelectedRegister8::Tmp,
         }
     }
 }
@@ -99,16 +122,14 @@ impl RegisterFile {
         }
     }
 
-    pub fn selected_register8(&mut self, selection: SelectedRegister8) -> &mut Reg8 {
+    pub fn selected_register8(&mut self, selection: ReferenceableRegister8) -> &mut Reg8 {
         match selection {
-            SelectedRegister8::A => &mut self.a,
-            SelectedRegister8::X => &mut self.x,
-            SelectedRegister8::Y => &mut self.y,
-            SelectedRegister8::SP => &mut self.sp,
-            SelectedRegister8::Status => todo!(),
-            SelectedRegister8::IR => &mut self.ir,
-            SelectedRegister8::Tmp => &mut self.tmp,
-            _ => todo!(),
+            ReferenceableRegister8::A => &mut self.a,
+            ReferenceableRegister8::X => &mut self.x,
+            ReferenceableRegister8::Y => &mut self.y,
+            ReferenceableRegister8::SP => &mut self.sp,
+            ReferenceableRegister8::IR => &mut self.ir,
+            ReferenceableRegister8::Tmp => &mut self.tmp,
         }
     }
 

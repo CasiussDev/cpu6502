@@ -1,6 +1,6 @@
 use crate::alu;
 use crate::instr;
-use crate::registers::{SelectedRegister8, StatusRegFlags};
+use crate::registers::{ReferenceableRegister8, SelectedRegister8, StatusRegFlags};
 use enum_map::{enum_map, Enum};
 use lazy_static::lazy_static;
 use std::{collections, slice};
@@ -172,98 +172,98 @@ pub fn create_instructionops_sequences() -> OpsMap {
             InstructionOp::IncrementMemory,
             vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Inc,
-                reg: SelectedRegister8::Tmp,
+                reg: ReferenceableRegister8::Tmp,
             }],
         ),
         (
             InstructionOp::IncrementX,
             vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Inc,
-                reg: SelectedRegister8::X,
+                reg: ReferenceableRegister8::X,
             }],
         ),
         (
             InstructionOp::IncrementY,
             vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Inc,
-                reg: SelectedRegister8::Y,
+                reg: ReferenceableRegister8::Y,
             }],
         ),
         (
             InstructionOp::DecrementMemory,
             vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Dec,
-                reg: SelectedRegister8::Tmp,
+                reg: ReferenceableRegister8::Tmp,
             }],
         ),
         (
             InstructionOp::DecrementX,
             vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Dec,
-                reg: SelectedRegister8::X,
+                reg: ReferenceableRegister8::X,
             }],
         ),
         (
             InstructionOp::DecrementY,
             vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Dec,
-                reg: SelectedRegister8::Y,
+                reg: ReferenceableRegister8::Y,
             }],
         ),
         (
             InstructionOp::ShiftLeftA,
             vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Asl,
-                reg: SelectedRegister8::A,
+                reg: ReferenceableRegister8::A,
             }],
         ),
         (
             InstructionOp::ShiftRightA,
             vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Lsr,
-                reg: SelectedRegister8::A,
+                reg: ReferenceableRegister8::A,
             }],
         ),
         (
             InstructionOp::RotateLeftA,
             vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Rol,
-                reg: SelectedRegister8::A,
+                reg: ReferenceableRegister8::A,
             }],
         ),
         (
             InstructionOp::RotateRightA,
             vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Ror,
-                reg: SelectedRegister8::A,
+                reg: ReferenceableRegister8::A,
             }],
         ),
         (
             InstructionOp::ShiftLeftMemory,
             vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Asl,
-                reg: SelectedRegister8::Tmp,
+                reg: ReferenceableRegister8::Tmp,
             }],
         ),
         (
             InstructionOp::ShiftRightMemory,
             vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Lsr,
-                reg: SelectedRegister8::Tmp,
+                reg: ReferenceableRegister8::Tmp,
             }],
         ),
         (
             InstructionOp::RotateLeftMemory,
             vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Rol,
-                reg: SelectedRegister8::Tmp,
+                reg: ReferenceableRegister8::Tmp,
             }],
         ),
         (
             InstructionOp::RotateRightMemory,
             vec![instr::MicroInstruction::AluUnaryOp {
                 op: alu::UnaryOp::Ror,
-                reg: SelectedRegister8::Tmp,
+                reg: ReferenceableRegister8::Tmp,
             }],
         ),
         (
