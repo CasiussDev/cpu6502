@@ -96,7 +96,11 @@ pub fn finish_instr_sequence() -> slice::Iter<'static, MicroInstruction> {
 
 pub type MicroInstructionsVector = Vec<MicroInstruction>;
 
-fn execute_alu_unary(op: alu::UnaryOp, selected_reg: ReferenceableRegister8, regs: &mut RegisterFile) {
+fn execute_alu_unary(
+    op: alu::UnaryOp,
+    selected_reg: ReferenceableRegister8,
+    regs: &mut RegisterFile,
+) {
     let mut status = regs.status;
     let reg = regs.selected_register8(selected_reg);
     match op {
