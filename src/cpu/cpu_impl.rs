@@ -144,10 +144,10 @@ impl Cpu {
         } else if self.pins.is_irq_set()
             && (self.waiting_interrupt != Some(WaitingInterrupt::NonMaskableInterrupt))
             && (self
-            .regs
-            .status
-            .are_any_flags_set(StatusRegFlags::IRQ_DISABLE)
-            == false)
+                .regs
+                .status
+                .are_any_flags_set(StatusRegFlags::IRQ_DISABLE)
+                == false)
         {
             Some(WaitingInterrupt::Interrupt)
         } else {
