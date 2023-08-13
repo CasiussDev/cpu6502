@@ -1,0 +1,31 @@
+use memory6502::MemorySpace;
+use log::trace;
+
+pub struct LoggingMemory<'a, T> {
+    inner: &'a mut T,
+}
+
+impl<'a, T> LoggingMemory<'a, T>
+where
+    T: MemorySpace,
+{
+    pub fn new(inner: &'a mut T) -> Self {
+        Self { inner }
+    }
+}
+
+impl<'a, T> MemorySpace for LoggingMemory<'a, T>
+where
+    T: MemorySpace,
+{
+    fn read(&self, addr: u16) -> u8 {
+        let data = self.inner.read(addr);
+        trace!("\t\t\tRead Memory[{:04X}] = {:02X}", addr, data);
+        data
+    }
+
+    fn write(&mut self, data: u8, addr: u16) {
+        trace!("\t\t\tWrite Memory[{:04X}] = {:02X}", addr, data,);
+        self.inner.write(data, addr);
+    }
+}

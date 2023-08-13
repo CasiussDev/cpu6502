@@ -18,11 +18,11 @@ extern crate log;
 #[cfg(feature = "integration_test")]
 pub use cpu::Cpu;
 #[cfg(feature = "integration_test")]
-pub use cpu::YieldStatus;
-#[cfg(feature = "integration_test")]
 pub use instr::opcodes::decode;
 #[cfg(feature = "integration_test")]
 pub use instr::sequence_for_mode;
+#[cfg(feature = "integration_test")]
+pub use instr::FetchedInstr;
 #[cfg(feature = "integration_test")]
 pub use instr::InstructionOp;
 #[cfg(feature = "integration_test")]

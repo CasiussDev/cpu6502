@@ -6,12 +6,12 @@ extern crate simplelog;
 mod test_computer;
 
 use crate::test_computer::TestComputer;
-use cpu6502::YieldStatus;
 use std::io::{BufRead, Write};
 use std::{fs, io};
 
 #[cfg(feature = "logging")]
 use log::trace;
+use cpu6502::FetchedInstr;
 
 fn run(computer: &mut TestComputer, num_cycles: u128) {
     let log_file =
@@ -24,9 +24,18 @@ fn run(computer: &mut TestComputer, num_cycles: u128) {
     computer.cpu.reset();
 
     while computer.cpu.cycle_count_since_reset() < num_cycles {
-        let status = computer.cpu.run();
+        let status = computer.cpu.run(&mut computer.memory);
 
-        if computer.cpu.has_decoded() {
+        if let FetchedInstr::Some(addr) = computer.cpu.fetched_instr() {
+            let instructions = disasm6502::from_addr_array(
+                &computer.memory[(addr as usize)..(addr as usize + 6)],
+                addr,
+            )
+            .expect("could not decode instr");
+            let decoded = instructions.first().expect("empty instr vector");
+
+            instr_log = format!("{:04X} {} {}", addr, decoded.as_hex_str(), decoded.as_str());
+
             writeln!(
                 log_file,
                 "{:<25}{} CYC:{}",
@@ -35,46 +44,6 @@ fn run(computer: &mut TestComputer, num_cycles: u128) {
                 computer.cpu.cycle_count_since_reset()
             )
             .expect("cannot write to file");
-        }
-
-        if status == YieldStatus::WaitingMemory {
-            let addr = computer.cpu.read_address_pins();
-            let write_to_memory = computer.cpu.read_writing_to_memory_pin();
-
-            if write_to_memory {
-                computer.memory[addr as usize] = computer.cpu.read_data_pins();
-                #[cfg(feature = "logging")]
-                {
-                    trace!(
-                        "\t\t\tWrite Memory[{:04X}] = {:02X}",
-                        addr,
-                        computer.cpu.read_data_pins()
-                    );
-                }
-            } else {
-                let old_instr_ready = computer.cpu.instr_ready();
-                computer.cpu.set_data_pins(computer.memory[addr as usize]);
-                #[cfg(feature = "logging")]
-                {
-                    trace!(
-                        "\t\t\tRead Memory[{:04X}] = {:02X}",
-                        addr,
-                        computer.cpu.read_data_pins()
-                    );
-                }
-
-                if (old_instr_ready == false) && computer.cpu.instr_ready() {
-                    let instructions = disasm6502::from_addr_array(
-                        &computer.memory[(addr as usize)..(addr as usize + 6)],
-                        addr,
-                    )
-                    .expect("could not decode instr");
-                    let decoded = instructions.first().expect("empty instr vector");
-
-                    instr_log =
-                        format!("{:04X} {} {}", addr, decoded.as_hex_str(), decoded.as_str());
-                }
-            }
         }
     }
 
@@ -124,7 +93,7 @@ fn nes_rom_test() {
     let mut computer = TestComputer::new();
     computer.load_rom();
 
-    run(&mut computer, 14579);
+    run(&mut computer, 14575);
 
     check_results();
 }

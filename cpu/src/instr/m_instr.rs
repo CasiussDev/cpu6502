@@ -1,6 +1,7 @@
+use crate::alu;
 use crate::registers::register_file::{SelectedRegister16, SelectedRegister8};
 use crate::registers::{IndexRegister, ReferenceableRegister8, RegisterFile, StatusRegFlags};
-use crate::{alu, pinout};
+use memory6502::MemorySpace;
 use std::slice;
 
 #[cfg(feature = "logging")]
@@ -90,6 +91,41 @@ pub enum MicroInstruction {
 
 const FINISH_INSTR: [MicroInstruction; 1] = [MicroInstruction::FinishInstruction; 1];
 
+//#[cfg(feature = "integration_test")]
+//pub type FetchedInstr = Option<u16>;
+//
+//#[cfg(not(feature = "integration_test"))]
+//pub type FetchedInstr = Option<()>;
+
+#[cfg(feature = "integration_test")]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+pub enum FetchedInstr {
+    Some(u16),
+    None,
+    Invalidate,
+}
+
+#[cfg(not(feature = "integration_test"))]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[cfg(feature = "integration_test")]
+pub enum FetchedInstr {
+    Some(u16),
+    None,
+    Invalidate,
+}
+
+impl Default for FetchedInstr {
+    fn default() -> Self {
+        FetchedInstr::None
+    }
+}
+
+impl FetchedInstr {
+    pub fn is_some(&self) -> bool {
+        (*self != FetchedInstr::Invalidate) && (*self != FetchedInstr::None)
+    }
+}
+
 pub fn finish_instr_sequence() -> slice::Iter<'static, MicroInstruction> {
     FINISH_INSTR.iter()
 }
@@ -140,50 +176,71 @@ pub enum ExecutionStatus {
     YieldClock,
     Continue,
     RunOp,
-    WaitMemory { dst: Option<SelectedRegister8> },
     RunOpAndFinish,
     FinishInstruction,
     FinishInstructionBranch,
+}
+
+impl Default for ExecutionStatus {
+    fn default() -> Self {
+        ExecutionStatus::Continue
+    }
 }
 
 pub fn execute(
     micro_instr: MicroInstruction,
     index_reg: Option<IndexRegister>,
     regs: &mut RegisterFile,
-    pins: &mut pinout::Pinout,
-) -> ExecutionStatus {
+    memory: &mut impl MemorySpace,
+) -> (ExecutionStatus, FetchedInstr) {
     #[cfg(feature = "logging")]
     {
         trace!("\t{:?}", micro_instr);
     }
+    let mut fetched_instr = FetchedInstr::None;
     match micro_instr {
         MicroInstruction::Fetch => {
-            pins.set_address_output(regs.pc.to_u16());
-            pins.set_data_direction(pinout::DataDirectionMode::Read);
+            let instr = memory.read(regs.pc.to_u16());
+            regs.ir.set_u8(instr);
+
+            #[cfg(feature = "integration_test")]
+            {
+                fetched_instr = FetchedInstr::Some(regs.pc.to_u16());
+            }
+            #[cfg(not(feature = "integration_test"))]
+            {
+                fetched_instr = FetchedInstr::Some();
+            }
+
             regs.pc.inc();
-            return ExecutionStatus::WaitMemory {
-                dst: Some(SelectedRegister8::IR),
-            };
         }
         MicroInstruction::ReadPC { dst, increment } => {
-            pins.set_address_output(regs.pc.to_u16());
-            pins.set_data_direction(pinout::DataDirectionMode::Read);
+            let operand = memory.read(regs.pc.to_u16());
+
+            if dst == SelectedRegister8::IR {
+                #[cfg(feature = "integration_test")]
+                {
+                    fetched_instr = FetchedInstr::Some(regs.pc.to_u16());
+                }
+                #[cfg(not(feature = "integration_test"))]
+                {
+                    fetched_instr = FetchedInstr::Some();
+                }
+            }
+
             if increment {
                 regs.pc.inc();
             };
-            return ExecutionStatus::WaitMemory { dst: Some(dst) };
+
+            regs.set_selected_register8(dst, operand);
         }
         MicroInstruction::ReadAddress { dst } => {
-            pins.set_address_output(regs.addr.to_u16());
-            pins.set_data_direction(pinout::DataDirectionMode::Read);
-            return ExecutionStatus::WaitMemory { dst: Some(dst) };
+            let data = memory.read(regs.addr.to_u16());
+            regs.set_selected_register8(dst, data);
         }
         MicroInstruction::WriteAddress { src } => {
-            pins.set_address_output(regs.addr.to_u16());
-            pins.set_data_direction(pinout::DataDirectionMode::Write);
             let data = regs.copy_selected_register8(src).to_u8();
-            pins.set_data_output(data);
-            return ExecutionStatus::WaitMemory { dst: None };
+            memory.write(data, regs.addr.to_u16());
         }
         MicroInstruction::CopyRegister { dst, src } => {
             let src = regs.copy_selected_register8(src);
@@ -241,9 +298,11 @@ pub fn execute(
                 regs.addr.set_high_u8(addr_high_value);
             }
         }
-        MicroInstruction::RunOperation => return ExecutionStatus::RunOp,
-        MicroInstruction::YieldClock => return ExecutionStatus::YieldClock,
-        MicroInstruction::FinishInstruction => return ExecutionStatus::FinishInstruction,
+        MicroInstruction::RunOperation => return (ExecutionStatus::RunOp, FetchedInstr::None),
+        MicroInstruction::YieldClock => return (ExecutionStatus::YieldClock, FetchedInstr::None),
+        MicroInstruction::FinishInstruction => {
+            return (ExecutionStatus::FinishInstruction, FetchedInstr::None)
+        }
         MicroInstruction::FixAddressOrRunOpAndFinish => {
             let addr_low_value = regs.addr.low_u8();
             let index_value = regs
@@ -258,7 +317,7 @@ pub fn execute(
                 let addr_high_value = regs.addr.high_u8().wrapping_add(1);
                 regs.addr.set_high_u8(addr_high_value);
             } else {
-                return ExecutionStatus::RunOpAndFinish;
+                return (ExecutionStatus::RunOpAndFinish, FetchedInstr::None);
             }
         }
         MicroInstruction::FixAddressOrIncrementPC => {
@@ -291,12 +350,13 @@ pub fn execute(
             if must_branch {
                 let (pc_low_byte, carry) = regs.pc.low_u8().overflowing_add(regs.tmp.to_u8());
                 regs.pc.set_low_u8(pc_low_byte);
+                fetched_instr = FetchedInstr::Invalidate;
                 if carry == false {
-                    return ExecutionStatus::FinishInstructionBranch;
+                    return (ExecutionStatus::FinishInstructionBranch, fetched_instr);
                 }
             } else {
                 regs.pc.inc();
-                return ExecutionStatus::FinishInstruction;
+                return (ExecutionStatus::FinishInstruction, FetchedInstr::None);
             }
         }
         MicroInstruction::PushFlagToTmp { flag } => {
@@ -323,5 +383,5 @@ pub fn execute(
         }
     }
 
-    ExecutionStatus::Continue
+    (ExecutionStatus::Continue, fetched_instr)
 }

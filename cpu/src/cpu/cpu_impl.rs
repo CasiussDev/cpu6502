@@ -1,21 +1,20 @@
-use crate::instr;
-use crate::pinout::{DataDirectionMode, Pinout};
+use crate::pinout::Pinout;
 use crate::registers::{IndexRegister, RegisterFile, SelectedRegister8, StatusRegFlags};
+use crate::{instr, MicroInstruction};
+use memory6502::MemorySpace;
 use std::{slice, time};
+
+use crate::instr::FetchedInstr;
 
 #[cfg(feature = "logging")]
 use log::{debug, trace};
+#[cfg(feature = "logging")]
+use crate::cpu::logging_memory::LoggingMemory;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Eq, Debug)]
 enum WaitingInterrupt {
     NonMaskableInterrupt,
     Interrupt,
-}
-
-#[derive(PartialEq, Debug)]
-enum ClockHalf {
-    BeforeMemory,
-    AfterMemory,
 }
 
 #[derive(Default, Debug)]
@@ -24,29 +23,12 @@ pub struct Cpu {
     pins: Pinout,
     current_sequence: Option<slice::Iter<'static, instr::MicroInstruction>>,
     current_op: Option<slice::Iter<'static, instr::MicroInstruction>>,
-    data_destination: Option<SelectedRegister8>,
     index_register: Option<IndexRegister>,
     waiting_interrupt: Option<WaitingInterrupt>,
     cycle_count_since_reset: u128,
     instr_count_since_reset: u128,
-    clock_half: ClockHalf,
-    instr_ready: bool,
+    fetched_instr: FetchedInstr,
     running_op: bool,
-
-    #[cfg(feature = "integration_test")]
-    has_decoded: bool,
-}
-
-#[derive(PartialEq, Eq, Debug)]
-pub enum YieldStatus {
-    ClockFinished,
-    WaitingMemory,
-}
-
-impl Default for ClockHalf {
-    fn default() -> Self {
-        ClockHalf::BeforeMemory
-    }
 }
 
 impl Cpu {
@@ -69,39 +51,13 @@ impl Cpu {
     }
 
     #[cfg(feature = "integration_test")]
-    pub fn instr_ready(&self) -> bool {
-        self.instr_ready
-    }
-
-    #[cfg(feature = "integration_test")]
-    pub fn has_decoded(&self) -> bool {
-        self.has_decoded
+    pub fn fetched_instr(&self) -> FetchedInstr {
+        self.fetched_instr
     }
 
     #[cfg(feature = "integration_test")]
     pub fn regs_as_log_line(&self) -> String {
         self.regs.as_log_line()
-    }
-
-    pub fn read_data_pins(&self) -> u8 {
-        self.pins.data()
-    }
-
-    pub fn read_address_pins(&self) -> u16 {
-        self.pins.address()
-    }
-
-    pub fn read_writing_to_memory_pin(&self) -> bool {
-        self.pins.data_direction() == DataDirectionMode::Write
-    }
-
-    pub fn set_data_pins(&mut self, value: u8) {
-        self.pins.set_data_input(value);
-        let data_destination = self.data_destination.expect("no data destination set");
-        self.regs.set_selected_register8(data_destination, value);
-        if data_destination == SelectedRegister8::IR {
-            self.instr_ready = true;
-        }
     }
 
     pub fn set_nmi_pin(&mut self) {
@@ -155,20 +111,25 @@ impl Cpu {
         }
     }
 
-    pub fn run_op(&mut self) -> instr::ExecutionStatus {
+    pub fn run_op(&mut self, memory: &mut impl MemorySpace) -> instr::ExecutionStatus {
         let mut run_status = instr::ExecutionStatus::Continue;
 
         if let Some(op) = &mut self.current_op {
             if let Some(&micro_instr) = op.next() {
-                run_status = instr::execute(
-                    micro_instr,
-                    self.index_register,
-                    &mut self.regs,
-                    &mut self.pins,
-                );
+                let fetched_instr;
+                (run_status, fetched_instr) =
+                    instr::execute(micro_instr, self.index_register, &mut self.regs, memory);
                 #[cfg(feature = "logging")]
                 {
                     trace!("{}", self.regs.as_log_line());
+                }
+                if fetched_instr == FetchedInstr::Invalidate {
+                    self.fetched_instr = FetchedInstr::None;
+                    if self.current_sequence.is_some() {
+                        self.current_sequence = None;
+                        self.instr_count_since_reset -= 1;
+                    }
+
                 }
             } else {
                 self.running_op = false;
@@ -182,19 +143,30 @@ impl Cpu {
         run_status
     }
 
-    pub fn run_sequence(&mut self) -> instr::ExecutionStatus {
+    pub fn run_sequence(&mut self, memory: &mut impl MemorySpace) -> instr::ExecutionStatus {
         let run_status;
         let sequence = &mut self.current_sequence.as_mut().unwrap();
         if let Some(&micro_instr) = sequence.next() {
-            run_status = instr::execute(
-                micro_instr,
-                self.index_register,
-                &mut self.regs,
-                &mut self.pins,
-            );
+            let fetched_instr;
+            (run_status, fetched_instr) =
+                instr::execute(micro_instr, self.index_register, &mut self.regs, memory);
             #[cfg(feature = "logging")]
             {
                 trace!("{}", self.regs.as_log_line());
+            }
+            if micro_instr == MicroInstruction::Fetch {
+                self.fetched_instr = fetched_instr;
+            } else if let MicroInstruction::ReadPC { dst, .. } = micro_instr {
+                if dst == SelectedRegister8::IR {
+                    self.fetched_instr = fetched_instr;
+                }
+            } else if fetched_instr == FetchedInstr::Invalidate {
+                self.fetched_instr = FetchedInstr::None;
+                if self.current_sequence.is_some() {
+                    self.current_sequence = None;
+                    self.instr_count_since_reset -= 1;
+                }
+
             }
         } else {
             self.current_sequence = None;
@@ -204,17 +176,24 @@ impl Cpu {
         run_status
     }
 
-    pub fn run(&mut self) -> YieldStatus {
-        #[cfg(feature = "integration_test")]
-        {
-            self.has_decoded = false;
-        }
+    #[cfg(feature = "logging")]
+    pub fn run(&mut self, memory: &mut impl MemorySpace) {
+        let mut memory = LoggingMemory::new(memory);
+        self.run_inner(&mut memory);
+    }
 
+    #[cfg(not(feature = "logging"))]
+    pub fn run(&mut self, memory: &mut impl MemorySpace) {
+        self.run_inner(memory);
+    }
+
+    fn run_inner(&mut self, memory: &mut impl MemorySpace) {
         if self.current_sequence.is_none() {
             if self.waiting_interrupt.is_some() {
                 self.service_interrupt();
-            } else if self.instr_ready && (self.clock_half == ClockHalf::BeforeMemory) {
+            } else if self.fetched_instr.is_some() {
                 self.decode_instr();
+                self.fetched_instr = FetchedInstr::None;
             }
         }
 
@@ -222,21 +201,20 @@ impl Cpu {
 
         while run_status == instr::ExecutionStatus::Continue {
             if self.running_op {
-                run_status = self.run_op();
+                run_status = self.run_op(memory);
             } else if self.current_sequence.is_some() {
-                run_status = self.run_sequence();
+                run_status = self.run_sequence(memory);
             } else {
                 self.current_sequence = Some(instr::sequence_for_mode(
                     instr::InstructionSequenceMode::FetchInstr,
                 ));
-                run_status = self.run_sequence();
+                run_status = self.run_sequence(memory);
             }
 
             match run_status {
                 instr::ExecutionStatus::YieldClock => {
                     self.waiting_interrupt = self.is_waiting_interrupt();
                     self.cycle_count_since_reset += 1;
-                    self.clock_half = ClockHalf::BeforeMemory;
                     #[cfg(feature = "logging")]
                     {
                         trace!("--------------");
@@ -247,12 +225,6 @@ impl Cpu {
                     self.running_op = true;
                     run_status = instr::ExecutionStatus::Continue;
                 }
-                instr::ExecutionStatus::WaitMemory { dst } => {
-                    self.data_destination = dst;
-                    self.clock_half = ClockHalf::AfterMemory;
-
-                    return YieldStatus::WaitingMemory;
-                }
                 instr::ExecutionStatus::RunOpAndFinish => {
                     self.running_op = true;
                     self.current_sequence = Some(instr::finish_instr_sequence());
@@ -262,7 +234,6 @@ impl Cpu {
                     self.current_op = None;
                     self.running_op = false;
                     self.cycle_count_since_reset += 1;
-                    self.clock_half = ClockHalf::BeforeMemory;
                     #[cfg(feature = "logging")]
                     {
                         trace!("--------------");
@@ -274,8 +245,6 @@ impl Cpu {
                     self.current_op = None;
                     self.running_op = false;
                     self.cycle_count_since_reset += 1;
-                    self.clock_half = ClockHalf::BeforeMemory;
-                    self.instr_ready = false;
                     #[cfg(feature = "logging")]
                     {
                         trace!("--------------");
@@ -284,8 +253,6 @@ impl Cpu {
                 }
             };
         }
-
-        YieldStatus::ClockFinished
     }
 
     fn decode_instr(&mut self) {
@@ -300,14 +267,9 @@ impl Cpu {
 
         self.index_register = decoded_instr.index;
 
-        self.instr_ready = false;
+        self.fetched_instr = FetchedInstr::None;
 
         self.instr_count_since_reset += 1;
-
-        #[cfg(feature = "integration_test")]
-        {
-            self.has_decoded = true;
-        }
 
         #[cfg(feature = "logging")]
         {
