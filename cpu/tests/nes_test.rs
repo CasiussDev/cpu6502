@@ -9,9 +9,9 @@ use crate::test_computer::TestComputer;
 use std::io::{BufRead, Write};
 use std::{fs, io};
 
+use cpu6502::FetchedInstr;
 #[cfg(feature = "logging")]
 use log::trace;
-use cpu6502::FetchedInstr;
 
 fn run(computer: &mut TestComputer, num_cycles: u128) {
     let log_file =

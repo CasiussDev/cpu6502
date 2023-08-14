@@ -1,5 +1,5 @@
-use memory6502::MemorySpace;
 use log::trace;
+use memory6502::MemorySpace;
 
 pub struct LoggingMemory<'a, T> {
     inner: &'a mut T,

@@ -7,9 +7,9 @@ use std::{slice, time};
 use crate::instr::FetchedInstr;
 
 #[cfg(feature = "logging")]
-use log::{debug, trace};
-#[cfg(feature = "logging")]
 use crate::cpu::logging_memory::LoggingMemory;
+#[cfg(feature = "logging")]
+use log::{debug, trace};
 
 #[derive(PartialEq, Eq, Debug)]
 enum WaitingInterrupt {
@@ -129,7 +129,6 @@ impl Cpu {
                         self.current_sequence = None;
                         self.instr_count_since_reset -= 1;
                     }
-
                 }
             } else {
                 self.running_op = false;
@@ -166,7 +165,6 @@ impl Cpu {
                     self.current_sequence = None;
                     self.instr_count_since_reset -= 1;
                 }
-
             }
         } else {
             self.current_sequence = None;
