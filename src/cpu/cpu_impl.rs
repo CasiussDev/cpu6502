@@ -1,7 +1,7 @@
+use crate::memory::MemorySpace;
 use crate::pinout::Pinout;
 use crate::registers::{IndexRegister, RegisterFile, SelectedRegister8, StatusRegFlags};
 use crate::{instr, MicroInstruction};
-use memory6502::MemorySpace;
 use std::{slice, time};
 
 use crate::instr::FetchedInstr;

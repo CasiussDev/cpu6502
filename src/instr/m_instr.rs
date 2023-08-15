@@ -1,7 +1,7 @@
 use crate::alu;
+use crate::memory::MemorySpace;
 use crate::registers::register_file::{SelectedRegister16, SelectedRegister8};
 use crate::registers::{IndexRegister, ReferenceableRegister8, RegisterFile, StatusRegFlags};
-use memory6502::MemorySpace;
 use std::slice;
 
 #[cfg(feature = "logging")]

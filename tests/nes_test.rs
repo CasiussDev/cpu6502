@@ -17,8 +17,7 @@ const REFERENCE_FILE: &'static str = "testdata/reference.6502log";
 const OUTPUT_FILE: &'static str = "testdata/output.6502log";
 
 fn run(computer: &mut TestComputer, num_cycles: u128) {
-    let log_file =
-        fs::File::create(OUTPUT_FILE).expect("cannot open output log file");
+    let log_file = fs::File::create(OUTPUT_FILE).expect("cannot open output log file");
 
     let mut log_file = io::BufWriter::new(log_file);
 
@@ -63,10 +62,8 @@ fn check_results() {
 
     assert_eq!(output_file_len, reference_file_len);
 
-    let reference_file =
-        fs::File::open(REFERENCE_FILE).expect("could not open reference.6502log");
-    let output_file =
-        fs::File::open(OUTPUT_FILE).expect("could not open output.6502log");
+    let reference_file = fs::File::open(REFERENCE_FILE).expect("could not open reference.6502log");
+    let output_file = fs::File::open(OUTPUT_FILE).expect("could not open output.6502log");
 
     let reference_lines = io::BufReader::new(reference_file).lines();
     let output_lines = io::BufReader::new(output_file).lines();

@@ -1,3 +1,3 @@
-mod memory_space;
+pub mod memory_space;
 
 pub use memory_space::MemorySpace;
