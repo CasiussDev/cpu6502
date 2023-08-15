@@ -1,10 +1,10 @@
 #[derive(Clone, Copy, Default, Debug)]
-pub struct Pinout {
+pub struct Interrupts {
     irq: bool,
     nmi: bool,
 }
 
-impl Pinout {
+impl Interrupts {
     pub fn reset(&mut self) {}
 
     pub fn set_irq_input(&mut self) {
@@ -26,6 +26,7 @@ impl Pinout {
     pub fn is_irq_set(&self) -> bool {
         self.irq
     }
+
 
     pub fn is_nmi_set(&self) -> bool {
         self.nmi

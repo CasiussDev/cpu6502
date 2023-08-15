@@ -1,5 +1,5 @@
 use crate::memory::MemorySpace;
-use crate::pinout::Pinout;
+use crate::interrupts::Interrupts;
 use crate::registers::{IndexRegister, RegisterFile, SelectedRegister8, StatusRegFlags};
 use crate::{instr, MicroInstruction};
 use std::{slice, time};
@@ -20,7 +20,7 @@ enum WaitingInterrupt {
 #[derive(Default, Debug)]
 pub struct Cpu {
     regs: RegisterFile,
-    pins: Pinout,
+    pins: Interrupts,
     current_sequence: Option<slice::Iter<'static, instr::MicroInstruction>>,
     current_op: Option<slice::Iter<'static, instr::MicroInstruction>>,
     index_register: Option<IndexRegister>,
