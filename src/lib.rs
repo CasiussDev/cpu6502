@@ -2,8 +2,8 @@ mod alu;
 mod cpu;
 mod instr;
 mod interrupts;
-mod registers;
 mod memory;
+mod registers;
 
 #[cfg(not(feature = "decode_switch"))]
 #[macro_use]

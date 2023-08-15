@@ -1,5 +1,5 @@
-use crate::memory::MemorySpace;
 use crate::interrupts::Interrupts;
+use crate::memory::MemorySpace;
 use crate::registers::{IndexRegister, RegisterFile, SelectedRegister8, StatusRegFlags};
 use crate::{instr, MicroInstruction};
 use std::{slice, time};

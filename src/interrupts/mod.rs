@@ -27,7 +27,6 @@ impl Interrupts {
         self.irq
     }
 
-
     pub fn is_nmi_set(&self) -> bool {
         self.nmi
     }

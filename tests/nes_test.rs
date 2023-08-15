@@ -21,12 +21,12 @@ fn run(computer: &mut TestComputer, num_cycles: u128) {
 
     let mut log_file = io::BufWriter::new(log_file);
 
-    let mut instr_log = String::new();
+    let mut instr_log;
 
     computer.cpu.reset();
 
     while computer.cpu.cycle_count_since_reset() < num_cycles {
-        let status = computer.cpu.run(&mut computer.memory);
+        computer.cpu.run(&mut computer.memory);
 
         if let FetchedInstr::Some(addr) = computer.cpu.fetched_instr() {
             let instructions = disasm6502::from_addr_array(
