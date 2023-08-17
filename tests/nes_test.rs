@@ -54,16 +54,16 @@ fn run(computer: &mut TestComputer, num_cycles: u128) {
 
 fn check_results() {
     let reference_file_len = fs::metadata(REFERENCE_FILE)
-        .expect("could not read metadata of reference.log.txt")
+        .expect("could not read metadata of {REFERENCE_FILE}")
         .len();
     let output_file_len = fs::metadata(OUTPUT_FILE)
-        .expect("could not read metadata of reference.log.txt")
+        .expect("could not read metadata of {OUTPUT_FILE}")
         .len();
 
     assert_eq!(output_file_len, reference_file_len);
 
-    let reference_file = fs::File::open(REFERENCE_FILE).expect("could not open reference.6502log");
-    let output_file = fs::File::open(OUTPUT_FILE).expect("could not open output.6502log");
+    let reference_file = fs::File::open(REFERENCE_FILE).expect("could not open {REFERENCE_FILE}");
+    let output_file = fs::File::open(OUTPUT_FILE).expect("could not open {OUTPUT_FILE}");
 
     let reference_lines = io::BufReader::new(reference_file).lines();
     let output_lines = io::BufReader::new(output_file).lines();
