@@ -185,6 +185,16 @@ impl Cpu {
         self.run_inner(memory);
     }
 
+    pub fn is_current_cycle_write(&self) -> bool {
+        let empty: [MicroInstruction; 0] = [];
+        let iter = &mut empty.iter();
+        self.current_sequence
+            .clone()
+            .as_mut()
+            .unwrap_or(iter)
+            .any(|&m_instr| matches!(m_instr, MicroInstruction::WriteAddress { .. }))
+    }
+
     fn run_inner(&mut self, memory: &mut impl MemorySpace) {
         if self.current_sequence.is_none() {
             if self.waiting_interrupt.is_some() {
