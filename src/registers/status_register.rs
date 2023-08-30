@@ -2,7 +2,7 @@ use bitflags::bitflags;
 use std::fmt;
 
 bitflags! {
-    #[derive(Default)]
+    #[derive(Default, Copy, Clone, PartialEq, Eq, Debug)]
     pub struct StatusRegFlags: u8 {
         const CARRY =       0b00000001;
         const ZERO =        0b00000010;
@@ -12,7 +12,7 @@ bitflags! {
         const UNUSED =      0b00100000;
         const OVERFLOW =    0b01000000;
         const NEGATIVE =    0b10000000;
-        const STARTUP =     Self::UNUSED.bits | Self::BREAK.bits | Self::IRQ_DISABLE.bits;
+        const STARTUP =     Self::UNUSED.bits() | Self::BREAK.bits() | Self::IRQ_DISABLE.bits();
     }
 }
 
@@ -24,21 +24,20 @@ pub struct StatusReg {
 impl From<u8> for StatusReg {
     fn from(value: u8) -> Self {
         Self {
-            // SAFETY: all u8 values are legal
-            flags: unsafe { StatusRegFlags::from_bits_unchecked(value) },
+            flags: StatusRegFlags::from_bits_truncate(value),
         }
     }
 }
 
 impl From<StatusReg> for u8 {
     fn from(value: StatusReg) -> Self {
-        value.flags.bits
+        value.flags.bits()
     }
 }
 
 impl StatusReg {
     pub fn reset(&mut self) {
-        self.flags.bits = 0x24;
+        self.flags = StatusRegFlags::from_bits_truncate(0x24);
     }
 
     pub fn to_u8(self) -> u8 {
@@ -47,7 +46,7 @@ impl StatusReg {
 
     pub fn set_u8(&mut self, value: u8) {
         // All combinations are accepted, even if some flags could be ignored
-        self.flags.bits = value;
+        self.flags = StatusRegFlags::from_bits_truncate(value);
     }
 
     pub fn set_flags(&mut self, flags_to_set: StatusRegFlags) {
