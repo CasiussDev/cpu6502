@@ -81,12 +81,20 @@ impl Cpu {
         self.pins.set_nmi_input();
     }
 
+    pub fn set_nmi_pin_value(&mut self, value: bool) {
+        self.pins.set_nmi_input_value(value);
+    }
+
     pub fn clear_nmi_pin(&mut self) {
         self.pins.clear_nmi_input();
     }
 
     pub fn set_irq_pin(&mut self) {
         self.pins.set_irq_input();
+    }
+
+    pub fn set_irq_pin_value(&mut self, value: bool) {
+        self.pins.set_irq_input_value(value);
     }
 
     pub fn clear_irq_pin(&mut self) {
@@ -111,8 +119,8 @@ impl Cpu {
         self.instr_count_since_reset = 0;
     }
 
-    fn is_waiting_interrupt(&self) -> Option<WaitingInterrupt> {
-        if self.pins.is_nmi_set() {
+    fn waiting_interrupt(&mut self) -> Option<WaitingInterrupt> {
+        if self.pins.waiting_nmi() {
             Some(WaitingInterrupt::NonMaskableInterrupt)
         } else if self.pins.is_irq_set()
             && (self.waiting_interrupt != Some(WaitingInterrupt::NonMaskableInterrupt))
@@ -238,7 +246,7 @@ impl Cpu {
 
             match run_status {
                 instr::ExecutionStatus::YieldClock => {
-                    self.waiting_interrupt = self.is_waiting_interrupt();
+                    self.waiting_interrupt = self.waiting_interrupt();
                     self.cycle_count_since_reset += 1;
                     #[cfg(feature = "logging")]
                     {
@@ -255,6 +263,7 @@ impl Cpu {
                     self.current_sequence = Some(instr::finish_instr_sequence());
                 }
                 instr::ExecutionStatus::FinishInstruction => {
+                    self.waiting_interrupt = self.waiting_interrupt();
                     self.current_sequence = None;
                     self.current_op = None;
                     self.running_op = false;
