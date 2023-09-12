@@ -10,6 +10,8 @@ use crate::instr::FetchedInstr;
 use crate::cpu::logging_memory::LoggingMemory;
 #[cfg(feature = "logging")]
 use log::{debug, trace};
+#[cfg(feature = "logging")]
+use std::fs;
 
 #[derive(PartialEq, Eq, Debug)]
 enum WaitingInterrupt {
@@ -40,6 +42,21 @@ impl Cpu {
         let _ = instr::sequence_for_op(instr::InstructionOp::Add);
 
         cpu
+    }
+
+    #[cfg(feature = "logging")]
+    pub fn init_logging(&self) {
+        let log_config = simplelog::ConfigBuilder::new()
+            .set_max_level(log::LevelFilter::Off)
+            .set_time_level(log::LevelFilter::Off)
+            .set_thread_level(log::LevelFilter::Off)
+            .set_target_level(log::LevelFilter::Off)
+            .set_location_level(log::LevelFilter::Off)
+            .build();
+
+        let trace_file =
+            fs::File::create("trace.log.txt").expect("cannot open trace file");
+        simplelog::WriteLogger::init(log::LevelFilter::Trace, log_config, trace_file).unwrap();
     }
 
     pub fn cycle_count_since_reset(&self) -> u128 {

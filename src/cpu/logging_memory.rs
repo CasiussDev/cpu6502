@@ -1,5 +1,5 @@
+use crate::MemorySpace;
 use log::trace;
-use memory6502::MemorySpace;
 
 pub struct LoggingMemory<'a, T> {
     inner: &'a mut T,
@@ -18,7 +18,7 @@ impl<'a, T> MemorySpace for LoggingMemory<'a, T>
 where
     T: MemorySpace,
 {
-    fn read(&self, addr: u16) -> u8 {
+    fn read(&mut self, addr: u16) -> u8 {
         let data = self.inner.read(addr);
         trace!("\t\t\tRead Memory[{:04X}] = {:02X}", addr, data);
         data
