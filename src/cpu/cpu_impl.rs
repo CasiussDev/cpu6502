@@ -54,8 +54,7 @@ impl Cpu {
             .set_location_level(log::LevelFilter::Off)
             .build();
 
-        let trace_file =
-            fs::File::create("trace.log.txt").expect("cannot open trace file");
+        let trace_file = fs::File::create("trace.log.txt").expect("cannot open trace file");
         simplelog::WriteLogger::init(log::LevelFilter::Trace, log_config, trace_file).unwrap();
     }
 
