@@ -347,8 +347,16 @@ pub fn execute(
             branch_if_set,
         } => {
             let must_branch = regs.status.are_all_flags_set(flag_to_test) == branch_if_set;
+            #[cfg(feature = "logging")]
+            {
+                trace!("\tmust_branch is {must_branch} with {flag_to_test:?}");
+            }
             if must_branch {
                 let (pc_low_byte, carry) = regs.pc.low_u8().overflowing_add(regs.tmp.to_u8());
+                #[cfg(feature = "logging")]
+                {
+                    trace!("\tmust_branch is {must_branch} with {flag_to_test:?}");
+                }
                 regs.pc.set_low_u8(pc_low_byte);
                 fetched_instr = FetchedInstr::Invalidate;
                 if carry == false {

@@ -307,7 +307,7 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             vec![
                 instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::Discard,
-                    increment: true,
+                    increment: false,
                 },
                 instr::MicroInstruction::YieldClock,
                 // Next clock
@@ -387,7 +387,7 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
             vec![
                 instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::Discard,
-                    increment: true,
+                    increment: false,
                 },
                 instr::MicroInstruction::YieldClock,
                 // Next clock
@@ -980,8 +980,8 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 instr::MicroInstruction::YieldClock,
                 // Next clock
                 instr::MicroInstruction::AddIndexToAddress,
-                instr::MicroInstruction::ReadAddress {
-                    dst: SelectedRegister8::Tmp,
+                instr::MicroInstruction::WriteAddress {
+                    src: SelectedRegister8::Tmp,
                 },
                 instr::MicroInstruction::FixAddress,
                 instr::MicroInstruction::YieldClock,

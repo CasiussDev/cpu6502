@@ -31,6 +31,9 @@ pub struct Cpu {
     instr_count_since_reset: u128,
     fetched_instr: FetchedInstr,
     running_op: bool,
+
+    #[cfg(feature = "logging")]
+    logging_inited: bool,
 }
 
 impl Cpu {
@@ -45,17 +48,21 @@ impl Cpu {
     }
 
     #[cfg(feature = "logging")]
-    pub fn init_logging(&self) {
-        let log_config = simplelog::ConfigBuilder::new()
-            .set_max_level(log::LevelFilter::Off)
-            .set_time_level(log::LevelFilter::Off)
-            .set_thread_level(log::LevelFilter::Off)
-            .set_target_level(log::LevelFilter::Off)
-            .set_location_level(log::LevelFilter::Off)
-            .build();
+    pub fn init_logging(&mut self) {
+        if !self.logging_inited {
+            let log_config = simplelog::ConfigBuilder::new()
+                .set_max_level(log::LevelFilter::Off)
+                .set_time_level(log::LevelFilter::Off)
+                .set_thread_level(log::LevelFilter::Off)
+                .set_target_level(log::LevelFilter::Off)
+                .set_location_level(log::LevelFilter::Off)
+                .build();
 
-        let trace_file = fs::File::create("trace.log.txt").expect("cannot open trace file");
-        simplelog::WriteLogger::init(log::LevelFilter::Trace, log_config, trace_file).unwrap();
+            let trace_file = fs::File::create("trace.log.txt").expect("cannot open trace file");
+            simplelog::WriteLogger::init(log::LevelFilter::Trace, log_config, trace_file).unwrap();
+
+            self.logging_inited = true;
+        }
     }
 
     pub fn cycle_count_since_reset(&self) -> u128 {
@@ -119,7 +126,9 @@ impl Cpu {
     }
 
     fn waiting_interrupt(&mut self) -> Option<WaitingInterrupt> {
-        if self.pins.waiting_nmi() {
+        if (self.waiting_interrupt == Some(WaitingInterrupt::NonMaskableInterrupt))
+            || self.pins.waiting_nmi()
+        {
             Some(WaitingInterrupt::NonMaskableInterrupt)
         } else if self.pins.is_irq_set()
             && (self.waiting_interrupt != Some(WaitingInterrupt::NonMaskableInterrupt))
@@ -153,6 +162,8 @@ impl Cpu {
                         self.current_sequence = None;
                         self.instr_count_since_reset -= 1;
                     }
+                } else if let FetchedInstr::Some(instr) = fetched_instr {
+                    self.fetched_instr = FetchedInstr::Some(instr);
                 }
             } else {
                 self.running_op = false;
@@ -221,11 +232,11 @@ impl Cpu {
 
     fn run_inner(&mut self, memory: &mut impl MemorySpace) {
         if self.current_sequence.is_none() {
-            if self.waiting_interrupt.is_some() {
-                self.service_interrupt();
-            } else if self.fetched_instr.is_some() {
+            if self.fetched_instr.is_some() {
                 self.decode_instr();
                 self.fetched_instr = FetchedInstr::None;
+            } else if self.waiting_interrupt.is_some() {
+                self.service_interrupt();
             }
         }
 
