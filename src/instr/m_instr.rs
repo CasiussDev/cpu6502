@@ -75,9 +75,9 @@ pub enum MicroInstruction {
     SetFlagsTmp {
         flags: StatusRegFlags,
     },
-    ClearFlagsTmp {
-        flags: StatusRegFlags,
-    },
+    //ClearFlagsTmp {
+    //    flags: StatusRegFlags,
+    //},
     AddIndexToAddress,
     FixAddress,
     RunOperation,
@@ -381,10 +381,10 @@ pub fn execute(
             let new_value = regs.tmp.to_u8() | flags.bits();
             regs.tmp.set_u8(new_value);
         }
-        MicroInstruction::ClearFlagsTmp { flags } => {
-            let new_value = regs.tmp.to_u8() & !flags.bits();
-            regs.tmp.set_u8(new_value);
-        }
+        //MicroInstruction::ClearFlagsTmp { flags } => {
+        //    let new_value = regs.tmp.to_u8() & !flags.bits();
+        //    regs.tmp.set_u8(new_value);
+        //}
         MicroInstruction::UpdateStatusFlagsNZ { reg } => {
             let value = regs.copy_selected_register8(reg).to_i8();
             alu::update_status_nz(value, &mut regs.status);

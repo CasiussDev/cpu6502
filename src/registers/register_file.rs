@@ -32,8 +32,6 @@ pub enum ReferenceableRegister8 {
     A = SelectedRegister8::A as isize,
     X,
     Y,
-    SP,
-    IR,
     Tmp,
 }
 
@@ -52,8 +50,6 @@ impl From<ReferenceableRegister8> for SelectedRegister8 {
             ReferenceableRegister8::A => SelectedRegister8::A,
             ReferenceableRegister8::X => SelectedRegister8::X,
             ReferenceableRegister8::Y => SelectedRegister8::Y,
-            ReferenceableRegister8::SP => SelectedRegister8::SP,
-            ReferenceableRegister8::IR => SelectedRegister8::IR,
             ReferenceableRegister8::Tmp => SelectedRegister8::Tmp,
         }
     }
@@ -127,8 +123,6 @@ impl RegisterFile {
             ReferenceableRegister8::A => &mut self.a,
             ReferenceableRegister8::X => &mut self.x,
             ReferenceableRegister8::Y => &mut self.y,
-            ReferenceableRegister8::SP => &mut self.sp,
-            ReferenceableRegister8::IR => &mut self.ir,
             ReferenceableRegister8::Tmp => &mut self.tmp,
         }
     }
