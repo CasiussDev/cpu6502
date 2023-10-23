@@ -91,23 +91,13 @@ pub enum MicroInstruction {
 
 const FINISH_INSTR: [MicroInstruction; 1] = [MicroInstruction::FinishInstruction; 1];
 
-//#[cfg(feature = "integration_test")]
+//#[cfg(feature = "disassembly")]
 //pub type FetchedInstr = Option<u16>;
 //
-//#[cfg(not(feature = "integration_test"))]
+//#[cfg(not(feature = "disassembly"))]
 //pub type FetchedInstr = Option<()>;
 
-#[cfg(feature = "integration_test")]
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub enum FetchedInstr {
-    Some(u16),
-    None,
-    Invalidate,
-}
-
-#[cfg(not(feature = "integration_test"))]
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
-#[cfg(feature = "integration_test")]
 pub enum FetchedInstr {
     Some(u16),
     None,
@@ -203,13 +193,9 @@ pub fn execute(
             let instr = memory.read(regs.pc.to_u16());
             regs.ir.set_u8(instr);
 
-            #[cfg(feature = "integration_test")]
+            #[cfg(feature = "disassembly")]
             {
                 fetched_instr = FetchedInstr::Some(regs.pc.to_u16());
-            }
-            #[cfg(not(feature = "integration_test"))]
-            {
-                fetched_instr = FetchedInstr::Some();
             }
 
             regs.pc.inc();
@@ -218,13 +204,9 @@ pub fn execute(
             let operand = memory.read(regs.pc.to_u16());
 
             if dst == SelectedRegister8::IR {
-                #[cfg(feature = "integration_test")]
+                #[cfg(feature = "disassembly")]
                 {
                     fetched_instr = FetchedInstr::Some(regs.pc.to_u16());
-                }
-                #[cfg(not(feature = "integration_test"))]
-                {
-                    fetched_instr = FetchedInstr::Some();
                 }
             }
 

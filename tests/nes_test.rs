@@ -10,8 +10,6 @@ use std::io::{BufRead, Write};
 use std::{fs, io};
 
 use cpu6502::FetchedInstr;
-#[cfg(feature = "logging")]
-use log::trace;
 
 const REFERENCE_FILE: &'static str = "testdata/reference.6502log";
 const OUTPUT_FILE: &'static str = "testdata/output.6502log";

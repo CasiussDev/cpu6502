@@ -19,13 +19,13 @@ pub use memory::MemorySpace;
 #[cfg(feature = "logging")]
 extern crate log;
 
-#[cfg(feature = "integration_test")]
+#[cfg(feature = "disassembly")]
 pub use instr::opcodes::decode;
-#[cfg(feature = "integration_test")]
+#[cfg(feature = "disassembly")]
 pub use instr::sequence_for_mode;
-#[cfg(feature = "integration_test")]
+#[cfg(feature = "disassembly")]
 pub use instr::FetchedInstr;
-#[cfg(feature = "integration_test")]
+#[cfg(feature = "disassembly")]
 pub use instr::InstructionOp;
-#[cfg(feature = "integration_test")]
+#[cfg(feature = "disassembly")]
 pub use instr::MicroInstruction;

@@ -9,6 +9,7 @@ pub struct DecodedOpcode {
 }
 
 impl DecodedOpcode {
+    #[cfg(feature = "disassembly")]
     pub fn new(
         sequence: instr::InstructionSequenceMode,
         operation: instr::InstructionOp,

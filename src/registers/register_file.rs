@@ -209,6 +209,7 @@ impl RegisterFile {
         };
     }
 
+    #[cfg(any(feature = "logging", feature = "disassembly"))]
     pub fn as_log_line(&self) -> String {
         format!(
             "\t\tA:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",

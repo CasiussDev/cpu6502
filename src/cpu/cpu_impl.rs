@@ -1,8 +1,9 @@
+use crate::instr;
+use crate::instr::MicroInstruction;
 use crate::interrupts::Interrupts;
 use crate::memory::MemorySpace;
 use crate::registers::{IndexRegister, RegisterFile, SelectedRegister8, StatusRegFlags};
-use crate::{instr, MicroInstruction};
-use std::{slice, time};
+use std::slice;
 
 use crate::instr::FetchedInstr;
 
@@ -12,6 +13,9 @@ use crate::cpu::logging_memory::LoggingMemory;
 use log::{debug, trace};
 #[cfg(feature = "logging")]
 use std::fs;
+
+#[cfg(feature = "disassembly")]
+extern crate disasm6502;
 
 #[derive(PartialEq, Eq, Debug)]
 enum WaitingInterrupt {
@@ -23,8 +27,8 @@ enum WaitingInterrupt {
 pub struct Cpu {
     regs: RegisterFile,
     pins: Interrupts,
-    current_sequence: Option<slice::Iter<'static, instr::MicroInstruction>>,
-    current_op: Option<slice::Iter<'static, instr::MicroInstruction>>,
+    current_sequence: Option<slice::Iter<'static, MicroInstruction>>,
+    current_op: Option<slice::Iter<'static, MicroInstruction>>,
     index_register: Option<IndexRegister>,
     waiting_interrupt: Option<WaitingInterrupt>,
     cycle_count_since_reset: u128,
@@ -59,7 +63,7 @@ impl Cpu {
                 .build();
 
             let trace_file = fs::File::create("trace.log.txt").expect("cannot open trace file");
-            simplelog::WriteLogger::init(log::LevelFilter::Trace, log_config, trace_file).unwrap();
+            simplelog::WriteLogger::init(log::LevelFilter::Debug, log_config, trace_file).unwrap();
 
             self.logging_inited = true;
         }
@@ -73,12 +77,12 @@ impl Cpu {
         self.instr_count_since_reset
     }
 
-    #[cfg(feature = "integration_test")]
+    #[cfg(feature = "disassembly")]
     pub fn fetched_instr(&self) -> FetchedInstr {
         self.fetched_instr
     }
 
-    #[cfg(feature = "integration_test")]
+    #[cfg(any(feature = "disassembly", feature = "logging"))]
     pub fn regs_as_log_line(&self) -> String {
         self.regs.as_log_line()
     }
@@ -233,7 +237,7 @@ impl Cpu {
     fn run_inner(&mut self, memory: &mut impl MemorySpace) {
         if self.current_sequence.is_none() {
             if self.fetched_instr.is_some() {
-                self.decode_instr();
+                self.decode_instr(memory);
                 self.fetched_instr = FetchedInstr::None;
             } else if self.waiting_interrupt.is_some() {
                 self.service_interrupt();
@@ -299,8 +303,27 @@ impl Cpu {
         }
     }
 
-    fn decode_instr(&mut self) {
-        let mut _decode_start: time::Instant;
+    fn decode_instr(&mut self, _memory: &mut impl MemorySpace) {
+        #[cfg(feature = "disassembly")]
+        #[cfg(feature = "logging")]
+        {
+            if let FetchedInstr::Some(addr) = self.fetched_instr {
+                let mut code = [0u8; 6];
+                _memory.read_array(addr, code.as_mut_slice());
+                let instructions = disasm6502::from_addr_array(code.as_slice(), addr)
+                    .expect("could not decode instr");
+                let decoded = instructions.first().expect("empty instr vector");
+
+                debug!(
+                    "{:04X} {} {} \t{} CYC:{}",
+                    addr,
+                    decoded.as_hex_str(),
+                    decoded.as_str(),
+                    self.regs_as_log_line(),
+                    self.cycle_count_since_reset()
+                );
+            }
+        }
 
         let opcode = self.regs.ir.to_u8();
         let decoded_instr = instr::decode(opcode);
@@ -314,11 +337,6 @@ impl Cpu {
         self.fetched_instr = FetchedInstr::None;
 
         self.instr_count_since_reset += 1;
-
-        #[cfg(feature = "logging")]
-        {
-            debug!("{:?}", decoded_instr);
-        }
     }
 
     fn service_interrupt(&mut self) {
@@ -327,6 +345,10 @@ impl Cpu {
                 panic!("service_interrupt was called witout any waiting interrupt");
             }
             Some(WaitingInterrupt::NonMaskableInterrupt) => {
+                #[cfg(feature = "logging")]
+                {
+                    debug!("--------------------------\n  Non Maskable Interrupt\n--------------------------");
+                }
                 instr::InstructionSequenceMode::StartNmi
             }
             Some(WaitingInterrupt::Interrupt) => instr::InstructionSequenceMode::StartIrq,
