@@ -321,12 +321,14 @@ pub fn execute(
             }
         }
         MicroInstruction::FixAddressOrIncrementPC => {
-            let addr_low_value = regs.addr.low_u8();
+            let addr_low_value = regs.pc.low_u8();
             let index_value = regs.tmp.to_u8();
 
             if index_value > addr_low_value {
-                let addr_high_value = regs.addr.high_u8().wrapping_add(1);
-                regs.addr.set_high_u8(addr_high_value);
+                let addr_high_value = regs.pc.high_u8().wrapping_add(1);
+                regs.pc.set_high_u8(addr_high_value);
+
+                fetched_instr = FetchedInstr::Invalidate;
             } else {
                 regs.pc.inc();
             }
@@ -352,6 +354,7 @@ pub fn execute(
                 trace!("\tmust_branch is {must_branch} with {flag_to_test:?}");
             }
             if must_branch {
+                let prev_pc_low_byte = regs.pc.low_u8();
                 let (pc_low_byte, carry) = regs.pc.low_u8().overflowing_add(regs.tmp.to_u8());
                 #[cfg(feature = "logging")]
                 {
@@ -359,6 +362,18 @@ pub fn execute(
                 }
                 regs.pc.set_low_u8(pc_low_byte);
                 fetched_instr = FetchedInstr::Invalidate;
+                if regs.tmp.to_i8() > 0 {
+                    if regs.tmp.to_u8() > pc_low_byte {
+                        let pc_high_byte = regs.pc.high_u8().wrapping_add(1);
+                        regs.pc.set_high_u8(pc_high_byte);
+                    }
+                } else {
+                    if prev_pc_low_byte < pc_low_byte {
+                        let pc_high_byte = regs.pc.high_u8().wrapping_sub(1);
+                        regs.pc.set_high_u8(pc_high_byte);
+                    }
+                }
+
                 if carry == false {
                     return (ExecutionStatus::FinishInstructionBranch, fetched_instr);
                 }
