@@ -193,10 +193,7 @@ pub fn execute(
             let instr = memory.read(regs.pc.to_u16());
             regs.ir.set_u8(instr);
 
-            #[cfg(feature = "disassembly")]
-            {
-                fetched_instr = FetchedInstr::Some(regs.pc.to_u16());
-            }
+            fetched_instr = FetchedInstr::Some(regs.pc.to_u16());
 
             regs.pc.inc();
         }
@@ -204,10 +201,7 @@ pub fn execute(
             let operand = memory.read(regs.pc.to_u16());
 
             if dst == SelectedRegister8::IR {
-                #[cfg(feature = "disassembly")]
-                {
-                    fetched_instr = FetchedInstr::Some(regs.pc.to_u16());
-                }
+                fetched_instr = FetchedInstr::Some(regs.pc.to_u16());
             }
 
             if increment {
