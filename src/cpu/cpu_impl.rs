@@ -52,7 +52,17 @@ impl Cpu {
     }
 
     #[cfg(feature = "logging")]
-    pub fn init_logging(&mut self) {
+    pub fn init_logging_trace(&mut self) {
+        self.init_logging(log::LevelFilter::Trace);
+    }
+
+    #[cfg(feature = "logging")]
+    pub fn init_logging_debug(&mut self) {
+        self.init_logging(log::LevelFilter::Debug);
+    }
+
+    #[cfg(feature = "logging")]
+    fn init_logging(&mut self, level: log::LevelFilter) {
         if !self.logging_inited {
             let log_config = simplelog::ConfigBuilder::new()
                 .set_max_level(log::LevelFilter::Off)
@@ -63,7 +73,7 @@ impl Cpu {
                 .build();
 
             let trace_file = fs::File::create("trace.log.txt").expect("cannot open trace file");
-            simplelog::WriteLogger::init(log::LevelFilter::Debug, log_config, trace_file).unwrap();
+            let _ = simplelog::WriteLogger::init(level, log_config, trace_file);
 
             self.logging_inited = true;
         }

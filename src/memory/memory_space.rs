@@ -3,7 +3,7 @@ pub trait MemorySpace {
     fn write(&mut self, data: u8, addr: u16);
     fn read_array(&mut self, addr: u16, out: &mut [u8]) {
         for (i, dst) in out.iter_mut().enumerate() {
-            *dst = self.read(addr + i as u16);
+            *dst = self.read(addr.saturating_add(i as u16));
         }
     }
 }
