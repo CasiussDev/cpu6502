@@ -416,6 +416,8 @@ pub fn decode(opcode: u8) -> DecodedOpcode {
                 decoded_opcode = DecodedOpcode::new(sequence, operation, index);
             } else if cfg!(feature = "undoc_opcodes") {
                 todo!();
+            } else {
+                unimplemented!();
             }
         }
         2 => {
@@ -432,6 +434,8 @@ pub fn decode(opcode: u8) -> DecodedOpcode {
                     DecodedOpcode::new(instr::InstructionSequenceMode::Implied, operation, None);
             } else if cfg!(feature = "undoc_opcodes") {
                 todo!();
+            } else {
+                unimplemented!()
             }
         }
         0 => {
@@ -455,6 +459,8 @@ pub fn decode(opcode: u8) -> DecodedOpcode {
                 decoded_opcode = DecodedOpcode::new(sequence, operation, None);
             } else if cfg!(feature = "undoc_opcodes") {
                 todo!();
+            } else {
+                unimplemented!()
             }
         }
         _ => (),
