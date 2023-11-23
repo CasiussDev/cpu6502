@@ -12,10 +12,6 @@ where
     pub fn new(inner: &'a mut T) -> Self {
         Self { inner }
     }
-
-    fn read_inner(&mut self, addr: u16) -> u8 {
-        self.inner.read(addr)
-    }
 }
 
 impl<'a, T> MemorySpace for LoggingMemory<'a, T>
