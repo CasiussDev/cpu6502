@@ -407,8 +407,10 @@ pub fn decode(opcode: u8) -> DecodedOpcode {
     let mut decoded_opcode = DecodedOpcode::default();
     match opcode & OPCODE_GROUP_MASK {
         1 => {
-            let op = OpsG1::from_u8(opcode & OPCODE_G123_OP_MASK).unwrap();
-            let addr_mode = AddrModeG1::from_u8(opcode & OPCODE_G123_ADDR_MASK).unwrap();
+            let op = OpsG1::from_u8(opcode & OPCODE_G123_OP_MASK)
+                .expect("Trying to decode wrong opcode");
+            let addr_mode = AddrModeG1::from_u8(opcode & OPCODE_G123_ADDR_MASK)
+                .expect("Trying to decode wrong opcode");
             if illegal_instruction_g1(op, addr_mode) == false {
                 let operation = instr_op_g1(op);
                 let sequence = sequence_mode_g1(op, addr_mode);
@@ -421,8 +423,10 @@ pub fn decode(opcode: u8) -> DecodedOpcode {
             }
         }
         2 => {
-            let op = OpsG2::from_u8(opcode & OPCODE_G123_OP_MASK).unwrap();
-            let addr_mode = AddrModeG2::from_u8(opcode & OPCODE_G123_ADDR_MASK).unwrap();
+            let op = OpsG2::from_u8(opcode & OPCODE_G123_OP_MASK)
+                .expect("Trying to decode wrong opcode");
+            let addr_mode = AddrModeG2::from_u8(opcode & OPCODE_G123_ADDR_MASK)
+                .expect("Trying to decode wrong opcode");
             if illegal_instruction_g2(op, addr_mode) == false {
                 let operation = instr_op_g2(op, addr_mode);
                 let sequence = sequence_mode_g2(op, addr_mode);
@@ -439,8 +443,10 @@ pub fn decode(opcode: u8) -> DecodedOpcode {
             }
         }
         0 => {
-            let op = OpsG3::from_u8(opcode & OPCODE_G123_OP_MASK).unwrap();
-            let addr_mode = AddrModeG3::from_u8(opcode & OPCODE_G123_ADDR_MASK).unwrap();
+            let op = OpsG3::from_u8(opcode & OPCODE_G123_OP_MASK)
+                .expect("Trying to decode wrong opcode");
+            let addr_mode = AddrModeG3::from_u8(opcode & OPCODE_G123_ADDR_MASK)
+                .expect("Trying to decode wrong opcode");
             if illegal_instruction_g3(op, addr_mode) == false {
                 let operation = instr_op_g3(op, addr_mode);
                 let sequence = sequence_mode_g3(op, addr_mode);

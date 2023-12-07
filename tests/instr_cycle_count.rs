@@ -17,6 +17,7 @@ struct OpcodeInfo {
 #[cfg(feature = "disassembly")]
 fn test() {
     use std::fs;
+
     let json_text = fs::read_to_string("testdata/all_6502.json")
         .expect("Could not open testdata/all_6502.json");
 
@@ -25,7 +26,7 @@ fn test() {
     let opcode_data = opcodes.into_iter().filter(|e| e.illegal == false).map(|e| {
         (
             e.opcode,
-            e.cycles.unwrap(),
+            e.cycles.unwrap_or(1),
             e.page_boundary_cycle.unwrap_or(false),
         )
     });

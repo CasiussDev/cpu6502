@@ -67,7 +67,10 @@ fn check_results() {
     let output_lines = io::BufReader::new(output_file).lines();
 
     for (reference, output) in reference_lines.zip(output_lines) {
-        assert_eq!(reference.unwrap(), output.unwrap());
+        assert_eq!(
+            reference.expect("cannot unwrap reference trace line"),
+            output.expect("cannot unwrap output trace line")
+        );
     }
 }
 
@@ -85,7 +88,8 @@ fn nes_rom_test() {
 
         let trace_file =
             fs::File::create("testdata/trace.log.txt").expect("cannot open trace file");
-        simplelog::WriteLogger::init(log::LevelFilter::Trace, log_config, trace_file).unwrap();
+        simplelog::WriteLogger::init(log::LevelFilter::Trace, log_config, trace_file)
+            .expect("WriteLogger::init error");
     }
 
     let mut computer = TestComputer::new();

@@ -1281,7 +1281,9 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
     for (mode, m_instrs) in sequences_map.iter_mut() {
         let last = m_instrs.last_mut();
         assert!(last.is_some(), "Sequence mode {:?} is empty", mode); //use this instead of expect to format
-        let last = last.unwrap();
+
+        // SAFETY: just asserted it's not None
+        let last = unsafe { last.unwrap_unchecked() };
         assert!(matches!(
             *last,
             instr::MicroInstruction::YieldClock | instr::MicroInstruction::FinishInstruction
