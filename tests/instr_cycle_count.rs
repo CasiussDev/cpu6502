@@ -1,5 +1,4 @@
 use serde::Deserialize;
-use std::fs;
 
 #[derive(Deserialize, Debug)]
 #[allow(dead_code)]
@@ -15,7 +14,9 @@ struct OpcodeInfo {
 }
 
 #[test]
+#[cfg(feature = "disassembly")]
 fn test() {
+    use std::fs;
     let json_text = fs::read_to_string("testdata/all_6502.json")
         .expect("Could not open testdata/all_6502.json");
 
