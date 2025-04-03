@@ -735,7 +735,7 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                 // Next clock
                 instr::MicroInstruction::ReadPC {
                     dst: SelectedRegister8::PCHigh,
-                    increment: true,
+                    increment: false,
                 },
                 instr::MicroInstruction::CopyRegister {
                     dst: SelectedRegister8::PCLow,
@@ -938,8 +938,8 @@ pub fn create_instruction_mode_sequences() -> SequenceMap {
                     increment: true,
                 },
                 instr::MicroInstruction::YieldClock,
-                instr::MicroInstruction::AddIndexToAddress,
                 // Next clock
+                instr::MicroInstruction::AddIndexToAddress,
                 instr::MicroInstruction::ReadAddress {
                     dst: SelectedRegister8::Discard,
                 },

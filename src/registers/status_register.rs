@@ -72,6 +72,22 @@ impl StatusReg {
     pub fn are_any_flags_set(&self, flags_to_check: StatusRegFlags) -> bool {
         self.flags.intersects(flags_to_check)
     }
+
+    pub fn negative(&self) -> bool {
+        self.flags.contains(StatusRegFlags::NEGATIVE)
+    }
+
+    pub fn carry(&self) -> bool {
+        self.flags.contains(StatusRegFlags::CARRY)
+    }
+
+    pub fn zero(&self) -> bool {
+        self.flags.contains(StatusRegFlags::ZERO)
+    }
+
+    pub fn overflow(&self) -> bool {
+        self.flags.contains(StatusRegFlags::OVERFLOW)
+    }
 }
 
 impl fmt::Debug for StatusReg {

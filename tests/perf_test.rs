@@ -20,5 +20,5 @@ fn perf_test() {
     let mut computer = TestComputer::new();
     computer.load_rom();
 
-    run(&mut computer, 60 * NES_CLOCKS_SECOND);
+    run(&mut computer, 180 * NES_CLOCKS_SECOND);
 }

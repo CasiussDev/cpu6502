@@ -1,3 +1,4 @@
+mod instr_impl;
 pub mod instr_operation;
 pub mod instr_sequences;
 pub mod m_instr;
