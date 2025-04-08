@@ -1,9 +1,9 @@
 use crate::instr::instr_impl::tests::MockMemory;
 use crate::instr::instr_impl::{
-    execute_branch_op, execute_implicit_op, execute_memory_modify_op, execute_op,
+    execute_branch_op, execute_implicit_op, execute_memory_modify_op, execute_op, ClockEndStatus,
 };
+use crate::instr::InstructionOp;
 use crate::registers::{RegisterFile, StatusRegFlags};
-use crate::InstructionOp;
 
 #[test]
 fn execute_increment_memory() {
@@ -426,9 +426,10 @@ fn execute_branch_plus() {
     let mut memory = MockMemory { data: [0; 65536] };
     regs.status.clear_flags(StatusRegFlags::NEGATIVE);
     regs.pc.set_u16(0x1000);
-    memory.data[0x1000] = 0x01; // Branch offset
-    execute_branch_op(Some(InstructionOp::BranchPlus), &mut regs, &mut memory);
-    assert_eq!(regs.pc.to_u16(), 0x1002);
+    regs.tmp.set_u8(0x10); // Branch offset
+    let status = execute_branch_op(Some(InstructionOp::BranchPlus), &mut regs, &mut memory);
+    assert_eq!(regs.pc.to_u16(), 0x1010);
+    assert_eq!(status, ClockEndStatus::EndInstruction);
 }
 
 #[test]
@@ -437,9 +438,12 @@ fn execute_branch_plus_not_taken() {
     let mut memory = MockMemory { data: [0; 65536] };
     regs.status.set_flags(StatusRegFlags::NEGATIVE);
     regs.pc.set_u16(0x1000);
-    memory.data[0x1000] = 0x01; // Branch offset
-    execute_branch_op(Some(InstructionOp::BranchPlus), &mut regs, &mut memory);
+    regs.tmp.set_u8(0x10); // Branch offset
+    memory.data[0x1000] = 0xEA; // next opcode
+    let status = execute_branch_op(Some(InstructionOp::BranchPlus), &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1001);
+    assert_eq!(regs.ir.to_u8(), 0xEA);
+    assert_eq!(status, ClockEndStatus::EndInstructionNextFetched);
 }
 
 #[test]
@@ -448,9 +452,10 @@ fn execute_branch_minus() {
     let mut memory = MockMemory { data: [0; 65536] };
     regs.status.set_flags(StatusRegFlags::NEGATIVE);
     regs.pc.set_u16(0x1000);
-    memory.data[0x1000] = 0x01; // Branch offset
-    execute_branch_op(Some(InstructionOp::BranchMinus), &mut regs, &mut memory);
-    assert_eq!(regs.pc.to_u16(), 0x1002);
+    regs.tmp.set_u8(0x10); // Branch offset
+    let status = execute_branch_op(Some(InstructionOp::BranchMinus), &mut regs, &mut memory);
+    assert_eq!(regs.pc.to_u16(), 0x1010);
+    assert_eq!(status, ClockEndStatus::EndInstruction);
 }
 
 #[test]
@@ -459,9 +464,12 @@ fn execute_branch_minus_not_taken() {
     let mut memory = MockMemory { data: [0; 65536] };
     regs.status.clear_flags(StatusRegFlags::NEGATIVE);
     regs.pc.set_u16(0x1000);
-    memory.data[0x1000] = 0x01; // Branch offset
-    execute_branch_op(Some(InstructionOp::BranchMinus), &mut regs, &mut memory);
+    regs.tmp.set_u8(0x10); // Branch offset
+    memory.data[0x1000] = 0xEA; // next opcode
+    let status = execute_branch_op(Some(InstructionOp::BranchMinus), &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1001);
+    assert_eq!(regs.ir.to_u8(), 0xEA);
+    assert_eq!(status, ClockEndStatus::EndInstructionNextFetched);
 }
 
 #[test]
@@ -470,13 +478,14 @@ fn execute_branch_overflow_clear() {
     let mut memory = MockMemory { data: [0; 65536] };
     regs.status.clear_flags(StatusRegFlags::OVERFLOW);
     regs.pc.set_u16(0x1000);
-    memory.data[0x1000] = 0x01; // Branch offset
-    execute_branch_op(
+    regs.tmp.set_u8(0x10); // Branch offset
+    let status = execute_branch_op(
         Some(InstructionOp::BranchOverflowClear),
         &mut regs,
         &mut memory,
     );
-    assert_eq!(regs.pc.to_u16(), 0x1002);
+    assert_eq!(regs.pc.to_u16(), 0x1010);
+    assert_eq!(status, ClockEndStatus::EndInstruction);
 }
 
 #[test]
@@ -485,13 +494,16 @@ fn execute_branch_overflow_clear_not_taken() {
     let mut memory = MockMemory { data: [0; 65536] };
     regs.status.set_flags(StatusRegFlags::OVERFLOW);
     regs.pc.set_u16(0x1000);
-    memory.data[0x1000] = 0x01; // Branch offset
-    execute_branch_op(
+    regs.tmp.set_u8(0x10); // Branch offset
+    memory.data[0x1000] = 0xEA; // next opcode
+    let status = execute_branch_op(
         Some(InstructionOp::BranchOverflowClear),
         &mut regs,
         &mut memory,
     );
     assert_eq!(regs.pc.to_u16(), 0x1001);
+    assert_eq!(regs.ir.to_u8(), 0xEA);
+    assert_eq!(status, ClockEndStatus::EndInstructionNextFetched);
 }
 
 #[test]
@@ -500,13 +512,14 @@ fn execute_branch_overflow_set() {
     let mut memory = MockMemory { data: [0; 65536] };
     regs.status.set_flags(StatusRegFlags::OVERFLOW);
     regs.pc.set_u16(0x1000);
-    memory.data[0x1000] = 0x01; // Branch offset
-    execute_branch_op(
+    regs.tmp.set_u8(0x10); // Branch offset
+    let status = execute_branch_op(
         Some(InstructionOp::BranchOverflowSet),
         &mut regs,
         &mut memory,
     );
-    assert_eq!(regs.pc.to_u16(), 0x1002);
+    assert_eq!(regs.pc.to_u16(), 0x1010);
+    assert_eq!(status, ClockEndStatus::EndInstruction);
 }
 
 #[test]
@@ -515,13 +528,16 @@ fn execute_branch_overflow_set_not_taken() {
     let mut memory = MockMemory { data: [0; 65536] };
     regs.status.clear_flags(StatusRegFlags::OVERFLOW);
     regs.pc.set_u16(0x1000);
-    memory.data[0x1000] = 0x01; // Branch offset
-    execute_branch_op(
+    regs.tmp.set_u8(0x10); // Branch offset
+    memory.data[0x1000] = 0xEA; // next opcode
+    let status = execute_branch_op(
         Some(InstructionOp::BranchOverflowSet),
         &mut regs,
         &mut memory,
     );
     assert_eq!(regs.pc.to_u16(), 0x1001);
+    assert_eq!(regs.ir.to_u8(), 0xEA);
+    assert_eq!(status, ClockEndStatus::EndInstructionNextFetched);
 }
 
 #[test]
@@ -530,13 +546,14 @@ fn execute_branch_carry_clear() {
     let mut memory = MockMemory { data: [0; 65536] };
     regs.status.clear_flags(StatusRegFlags::CARRY);
     regs.pc.set_u16(0x1000);
-    memory.data[0x1000] = 0x01; // Branch offset
-    execute_branch_op(
+    regs.tmp.set_u8(0x10); // Branch offset
+    let status = execute_branch_op(
         Some(InstructionOp::BranchCarryClear),
         &mut regs,
         &mut memory,
     );
-    assert_eq!(regs.pc.to_u16(), 0x1002);
+    assert_eq!(regs.pc.to_u16(), 0x1010);
+    assert_eq!(status, ClockEndStatus::EndInstruction);
 }
 
 #[test]
@@ -545,13 +562,16 @@ fn execute_branch_carry_clear_not_taken() {
     let mut memory = MockMemory { data: [0; 65536] };
     regs.status.set_flags(StatusRegFlags::CARRY);
     regs.pc.set_u16(0x1000);
-    memory.data[0x1000] = 0x01; // Branch offset
-    execute_branch_op(
+    regs.tmp.set_u8(0x10); // Branch offset
+    memory.data[0x1000] = 0xEA; // next opcode
+    let status = execute_branch_op(
         Some(InstructionOp::BranchCarryClear),
         &mut regs,
         &mut memory,
     );
     assert_eq!(regs.pc.to_u16(), 0x1001);
+    assert_eq!(regs.ir.to_u8(), 0xEA);
+    assert_eq!(status, ClockEndStatus::EndInstructionNextFetched);
 }
 
 #[test]
@@ -560,9 +580,10 @@ fn execute_branch_carry_set() {
     let mut memory = MockMemory { data: [0; 65536] };
     regs.status.set_flags(StatusRegFlags::CARRY);
     regs.pc.set_u16(0x1000);
-    memory.data[0x1000] = 0x01; // Branch offset
-    execute_branch_op(Some(InstructionOp::BranchCarrySet), &mut regs, &mut memory);
-    assert_eq!(regs.pc.to_u16(), 0x1002);
+    regs.tmp.set_u8(0x10); // Branch offset
+    let status = execute_branch_op(Some(InstructionOp::BranchCarrySet), &mut regs, &mut memory);
+    assert_eq!(regs.pc.to_u16(), 0x1010);
+    assert_eq!(status, ClockEndStatus::EndInstruction);
 }
 
 #[test]
@@ -571,9 +592,12 @@ fn execute_branch_carry_set_not_taken() {
     let mut memory = MockMemory { data: [0; 65536] };
     regs.status.clear_flags(StatusRegFlags::CARRY);
     regs.pc.set_u16(0x1000);
-    memory.data[0x1000] = 0x01; // Branch offset
-    execute_branch_op(Some(InstructionOp::BranchCarrySet), &mut regs, &mut memory);
+    regs.tmp.set_u8(0x10); // Branch offset
+    memory.data[0x1000] = 0xEA; // next opcode
+    let status = execute_branch_op(Some(InstructionOp::BranchCarrySet), &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1001);
+    assert_eq!(regs.ir.to_u8(), 0xEA);
+    assert_eq!(status, ClockEndStatus::EndInstructionNextFetched);
 }
 
 #[test]
@@ -582,9 +606,10 @@ fn execute_branch_not_equal() {
     let mut memory = MockMemory { data: [0; 65536] };
     regs.status.clear_flags(StatusRegFlags::ZERO);
     regs.pc.set_u16(0x1000);
-    memory.data[0x1000] = 0x01; // Branch offset
-    execute_branch_op(Some(InstructionOp::BranchNotEqual), &mut regs, &mut memory);
-    assert_eq!(regs.pc.to_u16(), 0x1002);
+    regs.tmp.set_u8(0x10); // Branch offset
+    let status = execute_branch_op(Some(InstructionOp::BranchNotEqual), &mut regs, &mut memory);
+    assert_eq!(regs.pc.to_u16(), 0x1010);
+    assert_eq!(status, ClockEndStatus::EndInstruction);
 }
 
 #[test]
@@ -593,9 +618,12 @@ fn execute_branch_not_equal_not_taken() {
     let mut memory = MockMemory { data: [0; 65536] };
     regs.status.set_flags(StatusRegFlags::ZERO);
     regs.pc.set_u16(0x1000);
-    memory.data[0x1000] = 0x01; // Branch offset
-    execute_branch_op(Some(InstructionOp::BranchNotEqual), &mut regs, &mut memory);
+    regs.tmp.set_u8(0x10); // Branch offset
+    memory.data[0x1000] = 0xEA; // next opcode
+    let status = execute_branch_op(Some(InstructionOp::BranchNotEqual), &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1001);
+    assert_eq!(regs.ir.to_u8(), 0xEA);
+    assert_eq!(status, ClockEndStatus::EndInstructionNextFetched);
 }
 
 #[test]
@@ -604,9 +632,10 @@ fn execute_branch_equal() {
     let mut memory = MockMemory { data: [0; 65536] };
     regs.status.set_flags(StatusRegFlags::ZERO);
     regs.pc.set_u16(0x1000);
-    memory.data[0x1000] = 0x01; // Branch offset
-    execute_branch_op(Some(InstructionOp::BranchEqual), &mut regs, &mut memory);
-    assert_eq!(regs.pc.to_u16(), 0x1002);
+    regs.tmp.set_u8(0x10); // Branch offset
+    let status = execute_branch_op(Some(InstructionOp::BranchEqual), &mut regs, &mut memory);
+    assert_eq!(regs.pc.to_u16(), 0x1010);
+    assert_eq!(status, ClockEndStatus::EndInstruction);
 }
 
 #[test]
@@ -615,7 +644,10 @@ fn execute_branch_equal_not_taken() {
     let mut memory = MockMemory { data: [0; 65536] };
     regs.status.clear_flags(StatusRegFlags::ZERO);
     regs.pc.set_u16(0x1000);
-    memory.data[0x1000] = 0x01; // Branch offset
-    execute_branch_op(Some(InstructionOp::BranchEqual), &mut regs, &mut memory);
+    regs.tmp.set_u8(0x10); // Branch offset
+    memory.data[0x1000] = 0xEA; // next opcode
+    let status = execute_branch_op(Some(InstructionOp::BranchEqual), &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1001);
+    assert_eq!(regs.ir.to_u8(), 0xEA);
+    assert_eq!(status, ClockEndStatus::EndInstructionNextFetched);
 }

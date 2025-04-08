@@ -1,11 +1,12 @@
 #[cfg(test)]
 mod tests;
 
-use crate::instr::InstructionSequenceMode;
+use super::InstructionOp;
+use super::InstructionSequenceMode;
 use crate::registers::{
     IndexRegister, RegisterFile, SelectedRegister16, SelectedRegister8, StatusRegFlags,
 };
-use crate::{alu, InstructionOp, MemorySpace};
+use crate::{alu, MemorySpace};
 #[cfg(feature = "logging")]
 use log::trace;
 
@@ -75,59 +76,46 @@ fn fix_addr_or_run_op_finish(
     }
 }
 
-fn fix_addr_or_inc_pc(regs: &mut RegisterFile) -> ClockEndStatus {
-    let addr_low_value = regs.pc.low_u8();
-    let index_value = regs.tmp.to_u8();
+fn branch_if(
+    condition: bool,
+    regs: &mut RegisterFile,
+    memory: &mut impl MemorySpace,
+) -> ClockEndStatus {
+    let next_opcode = memory.read(regs.pc.to_u16());
 
-    if index_value > addr_low_value {
-        let addr_high_value = regs.pc.high_u8().wrapping_add(1);
-        regs.pc.set_high_u8(addr_high_value);
-        ClockEndStatus::EndInstruction
-    } else {
-        regs.pc.inc();
-        ClockEndStatus::EndInstructionNextFetched
-    }
-}
-
-fn branch_if(condition: bool, regs: &mut RegisterFile, memory: &mut impl MemorySpace) {
-    let offset = memory.read(regs.pc.to_u16()) as i8;
-    regs.pc.inc();
     if condition {
-        let new_pc = regs.pc.to_u16().wrapping_add(offset as u16);
+        let old_pch = regs.pc.high_u8();
+        let new_pc = regs.pc.to_u16().wrapping_add(regs.tmp.to_i8() as u16);
         regs.pc.set_u16(new_pc);
+        if old_pch != regs.pc.high_u8() {
+            // Crossed a page boundary
+            return ClockEndStatus::Continue;
+        } else {
+            return ClockEndStatus::EndInstruction;
+        }
     }
+
+    regs.pc.inc();
+    regs.ir.set_u8(next_opcode);
+    ClockEndStatus::EndInstructionNextFetched
 }
 
 fn execute_branch_op(
     op: Option<InstructionOp>,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
-) {
+) -> ClockEndStatus {
     match op {
-        Some(InstructionOp::BranchPlus) => {
-            branch_if(!regs.status.negative(), regs, memory);
-        }
-        Some(InstructionOp::BranchMinus) => {
-            branch_if(regs.status.negative(), regs, memory);
-        }
-        Some(InstructionOp::BranchEqual) => {
-            branch_if(regs.status.zero(), regs, memory);
-        }
-        Some(InstructionOp::BranchNotEqual) => {
-            branch_if(!regs.status.zero(), regs, memory);
-        }
-        Some(InstructionOp::BranchCarryClear) => {
-            branch_if(!regs.status.carry(), regs, memory);
-        }
-        Some(InstructionOp::BranchCarrySet) => {
-            branch_if(regs.status.carry(), regs, memory);
-        }
+        Some(InstructionOp::BranchPlus) => branch_if(!regs.status.negative(), regs, memory),
+        Some(InstructionOp::BranchMinus) => branch_if(regs.status.negative(), regs, memory),
+        Some(InstructionOp::BranchEqual) => branch_if(regs.status.zero(), regs, memory),
+        Some(InstructionOp::BranchNotEqual) => branch_if(!regs.status.zero(), regs, memory),
+        Some(InstructionOp::BranchCarryClear) => branch_if(!regs.status.carry(), regs, memory),
+        Some(InstructionOp::BranchCarrySet) => branch_if(regs.status.carry(), regs, memory),
         Some(InstructionOp::BranchOverflowClear) => {
-            branch_if(!regs.status.overflow(), regs, memory);
+            branch_if(!regs.status.overflow(), regs, memory)
         }
-        Some(InstructionOp::BranchOverflowSet) => {
-            branch_if(regs.status.overflow(), regs, memory);
-        }
+        Some(InstructionOp::BranchOverflowSet) => branch_if(regs.status.overflow(), regs, memory),
         _ => unreachable!(),
     }
 }
@@ -871,7 +859,7 @@ fn absolute_indexed_read(
             regs.pc.inc();
         }
         1 => {
-            let addr_high = memory.read(regs.addr.to_u16());
+            let addr_high = memory.read(regs.pc.to_u16());
             regs.addr.set_high_u8(addr_high);
             regs.pc.inc();
         }
@@ -906,7 +894,7 @@ fn absolute_indexed_rmw(
             regs.pc.inc();
         }
         1 => {
-            let addr_high = memory.read(regs.addr.to_u16());
+            let addr_high = memory.read(regs.pc.to_u16());
             regs.addr.set_high_u8(addr_high);
             regs.pc.inc();
         }
@@ -949,7 +937,7 @@ fn absolute_indexed_write(
             regs.pc.inc();
         }
         1 => {
-            let addr_high = memory.read(regs.addr.to_u16());
+            let addr_high = memory.read(regs.pc.to_u16());
             regs.addr.set_high_u8(addr_high);
             regs.pc.inc();
         }
@@ -984,12 +972,10 @@ fn relative(
         }
         1 => {
             //let _ = memory.read(regs.pc.to_u16());
-            execute_branch_op(op, regs, memory);
+            return execute_branch_op(op, regs, memory);
         }
         2 => {
-            let opcode = memory.read(regs.pc.to_u16());
-            regs.ir.set_u8(opcode);
-            return fix_addr_or_inc_pc(regs);
+            return ClockEndStatus::EndInstruction;
         }
 
         _ => unreachable!(),
