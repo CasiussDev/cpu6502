@@ -50,7 +50,7 @@ impl TestComputer {
 
         assert_eq!(read_rom_content.len(), NUM_ROM_BYTES);
 
-        let ranges = vec![
+        let ranges = [
             ROM_DESTINATION..(ROM_DESTINATION + NUM_ROM_BYTES),
             (ROM_DESTINATION + NUM_ROM_BYTES)..(ROM_DESTINATION + NUM_ROM_BYTES * 2),
         ];

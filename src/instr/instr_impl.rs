@@ -1061,12 +1061,12 @@ fn zero_page_indexed_indirect_rmw(
             regs.addr.set_low_u8(regs.tmp.to_u8());
         }
         4 => {
-            let operand = memory.read(regs.pc.to_u16());
+            let operand = memory.read(regs.addr.to_u16());
             regs.tmp.set_u8(operand);
         }
         5 => {
             memory.write(regs.tmp.to_u8(), regs.addr.to_u16());
-            execute_op(op, regs, memory);
+            execute_memory_modify_op(op, regs);
         }
         6 => {
             memory.write(regs.tmp.to_u8(), regs.addr.to_u16());
@@ -1158,7 +1158,7 @@ fn zero_page_indirect_indexed_rmw(
         }
         5 => {
             memory.write(regs.tmp.to_u8(), regs.addr.to_u16());
-            execute_op(op, regs, memory);
+            execute_memory_modify_op(op, regs);
         }
         6 => {
             memory.write(regs.tmp.to_u8(), regs.addr.to_u16());

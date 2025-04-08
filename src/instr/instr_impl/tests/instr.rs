@@ -338,6 +338,23 @@ fn execute_implied() {
 }
 
 #[test]
+#[should_panic(expected = "unreachable")]
+fn execute_implied_unsupported_op() {
+    let mut regs = RegisterFile::default();
+    let mut memory = MockMemory { data: [0; 65536] };
+
+    // Execute implied operation with an unsupported operation
+    execute(
+        Some(InstructionOp::StoreA), // StoreA is not valid for implied mode
+        0,
+        &mut regs,
+        &mut memory,
+        None,
+        InstructionSequenceMode::Implied,
+    );
+}
+
+#[test]
 fn execute_immediate() {
     let mut regs = RegisterFile::default();
     let mut memory = MockMemory { data: [0; 65536] };
@@ -703,6 +720,27 @@ fn execute_absolute_indexed_write() {
     assert_eq!(step, 3);
 }
 
+fn execute_relative_branch(
+    op: Option<InstructionOp>,
+    regs: &mut RegisterFile,
+    memory: &mut MockMemory,
+    mode: InstructionSequenceMode,
+) -> (ClockEndStatus, u8) {
+    let mut step = 0;
+    let mut status;
+
+    loop {
+        status = execute(op, step, regs, memory, None, mode);
+        if status == ClockEndStatus::Continue {
+            step += 1;
+        } else {
+            break;
+        }
+    }
+
+    (status, step)
+}
+
 #[test]
 fn execute_relative_branch_taken() {
     let mut regs = RegisterFile::default();
@@ -713,24 +751,12 @@ fn execute_relative_branch_taken() {
     memory.data[0x1000] = 0x02; // Branch offset
 
     // Execute relative operation (BranchNotEqual)
-    let mut step = 0;
-    let mut status;
-
-    loop {
-        status = execute(
-            Some(InstructionOp::BranchNotEqual),
-            step,
-            &mut regs,
-            &mut memory,
-            None,
-            InstructionSequenceMode::Relative,
-        );
-        if status == ClockEndStatus::Continue {
-            step += 1;
-        } else {
-            break;
-        }
-    }
+    let (status, step) = execute_relative_branch(
+        Some(InstructionOp::BranchNotEqual),
+        &mut regs,
+        &mut memory,
+        InstructionSequenceMode::Relative,
+    );
 
     // Verify the results
     assert_eq!(regs.pc.to_u16(), 0x1003); // PC should be incremented by 2 (offset) + 1 (next instruction)
@@ -749,24 +775,12 @@ fn execute_relative_branch_not_taken() {
     regs.status.set_flags(StatusRegFlags::ZERO); // Set ZERO flag to prevent branch
 
     // Execute relative operation (BranchNotEqual)
-    let mut step = 0;
-    let mut status;
-
-    loop {
-        status = execute(
-            Some(InstructionOp::BranchNotEqual),
-            step,
-            &mut regs,
-            &mut memory,
-            None,
-            InstructionSequenceMode::Relative,
-        );
-        if status == ClockEndStatus::Continue {
-            step += 1;
-        } else {
-            break;
-        }
-    }
+    let (status, step) = execute_relative_branch(
+        Some(InstructionOp::BranchNotEqual),
+        &mut regs,
+        &mut memory,
+        InstructionSequenceMode::Relative,
+    );
 
     // Verify the results
     assert_eq!(regs.pc.to_u16(), 0x1002); // PC should be incremented by 2 (next instruction already fetched)
@@ -784,24 +798,12 @@ fn execute_relative_branch_taken_page_boundary() {
     memory.data[0x10F0] = 0x10; // Branch offset
 
     // Execute relative operation (BranchNotEqual)
-    let mut step = 0;
-    let mut status;
-
-    loop {
-        status = execute(
-            Some(InstructionOp::BranchNotEqual),
-            step,
-            &mut regs,
-            &mut memory,
-            None,
-            InstructionSequenceMode::Relative,
-        );
-        if status == ClockEndStatus::Continue {
-            step += 1;
-        } else {
-            break;
-        }
-    }
+    let (status, step) = execute_relative_branch(
+        Some(InstructionOp::BranchNotEqual),
+        &mut regs,
+        &mut memory,
+        InstructionSequenceMode::Relative,
+    );
 
     // Verify the results
     assert_eq!(regs.pc.to_u16(), 0x1101); // PC should be incremented by 2 (offset) + 1 (next instruction)
@@ -819,24 +821,12 @@ fn execute_relative_branch_taken_negative_offset() {
     memory.data[0x1001] = 0xFE; // Branch offset (-2 in two's complement)
 
     // Execute relative operation (BranchNotEqual)
-    let mut step = 0;
-    let mut status;
-
-    loop {
-        status = execute(
-            Some(InstructionOp::BranchNotEqual),
-            step,
-            &mut regs,
-            &mut memory,
-            None,
-            InstructionSequenceMode::Relative,
-        );
-        if status == ClockEndStatus::Continue {
-            step += 1;
-        } else {
-            break;
-        }
-    }
+    let (status, step) = execute_relative_branch(
+        Some(InstructionOp::BranchNotEqual),
+        &mut regs,
+        &mut memory,
+        InstructionSequenceMode::Relative,
+    );
 
     // Verify the results
     assert_eq!(regs.pc.to_u16(), 0x1000); // PC should be decremented by 1 [-2 (offset) + 1 (next instruction)]
@@ -844,3 +834,229 @@ fn execute_relative_branch_taken_negative_offset() {
     assert_eq!(status, ClockEndStatus::EndInstruction);
 }
 
+#[test]
+fn execute_zero_page_indexed_indirect() {
+    let mut regs = RegisterFile::default();
+    let mut memory = MockMemory { data: [0; 65536] };
+
+    // Set initial values
+    regs.pc.set_u16(0x1000);
+    regs.x.set_u8(0x10); // Index register X
+    memory.data[0x1000] = 0x42; // Zero page base address
+    memory.data[0x0052] = 0x34; // Low byte of effective address (0x42 + 0x10)
+    memory.data[0x0053] = 0x12; // High byte of effective address
+    memory.data[0x1234] = 0x84; // Value to load into A
+
+    // Execute zero page indexed indirect operation (LoadA)
+    let mut step = 0;
+    while execute(
+        Some(InstructionOp::LoadA),
+        step,
+        &mut regs,
+        &mut memory,
+        Some(IndexRegister::X),
+        InstructionSequenceMode::ZeroPageIdxIndirect,
+    ) == ClockEndStatus::Continue
+    {
+        step += 1;
+    }
+
+    // Verify the results
+    assert_eq!(regs.a.to_u8(), 0x84); // A register should be loaded with value from effective address
+    assert_eq!(regs.pc.to_u16(), 0x1001); // Program counter should be incremented
+    assert_eq!(step, 4);
+}
+
+#[test]
+fn execute_zero_page_indexed_indirect_read_modify_write() {
+    let mut regs = RegisterFile::default();
+    let mut memory = MockMemory { data: [0; 65536] };
+
+    // Set initial values
+    regs.pc.set_u16(0x1000);
+    regs.x.set_u8(0x10); // Index register X
+    memory.data[0x1000] = 0x42; // Zero page base address
+    memory.data[0x0052] = 0x34; // Low byte of effective address (0x42 + 0x10)
+    memory.data[0x0053] = 0x12; // High byte of effective address
+    memory.data[0x1234] = 0x01; // Initial value in memory
+
+    // Execute zero page indexed indirect read-modify-write operation (IncrementMemory)
+    let mut step = 0;
+    while execute(
+        Some(InstructionOp::IncrementMemory),
+        step,
+        &mut regs,
+        &mut memory,
+        Some(IndexRegister::X),
+        InstructionSequenceMode::ZeroPageIdxIndirectReadModifyWrite,
+    ) == ClockEndStatus::Continue
+    {
+        step += 1;
+    }
+
+    // Verify the results
+    assert_eq!(memory.data[0x1234], 0x02); // Value in memory should be incremented
+    assert_eq!(regs.pc.to_u16(), 0x1001); // Program counter should be incremented
+    assert_eq!(step, 6);
+}
+
+#[test]
+fn execute_zero_page_indirect_idx_read() {
+    let mut regs = RegisterFile::default();
+    let mut memory = MockMemory { data: [0; 65536] };
+
+    // Set initial values
+    regs.pc.set_u16(0x1000);
+    regs.y.set_u8(0x10); // Index register Y
+    memory.data[0x1000] = 0x42; // Zero page base address
+    memory.data[0x0042] = 0x34; // Low byte of effective address
+    memory.data[0x0043] = 0x12; // High byte of effective address
+    memory.data[0x1244] = 0x84; // Value to load into A (0x1234 + 0x10)
+
+    // Execute zero page indirect indexed read operation (LoadA)
+    let mut step = 0;
+    while execute(
+        Some(InstructionOp::LoadA),
+        step,
+        &mut regs,
+        &mut memory,
+        Some(IndexRegister::Y),
+        InstructionSequenceMode::ZeroPageIndirectIdxRead,
+    ) == ClockEndStatus::Continue
+    {
+        step += 1;
+    }
+
+    // Verify the results
+    assert_eq!(regs.a.to_u8(), 0x84); // A register should be loaded with value from effective address
+    assert_eq!(regs.pc.to_u16(), 0x1001); // Program counter should be incremented
+    assert_eq!(step, 3);
+}
+
+#[test]
+fn execute_zero_page_indirect_idx_read_modify_write() {
+    let mut regs = RegisterFile::default();
+    let mut memory = MockMemory { data: [0; 65536] };
+
+    // Set initial values
+    regs.pc.set_u16(0x1000);
+    regs.y.set_u8(0x10); // Index register Y
+    memory.data[0x1000] = 0x42; // Zero page base address
+    memory.data[0x0042] = 0x34; // Low byte of effective address
+    memory.data[0x0043] = 0x12; // High byte of effective address
+    memory.data[0x1244] = 0x01; // Initial value in memory (0x1234 + 0x10)
+
+    // Execute zero page indirect indexed read-modify-write operation (IncrementMemory)
+    let mut step = 0;
+    while execute(
+        Some(InstructionOp::IncrementMemory),
+        step,
+        &mut regs,
+        &mut memory,
+        Some(IndexRegister::Y),
+        InstructionSequenceMode::ZeroPageIndirectIdxReadModifyWrite,
+    ) == ClockEndStatus::Continue
+    {
+        step += 1;
+    }
+
+    // Verify the results
+    assert_eq!(memory.data[0x1244], 0x02); // Value in memory should be incremented
+    assert_eq!(regs.pc.to_u16(), 0x1001); // Program counter should be incremented
+    assert_eq!(step, 6);
+}
+
+#[test]
+fn execute_zero_page_indirect_idx_write() {
+    let mut regs = RegisterFile::default();
+    let mut memory = MockMemory { data: [0; 65536] };
+
+    // Set initial values
+    regs.pc.set_u16(0x1000);
+    regs.y.set_u8(0x10); // Index register Y
+    regs.a.set_u8(0x42); // Value to store
+    memory.data[0x1000] = 0x42; // Zero page base address
+    memory.data[0x0042] = 0x34; // Low byte of effective address
+    memory.data[0x0043] = 0x12; // High byte of effective address
+
+    // Execute zero page indirect indexed write operation (StoreA)
+    let mut step = 0;
+    while execute(
+        Some(InstructionOp::StoreA),
+        step,
+        &mut regs,
+        &mut memory,
+        Some(IndexRegister::Y),
+        InstructionSequenceMode::ZeroPageIndirectIdxWrite,
+    ) == ClockEndStatus::Continue
+    {
+        step += 1;
+    }
+
+    // Verify the results
+    assert_eq!(memory.data[0x1244], 0x42); // Value in memory should be updated
+    assert_eq!(regs.pc.to_u16(), 0x1001); // Program counter should be incremented
+    assert_eq!(step, 4);
+}
+
+#[test]
+fn execute_absolute_indirect_jump() {
+    let mut regs = RegisterFile::default();
+    let mut memory = MockMemory { data: [0; 65536] };
+
+    // Set initial values
+    regs.pc.set_u16(0x1000);
+    memory.data[0x1000] = 0x34; // Low byte of indirect address
+    memory.data[0x1001] = 0x12; // High byte of indirect address
+    memory.data[0x1234] = 0x78; // Low byte of jump target
+    memory.data[0x1235] = 0x56; // High byte of jump target
+
+    // Execute absolute indirect jump
+    let mut step = 0;
+    while execute(
+        None,
+        step,
+        &mut regs,
+        &mut memory,
+        None,
+        InstructionSequenceMode::AbsoluteIndirectJump,
+    ) == ClockEndStatus::Continue
+    {
+        step += 1;
+    }
+
+    // Verify the results
+    assert_eq!(regs.pc.to_u16(), 0x5678); // PC should be set to the jump target
+    assert_eq!(step, 3); // Ensure the step value is correct
+}
+
+#[test]
+fn execute_absolute_indirect_jump_page_boundary_bug() {
+    let mut regs = RegisterFile::default();
+    let mut memory = MockMemory { data: [0; 65536] };
+
+    // Set initial values
+    regs.pc.set_u16(0x1000);
+    memory.data[0x1000] = 0xFF; // Low byte of indirect address
+    memory.data[0x1001] = 0x12; // High byte of indirect address
+    memory.data[0x12FF] = 0x78; // Low byte of jump target
+    memory.data[0x1200] = 0x56; // High byte of jump target (6502 bug: wraps to 0x1200 instead of 0x1300)
+
+    // Execute absolute indirect jump
+    let mut step = 0;
+    while execute(
+        None,
+        step,
+        &mut regs,
+        &mut memory,
+        None,
+        InstructionSequenceMode::AbsoluteIndirectJump,
+    ) == ClockEndStatus::Continue
+    {
+        step += 1;
+    }
+
+    // Verify the results
+    assert_eq!(regs.pc.to_u16(), 0x5678); // PC should be set to the jump target
+    assert_eq!(step, 3); // Ensure the step value is correct
+}

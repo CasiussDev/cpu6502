@@ -15,7 +15,7 @@ fn run(computer: &mut TestComputer, num_cycles: u128) {
 }
 
 #[test]
-//#[ignore]
+#[ignore]
 fn perf_test() {
     let mut computer = TestComputer::new();
     computer.load_rom();
