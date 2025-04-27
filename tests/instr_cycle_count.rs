@@ -1,3 +1,6 @@
+#[cfg(feature = "disassembly")]
+use cpu6502::instr::destruct_sequence;
+
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
@@ -37,7 +40,8 @@ fn test() {
         }
 
         let decoded = cpu6502::decode(opcode);
-        let sequence = cpu6502::sequence_for_mode(decoded.sequence);
+        let (sequence, operation, _) = destruct_sequence(decoded);
+        let sequence = cpu6502::sequence_for_mode(sequence);
 
         let cycles = sequence
             .into_iter()
@@ -51,7 +55,7 @@ fn test() {
             .count();
         let mut cycles = (cycles + 1) as u8; // +1 for fetch
         if matches!(
-            decoded.operation,
+            operation,
             cpu6502::InstructionOp::BranchPlus
                 | cpu6502::InstructionOp::BranchMinus
                 | cpu6502::InstructionOp::BranchOverflowClear

@@ -1,5 +1,5 @@
-use crate::instr;
-use crate::instr::MicroInstruction;
+use crate::{instr};
+use crate::instr::{destruct_sequence, MicroInstruction};
 use crate::interrupts::Interrupts;
 use crate::memory::MemorySpace;
 use crate::registers::{IndexRegister, RegisterFile, SelectedRegister8, StatusRegFlags};
@@ -88,8 +88,11 @@ impl Cpu {
     }
 
     #[cfg(feature = "disassembly")]
-    pub fn fetched_instr(&self) -> FetchedInstr {
-        self.fetched_instr
+    pub fn fetched_instr_addr(&self) -> Option<u16> {
+        if let FetchedInstr::Some(addr) = self.fetched_instr {
+            return Some(addr);
+        }
+        None
     }
 
     #[cfg(any(feature = "disassembly", feature = "logging"))]
@@ -337,12 +340,13 @@ impl Cpu {
 
         let opcode = self.regs.ir.to_u8();
         let decoded_instr = instr::decode(opcode);
+        let (sequence, op, idx) = destruct_sequence(decoded_instr);
 
-        self.current_sequence = Some(instr::sequence_for_mode(decoded_instr.sequence));
+        self.current_sequence = Some(instr::sequence_for_mode(sequence));
 
-        self.current_op = Some(instr::sequence_for_op(decoded_instr.operation));
+        self.current_op = Some(instr::sequence_for_op(op));
 
-        self.index_register = decoded_instr.index;
+        self.index_register = Some(idx);
 
         self.fetched_instr = FetchedInstr::None;
 

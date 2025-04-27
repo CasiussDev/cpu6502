@@ -1,5 +1,6 @@
 use super::*;
 use crate::instr;
+use crate::instr::{InstructionSequenceMode, InstructionSequenceMode2};
 use crate::num_traits::FromPrimitive;
 use crate::registers::IndexRegister;
 
@@ -128,6 +129,106 @@ pub enum OpsSingleByte2 {
     TSX = 0xBA,
     DEX = 0xCA,
     NOP = 0xEA,
+}
+
+fn create_decoded_opcode(
+    sequence: InstructionSequenceMode,
+    operation: instr::InstructionOp,
+    index: Option<IndexRegister>,
+) -> InstructionSequenceMode2 {
+    match sequence {
+        InstructionSequenceMode::Immediate => {
+            InstructionSequenceMode2::Immediate(operation.try_into().unwrap())
+        }
+        InstructionSequenceMode::ZeroPage => {
+            InstructionSequenceMode2::ZeroPage(operation.try_into().unwrap())
+        }
+        InstructionSequenceMode::Absolute => {
+            InstructionSequenceMode2::Absolute(operation.try_into().unwrap())
+        }
+        InstructionSequenceMode::ZeroPageIdxIndirect => {
+            InstructionSequenceMode2::ZeroPageIdxIndirect(
+                operation.try_into().unwrap(),
+                index.unwrap(),
+            )
+        }
+        InstructionSequenceMode::ZeroPageIdx => {
+            InstructionSequenceMode2::ZeroPageIdx(operation.try_into().unwrap(), index.unwrap())
+        }
+        InstructionSequenceMode::AbsoluteIdxRead => {
+            InstructionSequenceMode2::AbsoluteIdxRead(operation.try_into().unwrap(), index.unwrap())
+        }
+        InstructionSequenceMode::AbsoluteIdxWrite => InstructionSequenceMode2::AbsoluteIdxWrite(
+            operation.try_into().unwrap(),
+            index.unwrap(),
+        ),
+        InstructionSequenceMode::ZeroPageIndirectIdxRead => {
+            InstructionSequenceMode2::ZeroPageIndirectIdxRead(
+                operation.try_into().unwrap(),
+                index.unwrap(),
+            )
+        }
+        InstructionSequenceMode::ZeroPageIndirectIdxWrite => {
+            InstructionSequenceMode2::ZeroPageIndirectIdxWrite(
+                operation.try_into().unwrap(),
+                index.unwrap(),
+            )
+        }
+        InstructionSequenceMode::ZeroPageReadModifyWrite => {
+            InstructionSequenceMode2::ZeroPageReadModifyWrite(operation.try_into().unwrap())
+        }
+        InstructionSequenceMode::AbsoluteReadModifyWrite => {
+            InstructionSequenceMode2::AbsoluteReadModifyWrite(operation.try_into().unwrap())
+        }
+        InstructionSequenceMode::ZeroPageIdxReadModifyWrite => {
+            InstructionSequenceMode2::ZeroPageIdxReadModifyWrite(
+                operation.try_into().unwrap(),
+                index.unwrap(),
+            )
+        }
+        InstructionSequenceMode::AbsoluteIdxReadModifyWrite => {
+            InstructionSequenceMode2::AbsoluteIdxReadModifyWrite(
+                operation.try_into().unwrap(),
+                index.unwrap(),
+            )
+        }
+        InstructionSequenceMode::Implied => {
+            InstructionSequenceMode2::Implied(operation.try_into().unwrap())
+        }
+        InstructionSequenceMode::AbsoluteJump => InstructionSequenceMode2::AbsoluteJump,
+        InstructionSequenceMode::AbsoluteIndirectJump => {
+            InstructionSequenceMode2::AbsoluteIndirectJump
+        }
+        InstructionSequenceMode::Relative => {
+            InstructionSequenceMode2::Relative(operation.try_into().unwrap())
+        }
+        InstructionSequenceMode::Push => {
+            InstructionSequenceMode2::Push(operation.try_into().unwrap())
+        }
+        InstructionSequenceMode::Pull => {
+            InstructionSequenceMode2::Pull(operation.try_into().unwrap())
+        }
+        InstructionSequenceMode::Break => InstructionSequenceMode2::Break,
+        InstructionSequenceMode::JumpSubroutine => InstructionSequenceMode2::JumpSubroutine,
+        InstructionSequenceMode::ReturnInterrupt => InstructionSequenceMode2::ReturnInterrupt,
+        InstructionSequenceMode::ReturnSubroutine => InstructionSequenceMode2::ReturnSubroutine,
+        InstructionSequenceMode::FetchInstr => InstructionSequenceMode2::FetchInstr,
+        InstructionSequenceMode::StartIrq => InstructionSequenceMode2::StartIrq,
+        InstructionSequenceMode::StartNmi => InstructionSequenceMode2::StartNmi,
+        InstructionSequenceMode::Reset => InstructionSequenceMode2::Reset,
+        InstructionSequenceMode::ZeroPageIdxIndirectReadModifyWrite => {
+            InstructionSequenceMode2::ZeroPageIdxIndirectReadModifyWrite(
+                operation.try_into().unwrap(),
+                index.unwrap(),
+            )
+        }
+        InstructionSequenceMode::ZeroPageIndirectIdxReadModifyWrite => {
+            InstructionSequenceMode2::ZeroPageIndirectIdxReadModifyWrite(
+                operation.try_into().unwrap(),
+                index.unwrap(),
+            )
+        }
+    }
 }
 
 fn instr_op_g1(op: OpsG1) -> instr::InstructionOp {
@@ -403,8 +504,8 @@ fn illegal_instruction_g3(op: OpsG3, addr_mode: AddrModeG3) -> bool {
         || ((addr_mode == AddrModeG3::ZeroPageIdx) && !matches!(op, OpsG3::STY | OpsG3::LDY))
 }
 
-pub fn decode(opcode: u8) -> DecodedOpcode {
-    let mut decoded_opcode = DecodedOpcode::default();
+pub fn decode2(opcode: u8) -> InstructionSequenceMode2 {
+    let mut decoded_opcode = InstructionSequenceMode2::default();
     match opcode & OPCODE_GROUP_MASK {
         1 => {
             let op = OpsG1::from_u8(opcode & OPCODE_G123_OP_MASK)
@@ -415,7 +516,7 @@ pub fn decode(opcode: u8) -> DecodedOpcode {
                 let operation = instr_op_g1(op);
                 let sequence = sequence_mode_g1(op, addr_mode);
                 let index = index_reg_g1(addr_mode);
-                decoded_opcode = DecodedOpcode::new(sequence, operation, index);
+                decoded_opcode = create_decoded_opcode(sequence, operation, index);
             } else if cfg!(feature = "undoc_opcodes") {
                 todo!();
             }
@@ -429,11 +530,11 @@ pub fn decode(opcode: u8) -> DecodedOpcode {
                 let operation = instr_op_g2(op, addr_mode);
                 let sequence = sequence_mode_g2(op, addr_mode);
                 let index = index_reg_g2(op, addr_mode);
-                decoded_opcode = DecodedOpcode::new(sequence, operation, index);
+                decoded_opcode = create_decoded_opcode(sequence, operation, index);
             } else if let Some(op) = OpsSingleByte2::from_u8(opcode) {
                 let operation = instr_op_single_byte2(op);
                 decoded_opcode =
-                    DecodedOpcode::new(instr::InstructionSequenceMode::Implied, operation, None);
+                    create_decoded_opcode(instr::InstructionSequenceMode::Implied, operation, None);
             } else if cfg!(feature = "undoc_opcodes") {
                 todo!();
             }
@@ -447,18 +548,21 @@ pub fn decode(opcode: u8) -> DecodedOpcode {
                 let operation = instr_op_g3(op, addr_mode);
                 let sequence = sequence_mode_g3(op, addr_mode);
                 let index = index_reg_g3(addr_mode);
-                decoded_opcode = DecodedOpcode::new(sequence, operation, index);
+                decoded_opcode = create_decoded_opcode(sequence, operation, index);
             } else if let Some(op) = OpsCompBranch::from_u8(opcode) {
                 let operation = instr_op_cond_branch(op);
-                decoded_opcode =
-                    DecodedOpcode::new(instr::InstructionSequenceMode::Relative, operation, None);
+                decoded_opcode = create_decoded_opcode(
+                    instr::InstructionSequenceMode::Relative,
+                    operation,
+                    None,
+                );
             } else if let Some(op) = OpsSubroutine::from_u8(opcode) {
                 let sequence = sequence_mode_subroutine(op);
-                decoded_opcode = DecodedOpcode::new(sequence, instr::InstructionOp::Nop, None);
+                decoded_opcode = create_decoded_opcode(sequence, instr::InstructionOp::Nop, None);
             } else if let Some(op) = OpsSingleByte0::from_u8(opcode) {
                 let operation = instr_op_single_byte0(op);
                 let sequence = sequence_mode_single_byte0(op);
-                decoded_opcode = DecodedOpcode::new(sequence, operation, None);
+                decoded_opcode = create_decoded_opcode(sequence, operation, None);
             } else if cfg!(feature = "undoc_opcodes") {
                 todo!();
             }

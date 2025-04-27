@@ -10,6 +10,6 @@ mod decode_logic;
 pub use decode_switch::decode;
 
 #[cfg(not(feature = "decode_switch"))]
-pub use decode_logic::decode;
+pub use decode_logic::decode2 as decode;
 
-use decoded_opcode::*;
+pub use decoded_opcode::destruct_sequence;

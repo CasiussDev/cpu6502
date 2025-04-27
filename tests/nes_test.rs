@@ -9,8 +9,6 @@ use crate::test_computer::TestComputer;
 use std::io::{BufRead, Write};
 use std::{fs, io};
 
-use cpu6502::FetchedInstr;
-
 const REFERENCE_FILE: &'static str = "testdata/reference.6502log";
 const OUTPUT_FILE: &'static str = "testdata/output.6502log";
 
@@ -26,7 +24,7 @@ fn run(computer: &mut TestComputer, num_cycles: u128) {
     while computer.cpu.cycle_count_since_reset() < num_cycles {
         computer.cpu.run(&mut computer.memory);
 
-        if let FetchedInstr::Some(addr) = computer.cpu.fetched_instr() {
+        if let Some(addr) = computer.cpu.fetched_instr_addr() {
             let instructions = disasm6502::from_addr_array(
                 &computer.memory[(addr as usize)..(addr as usize + 6)],
                 addr,

@@ -21,7 +21,7 @@ pub struct TestComputer {
 impl Default for TestComputer {
     fn default() -> Self {
         Self {
-            cpu: Default::default(),
+            cpu: cpu6502::Cpu::new(),
             memory: [0; MEMORY_64K],
         }
     }
@@ -76,3 +76,4 @@ impl TestComputer {
         }
     }
 }
+

@@ -1,13 +1,18 @@
 {}
 
-use super::*;
-use crate::instr;
+use crate::instr::instr_operation::BranchOperation::*;
+use crate::instr::instr_operation::ImplicitOperation::*;
+use crate::instr::instr_operation::MemoryModifyOperation::*;
+use crate::instr::instr_operation::PullStackOperation::*;
+use crate::instr::instr_operation::PushStackOperation::*;
+use crate::instr::instr_operation::RegisterMemoryOperation::*;
+use crate::instr::InstructionSequenceMode2;
+use crate::instr::InstructionSequenceMode2::*;
 use crate::registers::IndexRegister::X;
 use crate::registers::IndexRegister::Y;
 
-pub fn decode(opcode: u8) -> DecodedOpcode {{
+pub fn decode(opcode: u8) -> InstructionSequenceMode2 {{
 	match opcode {{
 {}
 	}}
-
 }}

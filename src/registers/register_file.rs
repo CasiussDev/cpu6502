@@ -21,8 +21,9 @@ pub enum SelectedRegister8 {
     Discard,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Default)]
 pub enum IndexRegister {
+    #[default]
     X = SelectedRegister8::X as isize,
     Y = SelectedRegister8::Y as isize,
 }
