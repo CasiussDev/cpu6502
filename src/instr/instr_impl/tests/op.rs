@@ -2,14 +2,17 @@ use crate::instr::instr_impl::tests::MockMemory;
 use crate::instr::instr_impl::{
     execute_branch_op, execute_implicit_op, execute_memory_modify_op, execute_op, ClockEndStatus,
 };
-use crate::instr::InstructionOp;
+use crate::instr::{
+    BranchOperation, ImplicitOperation, InstructionOp, MemoryModifyOperation,
+    RegisterMemoryOperation,
+};
 use crate::registers::{RegisterFile, StatusRegFlags};
 
 #[test]
 fn execute_increment_memory() {
     let mut regs = RegisterFile::default();
     regs.tmp.set_u8(0x01);
-    execute_memory_modify_op(Some(InstructionOp::IncrementMemory), &mut regs);
+    execute_memory_modify_op(MemoryModifyOperation::IncrementMemory, &mut regs);
     assert_eq!(regs.tmp.to_u8(), 0x02);
 }
 
@@ -17,7 +20,7 @@ fn execute_increment_memory() {
 fn execute_increment_x() {
     let mut regs = RegisterFile::default();
     regs.x.set_u8(0x01);
-    execute_implicit_op(Some(InstructionOp::IncrementX), &mut regs);
+    execute_implicit_op(ImplicitOperation::IncrementX, &mut regs);
     assert_eq!(regs.x.to_u8(), 0x02);
 }
 
@@ -25,7 +28,7 @@ fn execute_increment_x() {
 fn execute_increment_y() {
     let mut regs = RegisterFile::default();
     regs.y.set_u8(0x01);
-    execute_implicit_op(Some(InstructionOp::IncrementY), &mut regs);
+    execute_implicit_op(ImplicitOperation::IncrementY, &mut regs);
     assert_eq!(regs.y.to_u8(), 0x02);
 }
 
@@ -33,7 +36,7 @@ fn execute_increment_y() {
 fn execute_decrement_memory() {
     let mut regs = RegisterFile::default();
     regs.tmp.set_u8(0x01);
-    execute_memory_modify_op(Some(InstructionOp::DecrementMemory), &mut regs);
+    execute_memory_modify_op(MemoryModifyOperation::DecrementMemory, &mut regs);
     assert_eq!(regs.tmp.to_u8(), 0x00);
 }
 
@@ -41,7 +44,7 @@ fn execute_decrement_memory() {
 fn execute_decrement_x() {
     let mut regs = RegisterFile::default();
     regs.x.set_u8(0x02);
-    execute_implicit_op(Some(InstructionOp::DecrementX), &mut regs);
+    execute_implicit_op(ImplicitOperation::DecrementX, &mut regs);
     assert_eq!(regs.x.to_u8(), 0x01);
 }
 
@@ -49,7 +52,7 @@ fn execute_decrement_x() {
 fn execute_decrement_y() {
     let mut regs = RegisterFile::default();
     regs.y.set_u8(0x02);
-    execute_implicit_op(Some(InstructionOp::DecrementY), &mut regs);
+    execute_implicit_op(ImplicitOperation::DecrementY, &mut regs);
     assert_eq!(regs.y.to_u8(), 0x01);
 }
 
@@ -57,14 +60,14 @@ fn execute_decrement_y() {
 fn execute_clear_carry() {
     let mut regs = RegisterFile::default();
     regs.status.set_flags(StatusRegFlags::CARRY);
-    execute_implicit_op(Some(InstructionOp::ClearCarry), &mut regs);
+    execute_implicit_op(ImplicitOperation::ClearCarry, &mut regs);
     assert!(!regs.status.are_all_flags_set(StatusRegFlags::CARRY));
 }
 
 #[test]
 fn execute_set_carry() {
     let mut regs = RegisterFile::default();
-    execute_implicit_op(Some(InstructionOp::SetCarry), &mut regs);
+    execute_implicit_op(ImplicitOperation::SetCarry, &mut regs);
     assert!(regs.status.are_all_flags_set(StatusRegFlags::CARRY));
 }
 
@@ -72,14 +75,14 @@ fn execute_set_carry() {
 fn execute_clear_decimal() {
     let mut regs = RegisterFile::default();
     regs.status.set_flags(StatusRegFlags::DECIMAL);
-    execute_implicit_op(Some(InstructionOp::ClearDecimal), &mut regs);
+    execute_implicit_op(ImplicitOperation::ClearDecimal, &mut regs);
     assert!(!regs.status.are_all_flags_set(StatusRegFlags::DECIMAL));
 }
 
 #[test]
 fn execute_set_decimal() {
     let mut regs = RegisterFile::default();
-    execute_implicit_op(Some(InstructionOp::SetDecimal), &mut regs);
+    execute_implicit_op(ImplicitOperation::SetDecimal, &mut regs);
     assert!(regs.status.are_all_flags_set(StatusRegFlags::DECIMAL));
 }
 
@@ -87,14 +90,14 @@ fn execute_set_decimal() {
 fn execute_clear_interrupt_disable() {
     let mut regs = RegisterFile::default();
     regs.status.set_flags(StatusRegFlags::IRQ_DISABLE);
-    execute_implicit_op(Some(InstructionOp::ClearInterruptDisable), &mut regs);
+    execute_implicit_op(ImplicitOperation::ClearInterruptDisable, &mut regs);
     assert!(!regs.status.are_all_flags_set(StatusRegFlags::IRQ_DISABLE));
 }
 
 #[test]
 fn execute_set_interrupt_disable() {
     let mut regs = RegisterFile::default();
-    execute_implicit_op(Some(InstructionOp::SetInterruptDisable), &mut regs);
+    execute_implicit_op(ImplicitOperation::SetInterruptDisable, &mut regs);
     assert!(regs.status.are_all_flags_set(StatusRegFlags::IRQ_DISABLE));
 }
 
@@ -102,14 +105,14 @@ fn execute_set_interrupt_disable() {
 fn execute_clear_overflow() {
     let mut regs = RegisterFile::default();
     regs.status.set_flags(StatusRegFlags::OVERFLOW);
-    execute_implicit_op(Some(InstructionOp::ClearOverflow), &mut regs);
+    execute_implicit_op(ImplicitOperation::ClearOverflow, &mut regs);
     assert!(!regs.status.are_all_flags_set(StatusRegFlags::OVERFLOW));
 }
 
 #[test]
 fn execute_set_overflow() {
     let mut regs = RegisterFile::default();
-    execute_implicit_op(Some(InstructionOp::SetOverflow), &mut regs);
+    execute_implicit_op(ImplicitOperation::SetOverflow, &mut regs);
     assert!(regs.status.are_all_flags_set(StatusRegFlags::OVERFLOW));
 }
 
@@ -117,7 +120,7 @@ fn execute_set_overflow() {
 fn execute_transfer_accumulator_to_x() {
     let mut regs = RegisterFile::default();
     regs.a.set_u8(0x42);
-    execute_implicit_op(Some(InstructionOp::TransferAccumulatorToX), &mut regs);
+    execute_implicit_op(ImplicitOperation::TransferAccumulatorToX, &mut regs);
     assert_eq!(regs.x.to_u8(), 0x42);
 }
 
@@ -125,7 +128,7 @@ fn execute_transfer_accumulator_to_x() {
 fn execute_transfer_accumulator_to_y() {
     let mut regs = RegisterFile::default();
     regs.a.set_u8(0x42);
-    execute_implicit_op(Some(InstructionOp::TransferAccumulatorToY), &mut regs);
+    execute_implicit_op(ImplicitOperation::TransferAccumulatorToY, &mut regs);
     assert_eq!(regs.y.to_u8(), 0x42);
 }
 
@@ -133,7 +136,7 @@ fn execute_transfer_accumulator_to_y() {
 fn execute_transfer_stack_ptr_to_x() {
     let mut regs = RegisterFile::default();
     regs.sp.set_u8(0x42);
-    execute_implicit_op(Some(InstructionOp::TransferStackPtrToX), &mut regs);
+    execute_implicit_op(ImplicitOperation::TransferStackPtrToX, &mut regs);
     assert_eq!(regs.x.to_u8(), 0x42);
 }
 
@@ -141,7 +144,7 @@ fn execute_transfer_stack_ptr_to_x() {
 fn execute_transfer_x_to_accumulator() {
     let mut regs = RegisterFile::default();
     regs.x.set_u8(0x42);
-    execute_implicit_op(Some(InstructionOp::TransferXToAccumulator), &mut regs);
+    execute_implicit_op(ImplicitOperation::TransferXToAccumulator, &mut regs);
     assert_eq!(regs.a.to_u8(), 0x42);
 }
 
@@ -149,7 +152,7 @@ fn execute_transfer_x_to_accumulator() {
 fn execute_transfer_y_to_accumulator() {
     let mut regs = RegisterFile::default();
     regs.y.set_u8(0x42);
-    execute_implicit_op(Some(InstructionOp::TransferYToAccumulator), &mut regs);
+    execute_implicit_op(ImplicitOperation::TransferYToAccumulator, &mut regs);
     assert_eq!(regs.a.to_u8(), 0x42);
 }
 
@@ -157,7 +160,7 @@ fn execute_transfer_y_to_accumulator() {
 fn execute_transfer_x_to_stack_ptr() {
     let mut regs = RegisterFile::default();
     regs.x.set_u8(0x42);
-    execute_implicit_op(Some(InstructionOp::TransferXToStackPtr), &mut regs);
+    execute_implicit_op(ImplicitOperation::TransferXToStackPtr, &mut regs);
     assert_eq!(regs.sp.to_u8(), 0x42);
 }
 
@@ -168,7 +171,7 @@ fn execute_or() {
     memory.data[0x1000] = 0x01;
     regs.a.set_u8(0x02);
     regs.addr.set_u16(0x1000);
-    execute_op(Some(InstructionOp::Or), &mut regs, &mut memory);
+    execute_op(RegisterMemoryOperation::Or, &mut regs, &mut memory);
     assert_eq!(regs.a.to_u8(), 0x03);
 }
 
@@ -179,7 +182,7 @@ fn execute_and() {
     memory.data[0x1000] = 0x01;
     regs.a.set_u8(0x03);
     regs.addr.set_u16(0x1000);
-    execute_op(Some(InstructionOp::And), &mut regs, &mut memory);
+    execute_op(RegisterMemoryOperation::And, &mut regs, &mut memory);
     assert_eq!(regs.a.to_u8(), 0x01);
 }
 
@@ -190,7 +193,7 @@ fn execute_xor() {
     memory.data[0x1000] = 0x01;
     regs.a.set_u8(0x03);
     regs.addr.set_u16(0x1000);
-    execute_op(Some(InstructionOp::Xor), &mut regs, &mut memory);
+    execute_op(RegisterMemoryOperation::Xor, &mut regs, &mut memory);
     assert_eq!(regs.a.to_u8(), 0x02);
 }
 
@@ -201,7 +204,7 @@ fn execute_add() {
     memory.data[0x1000] = 0x01;
     regs.a.set_u8(0x03);
     regs.addr.set_u16(0x1000);
-    execute_op(Some(InstructionOp::Add), &mut regs, &mut memory);
+    execute_op(RegisterMemoryOperation::Add, &mut regs, &mut memory);
     assert_eq!(regs.a.to_u8(), 0x04);
 }
 
@@ -213,7 +216,7 @@ fn execute_sub() {
     regs.a.set_u8(0x03);
     regs.status.set_flags(StatusRegFlags::CARRY);
     regs.addr.set_u16(0x1000);
-    execute_op(Some(InstructionOp::Sub), &mut regs, &mut memory);
+    execute_op(RegisterMemoryOperation::Sub, &mut regs, &mut memory);
     assert_eq!(regs.a.to_u8(), 0x02);
 }
 
@@ -224,7 +227,7 @@ fn execute_cmp() {
     memory.data[0x1000] = 0x01;
     regs.a.set_u8(0x03);
     regs.addr.set_u16(0x1000);
-    execute_op(Some(InstructionOp::Cmp), &mut regs, &mut memory);
+    execute_op(RegisterMemoryOperation::Cmp, &mut regs, &mut memory);
     assert!(regs.status.are_all_flags_set(StatusRegFlags::CARRY));
 }
 
@@ -235,7 +238,7 @@ fn execute_cpx() {
     memory.data[0x1000] = 0x01;
     regs.x.set_u8(0x03);
     regs.addr.set_u16(0x1000);
-    execute_op(Some(InstructionOp::Cpx), &mut regs, &mut memory);
+    execute_op(RegisterMemoryOperation::Cpx, &mut regs, &mut memory);
     assert!(regs.status.are_all_flags_set(StatusRegFlags::CARRY));
 }
 
@@ -246,7 +249,7 @@ fn execute_cpy() {
     memory.data[0x1000] = 0x01;
     regs.y.set_u8(0x03);
     regs.addr.set_u16(0x1000);
-    execute_op(Some(InstructionOp::Cpy), &mut regs, &mut memory);
+    execute_op(RegisterMemoryOperation::Cpy, &mut regs, &mut memory);
     assert!(regs.status.are_all_flags_set(StatusRegFlags::CARRY));
 }
 
@@ -254,7 +257,7 @@ fn execute_cpy() {
 fn execute_shift_left_a() {
     let mut regs = RegisterFile::default();
     regs.a.set_u8(0x01);
-    execute_implicit_op(Some(InstructionOp::ShiftLeftA), &mut regs);
+    execute_implicit_op(ImplicitOperation::ShiftLeftA, &mut regs);
     assert_eq!(regs.a.to_u8(), 0x02);
 }
 
@@ -264,7 +267,7 @@ fn execute_shift_load_a() {
     let mut memory = MockMemory { data: [0; 65536] };
     memory.data[0x1000] = 0x01;
     regs.addr.set_u16(0x1000);
-    execute_op(Some(InstructionOp::LoadA), &mut regs, &mut memory);
+    execute_op(RegisterMemoryOperation::LoadA, &mut regs, &mut memory);
     assert_eq!(regs.a.to_u8(), 0x01);
 }
 
@@ -275,8 +278,8 @@ fn execute_bit() {
     memory.data[0x1000] = 0xC0; // 1100 0000
     regs.a.set_u8(0x80); // 1000 0000
     regs.addr.set_u16(0x1000);
-    regs.status.set_flags(StatusRegFlags::ZERO);
-    execute_op(Some(InstructionOp::Bit), &mut regs, &mut memory);
+    regs.status.clear_flags(StatusRegFlags::ZERO);
+    execute_op(RegisterMemoryOperation::Bit, &mut regs, &mut memory);
     assert!(regs
         .status
         .are_all_flags_set(StatusRegFlags::NEGATIVE | StatusRegFlags::OVERFLOW));
@@ -288,9 +291,9 @@ fn execute_bit_immediate() {
     let mut regs = RegisterFile::default();
     regs.a.set_u8(0x80); // 1000 0000
     regs.tmp.set_u8(0xC0); // 1100 0000
-    regs.status.set_flags(StatusRegFlags::ZERO);
+    regs.status.clear_flags(StatusRegFlags::ZERO);
     execute_op(
-        Some(InstructionOp::BitImmediate),
+        RegisterMemoryOperation::BitImmediate,
         &mut regs,
         &mut MockMemory { data: [0; 65536] },
     );
@@ -304,7 +307,7 @@ fn execute_bit_immediate() {
 fn execute_shift_right_a() {
     let mut regs = RegisterFile::default();
     regs.a.set_u8(0x02);
-    execute_implicit_op(Some(InstructionOp::ShiftRightA), &mut regs);
+    execute_implicit_op(ImplicitOperation::ShiftRightA, &mut regs);
     assert_eq!(regs.a.to_u8(), 0x01);
 }
 
@@ -312,7 +315,7 @@ fn execute_shift_right_a() {
 fn execute_rotate_left_a() {
     let mut regs = RegisterFile::default();
     regs.a.set_u8(0x80);
-    execute_implicit_op(Some(InstructionOp::RotateLeftA), &mut regs);
+    execute_implicit_op(ImplicitOperation::RotateLeftA, &mut regs);
     assert_eq!(regs.a.to_u8(), 0x00);
     assert!(regs.status.are_all_flags_set(StatusRegFlags::CARRY));
 }
@@ -321,7 +324,7 @@ fn execute_rotate_left_a() {
 fn execute_rotate_right_a() {
     let mut regs = RegisterFile::default();
     regs.a.set_u8(0x01);
-    execute_implicit_op(Some(InstructionOp::RotateRightA), &mut regs);
+    execute_implicit_op(ImplicitOperation::RotateRightA, &mut regs);
     assert_eq!(regs.a.to_u8(), 0x00);
     assert!(regs.status.are_all_flags_set(StatusRegFlags::CARRY));
 }
@@ -330,7 +333,7 @@ fn execute_rotate_right_a() {
 fn execute_shift_left_memory() {
     let mut regs = RegisterFile::default();
     regs.tmp.set_u8(0x01);
-    execute_memory_modify_op(Some(InstructionOp::ShiftLeftMemory), &mut regs);
+    execute_memory_modify_op(MemoryModifyOperation::ShiftLeftMemory, &mut regs);
     assert_eq!(regs.tmp.to_u8(), 0x02);
 }
 
@@ -338,7 +341,7 @@ fn execute_shift_left_memory() {
 fn execute_shift_right_memory() {
     let mut regs = RegisterFile::default();
     regs.tmp.set_u8(0x02);
-    execute_memory_modify_op(Some(InstructionOp::ShiftRightMemory), &mut regs);
+    execute_memory_modify_op(MemoryModifyOperation::ShiftRightMemory, &mut regs);
     assert_eq!(regs.tmp.to_u8(), 0x01);
 }
 
@@ -346,7 +349,7 @@ fn execute_shift_right_memory() {
 fn execute_rotate_left_memory() {
     let mut regs = RegisterFile::default();
     regs.tmp.set_u8(0x80);
-    execute_memory_modify_op(Some(InstructionOp::RotateLeftMemory), &mut regs);
+    execute_memory_modify_op(MemoryModifyOperation::RotateLeftMemory, &mut regs);
     assert_eq!(regs.tmp.to_u8(), 0x00);
     assert!(regs.status.are_all_flags_set(StatusRegFlags::CARRY));
 }
@@ -355,7 +358,7 @@ fn execute_rotate_left_memory() {
 fn execute_rotate_right_memory() {
     let mut regs = RegisterFile::default();
     regs.tmp.set_u8(0x01);
-    execute_memory_modify_op(Some(InstructionOp::RotateRightMemory), &mut regs);
+    execute_memory_modify_op(MemoryModifyOperation::RotateRightMemory, &mut regs);
     assert_eq!(regs.tmp.to_u8(), 0x00);
     assert!(regs.status.are_all_flags_set(StatusRegFlags::CARRY));
 }
@@ -366,7 +369,7 @@ fn execute_store_a() {
     let mut memory = MockMemory { data: [0; 65536] };
     regs.a.set_u8(0x42);
     regs.addr.set_u16(0x1000);
-    execute_op(Some(InstructionOp::StoreA), &mut regs, &mut memory);
+    execute_op(RegisterMemoryOperation::StoreA, &mut regs, &mut memory);
     assert_eq!(memory.data[0x1000], 0x42);
 }
 
@@ -376,7 +379,7 @@ fn execute_load_a() {
     let mut memory = MockMemory { data: [0; 65536] };
     memory.data[0x1000] = 0x42;
     regs.addr.set_u16(0x1000);
-    execute_op(Some(InstructionOp::LoadA), &mut regs, &mut memory);
+    execute_op(RegisterMemoryOperation::LoadA, &mut regs, &mut memory);
     assert_eq!(regs.a.to_u8(), 0x42);
 }
 
@@ -386,7 +389,7 @@ fn execute_store_x() {
     let mut memory = MockMemory { data: [0; 65536] };
     regs.x.set_u8(0x42);
     regs.addr.set_u16(0x1000);
-    execute_op(Some(InstructionOp::StoreX), &mut regs, &mut memory);
+    execute_op(RegisterMemoryOperation::StoreX, &mut regs, &mut memory);
     assert_eq!(memory.data[0x1000], 0x42);
 }
 
@@ -396,7 +399,7 @@ fn execute_load_x() {
     let mut memory = MockMemory { data: [0; 65536] };
     memory.data[0x1000] = 0x42;
     regs.addr.set_u16(0x1000);
-    execute_op(Some(InstructionOp::LoadX), &mut regs, &mut memory);
+    execute_op(RegisterMemoryOperation::LoadX, &mut regs, &mut memory);
     assert_eq!(regs.x.to_u8(), 0x42);
 }
 
@@ -406,7 +409,7 @@ fn execute_store_y() {
     let mut memory = MockMemory { data: [0; 65536] };
     regs.y.set_u8(0x42);
     regs.addr.set_u16(0x1000);
-    execute_op(Some(InstructionOp::StoreY), &mut regs, &mut memory);
+    execute_op(RegisterMemoryOperation::StoreY, &mut regs, &mut memory);
     assert_eq!(memory.data[0x1000], 0x42);
 }
 
@@ -416,7 +419,7 @@ fn execute_load_y() {
     let mut memory = MockMemory { data: [0; 65536] };
     memory.data[0x1000] = 0x42;
     regs.addr.set_u16(0x1000);
-    execute_op(Some(InstructionOp::LoadY), &mut regs, &mut memory);
+    execute_op(RegisterMemoryOperation::LoadY, &mut regs, &mut memory);
     assert_eq!(regs.y.to_u8(), 0x42);
 }
 
@@ -427,7 +430,7 @@ fn execute_branch_plus() {
     regs.status.clear_flags(StatusRegFlags::NEGATIVE);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
-    let status = execute_branch_op(Some(InstructionOp::BranchPlus), &mut regs, &mut memory);
+    let status = execute_branch_op(BranchOperation::BranchPlus, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1010);
     assert_eq!(status, ClockEndStatus::EndInstruction);
 }
@@ -440,10 +443,15 @@ fn execute_branch_plus_not_taken() {
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
     memory.data[0x1000] = 0xEA; // next opcode
-    let status = execute_branch_op(Some(InstructionOp::BranchPlus), &mut regs, &mut memory);
+    let status = execute_branch_op(BranchOperation::BranchPlus, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1001);
     assert_eq!(regs.ir.to_u8(), 0xEA);
-    assert_eq!(status, ClockEndStatus::EndInstructionNextFetched);
+    assert_eq!(
+        status,
+        ClockEndStatus::EndInstructionNextFetched {
+            opcode_addr: 0x1000
+        }
+    );
 }
 
 #[test]
@@ -453,7 +461,7 @@ fn execute_branch_minus() {
     regs.status.set_flags(StatusRegFlags::NEGATIVE);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
-    let status = execute_branch_op(Some(InstructionOp::BranchMinus), &mut regs, &mut memory);
+    let status = execute_branch_op(BranchOperation::BranchMinus, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1010);
     assert_eq!(status, ClockEndStatus::EndInstruction);
 }
@@ -466,10 +474,15 @@ fn execute_branch_minus_not_taken() {
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
     memory.data[0x1000] = 0xEA; // next opcode
-    let status = execute_branch_op(Some(InstructionOp::BranchMinus), &mut regs, &mut memory);
+    let status = execute_branch_op(BranchOperation::BranchMinus, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1001);
     assert_eq!(regs.ir.to_u8(), 0xEA);
-    assert_eq!(status, ClockEndStatus::EndInstructionNextFetched);
+    assert_eq!(
+        status,
+        ClockEndStatus::EndInstructionNextFetched {
+            opcode_addr: 0x1000
+        }
+    );
 }
 
 #[test]
@@ -479,11 +492,7 @@ fn execute_branch_overflow_clear() {
     regs.status.clear_flags(StatusRegFlags::OVERFLOW);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
-    let status = execute_branch_op(
-        Some(InstructionOp::BranchOverflowClear),
-        &mut regs,
-        &mut memory,
-    );
+    let status = execute_branch_op(BranchOperation::BranchOverflowClear, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1010);
     assert_eq!(status, ClockEndStatus::EndInstruction);
 }
@@ -496,14 +505,15 @@ fn execute_branch_overflow_clear_not_taken() {
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
     memory.data[0x1000] = 0xEA; // next opcode
-    let status = execute_branch_op(
-        Some(InstructionOp::BranchOverflowClear),
-        &mut regs,
-        &mut memory,
-    );
+    let status = execute_branch_op(BranchOperation::BranchOverflowClear, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1001);
     assert_eq!(regs.ir.to_u8(), 0xEA);
-    assert_eq!(status, ClockEndStatus::EndInstructionNextFetched);
+    assert_eq!(
+        status,
+        ClockEndStatus::EndInstructionNextFetched {
+            opcode_addr: 0x1000
+        }
+    );
 }
 
 #[test]
@@ -513,11 +523,7 @@ fn execute_branch_overflow_set() {
     regs.status.set_flags(StatusRegFlags::OVERFLOW);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
-    let status = execute_branch_op(
-        Some(InstructionOp::BranchOverflowSet),
-        &mut regs,
-        &mut memory,
-    );
+    let status = execute_branch_op(BranchOperation::BranchOverflowSet, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1010);
     assert_eq!(status, ClockEndStatus::EndInstruction);
 }
@@ -530,14 +536,15 @@ fn execute_branch_overflow_set_not_taken() {
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
     memory.data[0x1000] = 0xEA; // next opcode
-    let status = execute_branch_op(
-        Some(InstructionOp::BranchOverflowSet),
-        &mut regs,
-        &mut memory,
-    );
+    let status = execute_branch_op(BranchOperation::BranchOverflowSet, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1001);
     assert_eq!(regs.ir.to_u8(), 0xEA);
-    assert_eq!(status, ClockEndStatus::EndInstructionNextFetched);
+    assert_eq!(
+        status,
+        ClockEndStatus::EndInstructionNextFetched {
+            opcode_addr: 0x1000
+        }
+    );
 }
 
 #[test]
@@ -547,11 +554,7 @@ fn execute_branch_carry_clear() {
     regs.status.clear_flags(StatusRegFlags::CARRY);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
-    let status = execute_branch_op(
-        Some(InstructionOp::BranchCarryClear),
-        &mut regs,
-        &mut memory,
-    );
+    let status = execute_branch_op(BranchOperation::BranchCarryClear, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1010);
     assert_eq!(status, ClockEndStatus::EndInstruction);
 }
@@ -564,14 +567,15 @@ fn execute_branch_carry_clear_not_taken() {
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
     memory.data[0x1000] = 0xEA; // next opcode
-    let status = execute_branch_op(
-        Some(InstructionOp::BranchCarryClear),
-        &mut regs,
-        &mut memory,
-    );
+    let status = execute_branch_op(BranchOperation::BranchCarryClear, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1001);
     assert_eq!(regs.ir.to_u8(), 0xEA);
-    assert_eq!(status, ClockEndStatus::EndInstructionNextFetched);
+    assert_eq!(
+        status,
+        ClockEndStatus::EndInstructionNextFetched {
+            opcode_addr: 0x1000
+        }
+    );
 }
 
 #[test]
@@ -581,7 +585,7 @@ fn execute_branch_carry_set() {
     regs.status.set_flags(StatusRegFlags::CARRY);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
-    let status = execute_branch_op(Some(InstructionOp::BranchCarrySet), &mut regs, &mut memory);
+    let status = execute_branch_op(BranchOperation::BranchCarrySet, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1010);
     assert_eq!(status, ClockEndStatus::EndInstruction);
 }
@@ -594,10 +598,15 @@ fn execute_branch_carry_set_not_taken() {
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
     memory.data[0x1000] = 0xEA; // next opcode
-    let status = execute_branch_op(Some(InstructionOp::BranchCarrySet), &mut regs, &mut memory);
+    let status = execute_branch_op(BranchOperation::BranchCarrySet, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1001);
     assert_eq!(regs.ir.to_u8(), 0xEA);
-    assert_eq!(status, ClockEndStatus::EndInstructionNextFetched);
+    assert_eq!(
+        status,
+        ClockEndStatus::EndInstructionNextFetched {
+            opcode_addr: 0x1000
+        }
+    );
 }
 
 #[test]
@@ -607,7 +616,7 @@ fn execute_branch_not_equal() {
     regs.status.clear_flags(StatusRegFlags::ZERO);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
-    let status = execute_branch_op(Some(InstructionOp::BranchNotEqual), &mut regs, &mut memory);
+    let status = execute_branch_op(BranchOperation::BranchNotEqual, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1010);
     assert_eq!(status, ClockEndStatus::EndInstruction);
 }
@@ -620,10 +629,15 @@ fn execute_branch_not_equal_not_taken() {
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
     memory.data[0x1000] = 0xEA; // next opcode
-    let status = execute_branch_op(Some(InstructionOp::BranchNotEqual), &mut regs, &mut memory);
+    let status = execute_branch_op(BranchOperation::BranchNotEqual, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1001);
     assert_eq!(regs.ir.to_u8(), 0xEA);
-    assert_eq!(status, ClockEndStatus::EndInstructionNextFetched);
+    assert_eq!(
+        status,
+        ClockEndStatus::EndInstructionNextFetched {
+            opcode_addr: 0x1000
+        }
+    );
 }
 
 #[test]
@@ -633,7 +647,7 @@ fn execute_branch_equal() {
     regs.status.set_flags(StatusRegFlags::ZERO);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
-    let status = execute_branch_op(Some(InstructionOp::BranchEqual), &mut regs, &mut memory);
+    let status = execute_branch_op(BranchOperation::BranchEqual, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1010);
     assert_eq!(status, ClockEndStatus::EndInstruction);
 }
@@ -646,8 +660,13 @@ fn execute_branch_equal_not_taken() {
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
     memory.data[0x1000] = 0xEA; // next opcode
-    let status = execute_branch_op(Some(InstructionOp::BranchEqual), &mut regs, &mut memory);
+    let status = execute_branch_op(BranchOperation::BranchEqual, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1001);
     assert_eq!(regs.ir.to_u8(), 0xEA);
-    assert_eq!(status, ClockEndStatus::EndInstructionNextFetched);
+    assert_eq!(
+        status,
+        ClockEndStatus::EndInstructionNextFetched {
+            opcode_addr: 0x1000
+        }
+    );
 }

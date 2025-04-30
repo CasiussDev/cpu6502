@@ -1,7 +1,7 @@
 use super::execute;
 use crate::instr::instr_impl::tests::MockMemory;
 use crate::instr::instr_impl::ClockEndStatus;
-use crate::instr::InstructionSequenceMode;
+use crate::instr::{InstructionSequenceMode, InstructionSequenceMode2};
 use crate::registers::{RegisterFile, SelectedRegister16};
 
 #[test]
@@ -14,11 +14,16 @@ fn fetch_instr() {
     memory.data[0x1000] = 0xA9; // Example instruction
 
     // Execute fetch_instr
-    let result = super::fetch_instr(None, 0, &mut regs, &mut memory);
+    let result = super::fetch_instr(0, &mut regs, &mut memory);
 
     // Verify the results
     assert_eq!(regs.ir.to_u8(), 0xA9); // Instruction register should be updated
-    assert_eq!(result, ClockEndStatus::EndInstructionNextFetched);
+    assert_eq!(
+        result,
+        ClockEndStatus::EndInstructionNextFetched {
+            opcode_addr: 0x1000
+        }
+    ); // Check the result
 }
 
 #[test]
@@ -38,12 +43,10 @@ fn reset() {
     // Execute reset
     let mut step = 0;
     while execute(
-        None,
+        InstructionSequenceMode2::Reset,
         step,
         &mut regs,
         &mut memory,
-        None,
-        InstructionSequenceMode::Reset,
     ) == ClockEndStatus::Continue
     {
         step += 1;

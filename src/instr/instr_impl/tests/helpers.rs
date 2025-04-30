@@ -2,7 +2,7 @@ use crate::instr::instr_impl::tests::MockMemory;
 use crate::instr::instr_impl::{
     add_index_to_address, fix_addr_or_run_op_finish, ClockEndStatus, FixAddressResult,
 };
-use crate::instr::InstructionOp;
+use crate::instr::{InstructionOp, RegisterMemoryOperation};
 use crate::registers::{IndexRegister, RegisterFile};
 
 #[test]
@@ -10,7 +10,7 @@ fn get_index_value() {
     let mut regs = RegisterFile::default();
     regs.x.set_u8(0x12);
     regs.y.set_u8(0xFF);
-    let idx = Some(IndexRegister::X);
+    let idx = IndexRegister::X;
     assert_eq!(super::get_index_value(idx, &mut regs), 0x12);
 }
 
@@ -19,7 +19,7 @@ fn get_index_value_y() {
     let mut regs = RegisterFile::default();
     regs.x.set_u8(0x12);
     regs.y.set_u8(0xFF);
-    let idx = Some(IndexRegister::Y);
+    let idx = IndexRegister::Y;
     assert_eq!(super::get_index_value(idx, &mut regs), 0xFF);
 }
 
@@ -37,7 +37,7 @@ fn add_index_to_address_x() {
     regs.addr.set_u16(0x1000);
     regs.x.set_u8(0x10);
     regs.y.set_u8(0xFF);
-    add_index_to_address(&mut regs, Some(IndexRegister::X));
+    add_index_to_address(&mut regs, IndexRegister::X);
     assert_eq!(regs.addr.to_u16(), 0x1010);
 }
 
@@ -47,7 +47,7 @@ fn add_index_to_address_y() {
     regs.addr.set_u16(0x1000);
     regs.x.set_u8(0xFF);
     regs.y.set_u8(0x10);
-    add_index_to_address(&mut regs, Some(IndexRegister::Y));
+    add_index_to_address(&mut regs, IndexRegister::Y);
     assert_eq!(regs.addr.to_u16(), 0x1010);
 }
 
@@ -79,10 +79,10 @@ fn fix_addr_or_run_op_finish_x() {
     memory.data[0x1010] = 0x01;
 
     let result = fix_addr_or_run_op_finish(
-        Some(InstructionOp::Add),
+        RegisterMemoryOperation::Add,
         &mut regs,
         &mut memory,
-        Some(IndexRegister::X),
+        IndexRegister::X,
     );
     assert_eq!(regs.a.to_u8(), 0x10);
     assert_eq!(result, ClockEndStatus::EndInstruction);
@@ -98,10 +98,10 @@ fn fix_addr_or_run_op_finish_x_fixed() {
     memory.data[0x1010] = 0x01;
 
     let result = fix_addr_or_run_op_finish(
-        Some(InstructionOp::Add),
+        RegisterMemoryOperation::Add,
         &mut regs,
         &mut memory,
-        Some(IndexRegister::X),
+        IndexRegister::X,
     );
     assert_eq!(regs.a.to_u8(), 0x0F);
     assert_eq!(regs.addr.to_u16(), 0x1110);
@@ -118,10 +118,10 @@ fn fix_addr_or_run_op_finish_y() {
     memory.data[0x1010] = 0x01;
 
     let result = fix_addr_or_run_op_finish(
-        Some(InstructionOp::Add),
+        RegisterMemoryOperation::Add,
         &mut regs,
         &mut memory,
-        Some(IndexRegister::Y),
+        IndexRegister::Y,
     );
     assert_eq!(regs.a.to_u8(), 0x10);
     assert_eq!(result, ClockEndStatus::EndInstruction);
@@ -137,10 +137,10 @@ fn fix_addr_or_run_op_finish_y_fixed() {
     memory.data[0x1010] = 0x01;
 
     let result = fix_addr_or_run_op_finish(
-        Some(InstructionOp::Add),
+        RegisterMemoryOperation::Add,
         &mut regs,
         &mut memory,
-        Some(IndexRegister::Y),
+        IndexRegister::Y,
     );
     assert_eq!(regs.a.to_u8(), 0x0F);
     assert_eq!(regs.addr.to_u16(), 0x1110);

@@ -4,12 +4,16 @@ use crate::registers::{IndexRegister, SelectedRegister16, SelectedRegister8, Sta
 use enum_map::{enum_map, Enum};
 use lazy_static::lazy_static;
 use std::{collections, slice};
+use strum_macros::EnumDiscriminants;
 
-use crate::instr::{BranchOperation, ImplicitOperation, MemoryModifyOperation, PullStackOperation, PushStackOperation, RegisterMemoryOperation};
+use crate::instr::{
+    BranchOperation, ImplicitOperation, MemoryModifyOperation, PullStackOperation,
+    PushStackOperation, RegisterMemoryOperation,
+};
 #[cfg(test)]
 use strum::IntoEnumIterator;
-#[cfg(test)]
-use strum_macros::EnumIter;
+#[cfg(any(test, feature = "gen_write_cycle_query"))]
+use strum_macros::{Display, EnumIter};
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Enum, Debug)]
 #[cfg_attr(test, derive(EnumIter))]
@@ -55,7 +59,9 @@ pub enum InstructionSequenceMode {
     AbsoluteIndirectJump,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Default)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Default, EnumDiscriminants)]
+#[cfg_attr(feature = "gen_write_cycle_query", derive(EnumIter))]
+//#[cfg_attr(feature = "gen_write_cycle_query", strum_discriminants(derive(EnumIter)))]
 pub enum InstructionSequenceMode2 {
     #[default]
     FetchInstr,
@@ -116,21 +122,45 @@ impl From<InstructionSequenceMode2> for InstructionSequenceMode {
             InstructionSequenceMode2::Immediate(_) => InstructionSequenceMode::Immediate,
             InstructionSequenceMode2::AbsoluteJump => InstructionSequenceMode::AbsoluteJump,
             InstructionSequenceMode2::Absolute(_) => InstructionSequenceMode::Absolute,
-            InstructionSequenceMode2::AbsoluteReadModifyWrite(_) => InstructionSequenceMode::AbsoluteReadModifyWrite,
+            InstructionSequenceMode2::AbsoluteReadModifyWrite(_) => {
+                InstructionSequenceMode::AbsoluteReadModifyWrite
+            }
             InstructionSequenceMode2::ZeroPage(_) => InstructionSequenceMode::ZeroPage,
-            InstructionSequenceMode2::ZeroPageReadModifyWrite(_) => InstructionSequenceMode::ZeroPageReadModifyWrite,
+            InstructionSequenceMode2::ZeroPageReadModifyWrite(_) => {
+                InstructionSequenceMode::ZeroPageReadModifyWrite
+            }
             InstructionSequenceMode2::ZeroPageIdx(_, _) => InstructionSequenceMode::ZeroPageIdx,
-            InstructionSequenceMode2::ZeroPageIdxReadModifyWrite(_, _) => InstructionSequenceMode::ZeroPageIdxReadModifyWrite,
-            InstructionSequenceMode2::AbsoluteIdxRead(_, _) => InstructionSequenceMode::AbsoluteIdxRead,
-            InstructionSequenceMode2::AbsoluteIdxReadModifyWrite(_, _) => InstructionSequenceMode::AbsoluteIdxReadModifyWrite,
-            InstructionSequenceMode2::AbsoluteIdxWrite(_, _) => InstructionSequenceMode::AbsoluteIdxWrite,
+            InstructionSequenceMode2::ZeroPageIdxReadModifyWrite(_, _) => {
+                InstructionSequenceMode::ZeroPageIdxReadModifyWrite
+            }
+            InstructionSequenceMode2::AbsoluteIdxRead(_, _) => {
+                InstructionSequenceMode::AbsoluteIdxRead
+            }
+            InstructionSequenceMode2::AbsoluteIdxReadModifyWrite(_, _) => {
+                InstructionSequenceMode::AbsoluteIdxReadModifyWrite
+            }
+            InstructionSequenceMode2::AbsoluteIdxWrite(_, _) => {
+                InstructionSequenceMode::AbsoluteIdxWrite
+            }
             InstructionSequenceMode2::Relative(_) => InstructionSequenceMode::Relative,
-            InstructionSequenceMode2::ZeroPageIdxIndirect(_, _) => InstructionSequenceMode::ZeroPageIdxIndirect,
-            InstructionSequenceMode2::ZeroPageIdxIndirectReadModifyWrite(_, _) => InstructionSequenceMode::ZeroPageIdxIndirectReadModifyWrite,
-            InstructionSequenceMode2::ZeroPageIndirectIdxRead(_, _) => InstructionSequenceMode::ZeroPageIndirectIdxRead,
-            InstructionSequenceMode2::ZeroPageIndirectIdxReadModifyWrite(_, _) => InstructionSequenceMode::ZeroPageIndirectIdxReadModifyWrite,
-            InstructionSequenceMode2::ZeroPageIndirectIdxWrite(_, _) => InstructionSequenceMode::ZeroPageIndirectIdxWrite,
-            InstructionSequenceMode2::AbsoluteIndirectJump => InstructionSequenceMode::AbsoluteIndirectJump,
+            InstructionSequenceMode2::ZeroPageIdxIndirect(_, _) => {
+                InstructionSequenceMode::ZeroPageIdxIndirect
+            }
+            InstructionSequenceMode2::ZeroPageIdxIndirectReadModifyWrite(_, _) => {
+                InstructionSequenceMode::ZeroPageIdxIndirectReadModifyWrite
+            }
+            InstructionSequenceMode2::ZeroPageIndirectIdxRead(_, _) => {
+                InstructionSequenceMode::ZeroPageIndirectIdxRead
+            }
+            InstructionSequenceMode2::ZeroPageIndirectIdxReadModifyWrite(_, _) => {
+                InstructionSequenceMode::ZeroPageIndirectIdxReadModifyWrite
+            }
+            InstructionSequenceMode2::ZeroPageIndirectIdxWrite(_, _) => {
+                InstructionSequenceMode::ZeroPageIndirectIdxWrite
+            }
+            InstructionSequenceMode2::AbsoluteIndirectJump => {
+                InstructionSequenceMode::AbsoluteIndirectJump
+            }
         }
     }
 }

@@ -3,17 +3,18 @@ use crate::instr;
 use crate::registers::{ReferenceableRegister8, SelectedRegister8, StatusRegFlags};
 use enum_map::{enum_map, Enum};
 use lazy_static::lazy_static;
-use std::{collections, slice};
 use std::convert::TryFrom;
+use std::{collections, slice};
 
 #[cfg(test)]
 use strum::IntoEnumIterator;
-#[cfg(test)]
+#[cfg(any(test, feature = "gen_write_cycle_query"))]
 use strum_macros::EnumIter;
 
-#[derive(Copy, Clone, PartialEq, Eq, Enum, Debug)]
-#[cfg_attr(test, derive(EnumIter))]
+#[derive(Copy, Clone, PartialEq, Eq, Enum, Debug, Default)]
+#[cfg_attr(feature = "gen_write_cycle_query", derive(EnumIter))]
 pub enum ImplicitOperation {
+    #[default]
     Nop,
     ShiftLeftA,
     ShiftRightA,
@@ -41,9 +42,10 @@ pub enum ImplicitOperation {
     TransferXToStackPtr,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Enum, Debug)]
-#[cfg_attr(test, derive(EnumIter))]
+#[derive(Copy, Clone, PartialEq, Eq, Enum, Debug, Default)]
+#[cfg_attr(feature = "gen_write_cycle_query", derive(EnumIter))]
 pub enum BranchOperation {
+    #[default]
     BranchPlus,
     BranchMinus,
     BranchOverflowClear,
@@ -54,9 +56,10 @@ pub enum BranchOperation {
     BranchEqual,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Enum, Debug)]
-#[cfg_attr(test, derive(EnumIter))]
+#[derive(Copy, Clone, PartialEq, Eq, Enum, Debug, Default)]
+#[cfg_attr(feature = "gen_write_cycle_query", derive(EnumIter))]
 pub enum MemoryModifyOperation {
+    #[default]
     IncrementMemory,
     DecrementMemory,
     ShiftLeftMemory,
@@ -65,9 +68,10 @@ pub enum MemoryModifyOperation {
     RotateRightMemory,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Enum, Debug)]
-#[cfg_attr(test, derive(EnumIter))]
+#[derive(Copy, Clone, PartialEq, Eq, Enum, Debug, Default)]
+#[cfg_attr(feature = "gen_write_cycle_query", derive(EnumIter))]
 pub enum RegisterMemoryOperation {
+    #[default]
     StoreA,
     LoadA,
     StoreX,
@@ -86,16 +90,18 @@ pub enum RegisterMemoryOperation {
     Cpy,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Enum, Debug)]
-#[cfg_attr(test, derive(EnumIter))]
+#[derive(Copy, Clone, PartialEq, Eq, Enum, Debug, Default)]
+#[cfg_attr(feature = "gen_write_cycle_query", derive(EnumIter))]
 pub enum PushStackOperation {
+    #[default]
     PushA,
     PushStatus,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Enum, Debug)]
-#[cfg_attr(test, derive(EnumIter))]
+#[derive(Copy, Clone, PartialEq, Eq, Enum, Debug, Default)]
+#[cfg_attr(feature = "gen_write_cycle_query", derive(EnumIter))]
 pub enum PullStackOperation {
+    #[default]
     PullA,
     PullStatus,
 }
@@ -170,7 +176,8 @@ impl From<ImplicitOperation> for InstructionOp {
             ImplicitOperation::ShiftLeftA => InstructionOp::ShiftLeftA,
             ImplicitOperation::ShiftRightA => InstructionOp::ShiftRightA,
             ImplicitOperation::RotateLeftA => InstructionOp::RotateLeftA,
-            ImplicitOperation::RotateRightA => InstructionOp::RotateRightA,            ImplicitOperation::IncrementX => InstructionOp::IncrementX,
+            ImplicitOperation::RotateRightA => InstructionOp::RotateRightA,
+            ImplicitOperation::IncrementX => InstructionOp::IncrementX,
             ImplicitOperation::IncrementY => InstructionOp::IncrementY,
             ImplicitOperation::DecrementX => InstructionOp::DecrementX,
             ImplicitOperation::DecrementY => InstructionOp::DecrementY,

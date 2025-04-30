@@ -1,8 +1,10 @@
 #[cfg(test)]
 mod tests;
 
-use super::InstructionOp;
-use super::InstructionSequenceMode;
+use super::{
+    BranchOperation, ImplicitOperation, InstructionSequenceMode2, MemoryModifyOperation,
+    PullStackOperation, PushStackOperation, RegisterMemoryOperation,
+};
 use crate::registers::{
     IndexRegister, RegisterFile, SelectedRegister16, SelectedRegister8, StatusRegFlags,
 };
@@ -14,7 +16,7 @@ use log::trace;
 pub enum ClockEndStatus {
     Continue,
     EndInstruction,
-    EndInstructionNextFetched,
+    EndInstructionNextFetched { opcode_addr: u16 },
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -23,10 +25,7 @@ pub enum FixAddressResult {
     Untouched,
 }
 
-fn get_index_value(idx: Option<IndexRegister>, regs: &mut RegisterFile) -> u8 {
-    debug_assert!(idx.is_some());
-    let idx = unsafe { idx.unwrap_unchecked() };
-
+fn get_index_value(idx: IndexRegister, regs: &mut RegisterFile) -> u8 {
     let index_reg = regs.copy_selected_register8(idx.into());
     index_reg.to_u8()
 }
@@ -39,7 +38,7 @@ fn set_stack_address(regs: &mut RegisterFile) {
     regs.addr.set_low_u8(addr_low);
 }
 
-fn add_index_to_address(regs: &mut RegisterFile, idx: Option<IndexRegister>) {
+fn add_index_to_address(regs: &mut RegisterFile, idx: IndexRegister) {
     let index_value = get_index_value(idx, regs);
 
     let addr_low = regs.addr.low_u8();
@@ -60,10 +59,10 @@ fn fix_addr(regs: &mut RegisterFile, index_value: u8) -> FixAddressResult {
 
 #[must_use]
 fn fix_addr_or_run_op_finish(
-    op: Option<InstructionOp>,
+    op: RegisterMemoryOperation,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
-    idx: Option<IndexRegister>,
+    idx: IndexRegister,
 ) -> ClockEndStatus {
     let index_value = get_index_value(idx, regs);
 
@@ -95,137 +94,136 @@ fn branch_if(
         }
     }
 
+    let status = ClockEndStatus::EndInstructionNextFetched {
+        opcode_addr: regs.pc.to_u16(),
+    };
     regs.pc.inc();
     regs.ir.set_u8(next_opcode);
-    ClockEndStatus::EndInstructionNextFetched
+    status
 }
 
 fn execute_branch_op(
-    op: Option<InstructionOp>,
+    op: BranchOperation,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
 ) -> ClockEndStatus {
     match op {
-        Some(InstructionOp::BranchPlus) => branch_if(!regs.status.negative(), regs, memory),
-        Some(InstructionOp::BranchMinus) => branch_if(regs.status.negative(), regs, memory),
-        Some(InstructionOp::BranchEqual) => branch_if(regs.status.zero(), regs, memory),
-        Some(InstructionOp::BranchNotEqual) => branch_if(!regs.status.zero(), regs, memory),
-        Some(InstructionOp::BranchCarryClear) => branch_if(!regs.status.carry(), regs, memory),
-        Some(InstructionOp::BranchCarrySet) => branch_if(regs.status.carry(), regs, memory),
-        Some(InstructionOp::BranchOverflowClear) => {
-            branch_if(!regs.status.overflow(), regs, memory)
-        }
-        Some(InstructionOp::BranchOverflowSet) => branch_if(regs.status.overflow(), regs, memory),
-        _ => unreachable!(),
+        BranchOperation::BranchPlus => branch_if(!regs.status.negative(), regs, memory),
+        BranchOperation::BranchMinus => branch_if(regs.status.negative(), regs, memory),
+        BranchOperation::BranchEqual => branch_if(regs.status.zero(), regs, memory),
+        BranchOperation::BranchNotEqual => branch_if(!regs.status.zero(), regs, memory),
+        BranchOperation::BranchCarryClear => branch_if(!regs.status.carry(), regs, memory),
+        BranchOperation::BranchCarrySet => branch_if(regs.status.carry(), regs, memory),
+        BranchOperation::BranchOverflowClear => branch_if(!regs.status.overflow(), regs, memory),
+        BranchOperation::BranchOverflowSet => branch_if(regs.status.overflow(), regs, memory),
     }
 }
 
-fn execute_implicit_op(op: Option<InstructionOp>, regs: &mut RegisterFile) {
+fn execute_implicit_op(op: ImplicitOperation, regs: &mut RegisterFile) {
     match op {
-        Some(InstructionOp::Nop) => (),
-        Some(InstructionOp::ShiftLeftA) => alu::shift_left(&mut regs.a, &mut regs.status),
-        Some(InstructionOp::ShiftRightA) => alu::shift_right(&mut regs.a, &mut regs.status),
-        Some(InstructionOp::RotateLeftA) => alu::rotate_left(&mut regs.a, &mut regs.status),
-        Some(InstructionOp::RotateRightA) => alu::rotate_right(&mut regs.a, &mut regs.status),
-        Some(InstructionOp::IncrementX) => alu::inc(&mut regs.x, &mut regs.status),
-        Some(InstructionOp::IncrementY) => alu::inc(&mut regs.y, &mut regs.status),
-        Some(InstructionOp::DecrementX) => alu::dec(&mut regs.x, &mut regs.status),
-        Some(InstructionOp::DecrementY) => alu::dec(&mut regs.y, &mut regs.status),
-        Some(InstructionOp::ClearCarry) => regs.status.clear_flags(StatusRegFlags::CARRY),
-        Some(InstructionOp::SetCarry) => regs.status.set_flags(StatusRegFlags::CARRY),
-        Some(InstructionOp::ClearDecimal) => regs.status.clear_flags(StatusRegFlags::DECIMAL),
-        Some(InstructionOp::SetDecimal) => regs.status.set_flags(StatusRegFlags::DECIMAL),
-        Some(InstructionOp::ClearInterruptDisable) => {
+        ImplicitOperation::Nop => (),
+        ImplicitOperation::ShiftLeftA => alu::shift_left(&mut regs.a, &mut regs.status),
+        ImplicitOperation::ShiftRightA => alu::shift_right(&mut regs.a, &mut regs.status),
+        ImplicitOperation::RotateLeftA => alu::rotate_left(&mut regs.a, &mut regs.status),
+        ImplicitOperation::RotateRightA => alu::rotate_right(&mut regs.a, &mut regs.status),
+        ImplicitOperation::IncrementX => alu::inc(&mut regs.x, &mut regs.status),
+        ImplicitOperation::IncrementY => alu::inc(&mut regs.y, &mut regs.status),
+        ImplicitOperation::DecrementX => alu::dec(&mut regs.x, &mut regs.status),
+        ImplicitOperation::DecrementY => alu::dec(&mut regs.y, &mut regs.status),
+        ImplicitOperation::ClearCarry => regs.status.clear_flags(StatusRegFlags::CARRY),
+        ImplicitOperation::SetCarry => regs.status.set_flags(StatusRegFlags::CARRY),
+        ImplicitOperation::ClearDecimal => regs.status.clear_flags(StatusRegFlags::DECIMAL),
+        ImplicitOperation::SetDecimal => regs.status.set_flags(StatusRegFlags::DECIMAL),
+        ImplicitOperation::ClearInterruptDisable => {
             regs.status.clear_flags(StatusRegFlags::IRQ_DISABLE)
         }
-        Some(InstructionOp::SetInterruptDisable) => {
+        ImplicitOperation::SetInterruptDisable => {
             regs.status.set_flags(StatusRegFlags::IRQ_DISABLE)
         }
-        Some(InstructionOp::ClearOverflow) => regs.status.clear_flags(StatusRegFlags::OVERFLOW),
-        Some(InstructionOp::SetOverflow) => regs.status.set_flags(StatusRegFlags::OVERFLOW),
-        Some(InstructionOp::TransferAccumulatorToX) => {
+        ImplicitOperation::ClearOverflow => regs.status.clear_flags(StatusRegFlags::OVERFLOW),
+        ImplicitOperation::SetOverflow => regs.status.set_flags(StatusRegFlags::OVERFLOW),
+        ImplicitOperation::TransferAccumulatorToX => {
             regs.x = regs.a;
             alu::update_status_nz(regs.x.to_i8(), &mut regs.status)
         }
-        Some(InstructionOp::TransferAccumulatorToY) => {
+        ImplicitOperation::TransferAccumulatorToY => {
             regs.y = regs.a;
             alu::update_status_nz(regs.y.to_i8(), &mut regs.status);
         }
-        Some(InstructionOp::TransferXToAccumulator) => {
+        ImplicitOperation::TransferXToAccumulator => {
             regs.a = regs.x;
             alu::update_status_nz(regs.a.to_i8(), &mut regs.status);
         }
-        Some(InstructionOp::TransferYToAccumulator) => {
+        ImplicitOperation::TransferYToAccumulator => {
             regs.a = regs.y;
             alu::update_status_nz(regs.a.to_i8(), &mut regs.status);
         }
-        Some(InstructionOp::TransferStackPtrToX) => {
+        ImplicitOperation::TransferStackPtrToX => {
             regs.x = regs.sp;
             alu::update_status_nz(regs.sp.to_i8(), &mut regs.status);
         }
-        Some(InstructionOp::TransferXToStackPtr) => {
+        ImplicitOperation::TransferXToStackPtr => {
             regs.sp = regs.x;
         }
-        _ => unreachable!(),
     }
 }
 
-fn execute_op(op: Option<InstructionOp>, regs: &mut RegisterFile, memory: &mut impl MemorySpace) {
+fn execute_op(op: RegisterMemoryOperation, regs: &mut RegisterFile, memory: &mut impl MemorySpace) {
     match op {
-        Some(InstructionOp::Or) => {
+        RegisterMemoryOperation::Or => {
             regs.tmp.set_u8(memory.read(regs.addr.to_u16()));
             alu::or(&mut regs.a, &regs.tmp, &mut regs.status)
         }
-        Some(InstructionOp::And) => {
+        RegisterMemoryOperation::And => {
             regs.tmp.set_u8(memory.read(regs.addr.to_u16()));
             alu::and(&mut regs.a, &regs.tmp, &mut regs.status)
         }
-        Some(InstructionOp::Xor) => {
+        RegisterMemoryOperation::Xor => {
             regs.tmp.set_u8(memory.read(regs.addr.to_u16()));
             alu::xor(&mut regs.a, &regs.tmp, &mut regs.status)
         }
-        Some(InstructionOp::Add) => {
+        RegisterMemoryOperation::Add => {
             regs.tmp.set_u8(memory.read(regs.addr.to_u16()));
             alu::add(&mut regs.a, &regs.tmp, &mut regs.status)
         }
-        Some(InstructionOp::Sub) => {
+        RegisterMemoryOperation::Sub => {
             regs.tmp.set_u8(memory.read(regs.addr.to_u16()));
             alu::sub(&mut regs.a, &regs.tmp, &mut regs.status)
         }
-        Some(InstructionOp::Cmp) => {
+        RegisterMemoryOperation::Cmp => {
             regs.tmp.set_u8(memory.read(regs.addr.to_u16()));
             alu::cmp(&mut regs.a, &regs.tmp, &mut regs.status)
         }
-        Some(InstructionOp::Cpx) => {
+        RegisterMemoryOperation::Cpx => {
             regs.tmp.set_u8(memory.read(regs.addr.to_u16()));
             alu::cmp(&mut regs.x, &regs.tmp, &mut regs.status)
         }
-        Some(InstructionOp::Cpy) => {
+        RegisterMemoryOperation::Cpy => {
             regs.tmp.set_u8(memory.read(regs.addr.to_u16()));
             alu::cmp(&mut regs.y, &regs.tmp, &mut regs.status)
         }
-        Some(InstructionOp::LoadA) => {
+        RegisterMemoryOperation::LoadA => {
             regs.a.set_u8(memory.read(regs.addr.to_u16()));
             alu::update_status_nz(regs.a.to_i8(), &mut regs.status);
         }
-        Some(InstructionOp::LoadX) => {
+        RegisterMemoryOperation::LoadX => {
             regs.x.set_u8(memory.read(regs.addr.to_u16()));
             alu::update_status_nz(regs.x.to_i8(), &mut regs.status);
         }
-        Some(InstructionOp::LoadY) => {
+        RegisterMemoryOperation::LoadY => {
             regs.y.set_u8(memory.read(regs.addr.to_u16()));
             alu::update_status_nz(regs.y.to_i8(), &mut regs.status);
         }
-        Some(InstructionOp::StoreA) => {
+        RegisterMemoryOperation::StoreA => {
             memory.write(regs.a.to_u8(), regs.addr.to_u16());
         }
-        Some(InstructionOp::StoreX) => {
+        RegisterMemoryOperation::StoreX => {
             memory.write(regs.x.to_u8(), regs.addr.to_u16());
         }
-        Some(InstructionOp::StoreY) => {
+        RegisterMemoryOperation::StoreY => {
             memory.write(regs.y.to_u8(), regs.addr.to_u16());
         }
-        Some(InstructionOp::Bit) => {
+        RegisterMemoryOperation::Bit => {
             regs.tmp.set_u8(memory.read(regs.addr.to_u16()));
             alu::bit_compare(regs.a, regs.tmp, &mut regs.status);
             regs.status
@@ -233,24 +231,26 @@ fn execute_op(op: Option<InstructionOp>, regs: &mut RegisterFile, memory: &mut i
             regs.status
                 .update_flags(StatusRegFlags::NEGATIVE, (regs.tmp.to_u8() & 0x80) != 0);
         }
-        Some(InstructionOp::BitImmediate) => {
+        RegisterMemoryOperation::BitImmediate => {
             alu::bit_compare(regs.a, regs.tmp, &mut regs.status);
         }
-        _ => unreachable!(),
     }
 }
 
-fn execute_memory_modify_op(op: Option<InstructionOp>, regs: &mut RegisterFile) {
+fn execute_memory_modify_op(op: MemoryModifyOperation, regs: &mut RegisterFile) {
     match op {
-        Some(InstructionOp::IncrementMemory) => alu::inc(&mut regs.tmp, &mut regs.status),
-        Some(InstructionOp::DecrementMemory) => alu::dec(&mut regs.tmp, &mut regs.status),
-        Some(InstructionOp::ShiftLeftMemory) => alu::shift_left(&mut regs.tmp, &mut regs.status),
-        Some(InstructionOp::ShiftRightMemory) => alu::shift_right(&mut regs.tmp, &mut regs.status),
-        Some(InstructionOp::RotateLeftMemory) => alu::rotate_left(&mut regs.tmp, &mut regs.status),
-        Some(InstructionOp::RotateRightMemory) => {
+        MemoryModifyOperation::IncrementMemory => alu::inc(&mut regs.tmp, &mut regs.status),
+        MemoryModifyOperation::DecrementMemory => alu::dec(&mut regs.tmp, &mut regs.status),
+        MemoryModifyOperation::ShiftLeftMemory => alu::shift_left(&mut regs.tmp, &mut regs.status),
+        MemoryModifyOperation::ShiftRightMemory => {
+            alu::shift_right(&mut regs.tmp, &mut regs.status)
+        }
+        MemoryModifyOperation::RotateLeftMemory => {
+            alu::rotate_left(&mut regs.tmp, &mut regs.status)
+        }
+        MemoryModifyOperation::RotateRightMemory => {
             alu::rotate_right(&mut regs.tmp, &mut regs.status)
         }
-        _ => unreachable!(),
     }
 }
 
@@ -289,32 +289,22 @@ fn read_interrupt_vector(
     }
 }
 
-fn fetch_instr(
-    op: Option<InstructionOp>,
-    step: u8,
-    regs: &mut RegisterFile,
-    memory: &mut impl MemorySpace,
-) -> ClockEndStatus {
-    debug_assert!(op.is_none());
-
+fn fetch_instr(step: u8, regs: &mut RegisterFile, memory: &mut impl MemorySpace) -> ClockEndStatus {
     match step {
         0 => {
             let instruction = read_pc(regs, memory);
             regs.ir.set_u8(instruction);
-            ClockEndStatus::EndInstructionNextFetched
+            let result = ClockEndStatus::EndInstructionNextFetched {
+                opcode_addr: regs.pc.to_u16(),
+            };
+            regs.pc.inc();
+            result
         }
         _ => unreachable!(),
     }
 }
 
-fn break_instr(
-    op: Option<InstructionOp>,
-    step: u8,
-    regs: &mut RegisterFile,
-    memory: &mut impl MemorySpace,
-) -> ClockEndStatus {
-    debug_assert!(op.is_none());
-
+fn break_instr(step: u8, regs: &mut RegisterFile, memory: &mut impl MemorySpace) -> ClockEndStatus {
     match step {
         0 => {
             let _ = read_pc_inc(regs, memory);
@@ -338,14 +328,7 @@ fn break_instr(
     ClockEndStatus::Continue
 }
 
-fn start_irq(
-    op: Option<InstructionOp>,
-    step: u8,
-    regs: &mut RegisterFile,
-    memory: &mut impl MemorySpace,
-) -> ClockEndStatus {
-    debug_assert!(op.is_none());
-
+fn start_irq(step: u8, regs: &mut RegisterFile, memory: &mut impl MemorySpace) -> ClockEndStatus {
     match step {
         0 => {
             let _ = read_pc(regs, memory);
@@ -367,14 +350,7 @@ fn start_irq(
     ClockEndStatus::Continue
 }
 
-fn start_nmi(
-    op: Option<InstructionOp>,
-    step: u8,
-    regs: &mut RegisterFile,
-    memory: &mut impl MemorySpace,
-) -> ClockEndStatus {
-    debug_assert!(op.is_none());
-
+fn start_nmi(step: u8, regs: &mut RegisterFile, memory: &mut impl MemorySpace) -> ClockEndStatus {
     match step {
         0 => {
             let _ = read_pc(regs, memory);
@@ -394,10 +370,10 @@ fn start_nmi(
 }
 
 fn push(
-    op: Option<InstructionOp>,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
+    op: PushStackOperation,
 ) -> ClockEndStatus {
     match step {
         0 => {
@@ -407,16 +383,15 @@ fn push(
             set_stack_address(regs);
 
             match op {
-                Some(InstructionOp::PushA) => {
+                PushStackOperation::PushA => {
                     let data = regs.a.to_u8();
                     memory.write(data, regs.addr.to_u16());
                 }
-                Some(InstructionOp::PushStatus) => {
+                PushStackOperation::PushStatus => {
                     let mut status = regs.status.to_u8();
                     status |= (StatusRegFlags::BREAK | StatusRegFlags::UNUSED).bits();
                     memory.write(status, regs.addr.to_u16());
                 }
-                _ => unreachable!(),
             }
 
             regs.sp.dec();
@@ -430,10 +405,10 @@ fn push(
 }
 
 fn pull(
-    op: Option<InstructionOp>,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
+    op: PullStackOperation,
 ) -> ClockEndStatus {
     match step {
         0 => {
@@ -445,17 +420,16 @@ fn pull(
             let data = memory.read(regs.addr.to_u16());
 
             match op {
-                Some(InstructionOp::PullA) => {
+                PullStackOperation::PullA => {
                     regs.a.set_u8(data);
                     alu::update_status_nz(data as i8, &mut regs.status);
                 }
-                Some(InstructionOp::PullStatus) => {
+                PullStackOperation::PullStatus => {
                     let ignored_bits = (StatusRegFlags::BREAK | StatusRegFlags::UNUSED).bits();
                     let status = regs.status.to_u8();
                     let new_status = (status & ignored_bits) | (data & !ignored_bits);
                     regs.status.set_u8(new_status);
                 }
-                _ => unreachable!(),
             }
 
             return ClockEndStatus::EndInstruction;
@@ -466,14 +440,7 @@ fn pull(
     ClockEndStatus::Continue
 }
 
-fn reset(
-    op: Option<InstructionOp>,
-    step: u8,
-    regs: &mut RegisterFile,
-    memory: &mut impl MemorySpace,
-) -> ClockEndStatus {
-    debug_assert!(op.is_none());
-
+fn reset(step: u8, regs: &mut RegisterFile, memory: &mut impl MemorySpace) -> ClockEndStatus {
     match step {
         0 => {
             let _ = read_pc(regs, memory);
@@ -506,13 +473,10 @@ fn reset(
 }
 
 fn return_interrupt(
-    op: Option<InstructionOp>,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
 ) -> ClockEndStatus {
-    debug_assert!(op.is_none());
-
     match step {
         0 => {
             let _ = read_pc(regs, memory);
@@ -546,13 +510,10 @@ fn return_interrupt(
 }
 
 fn jump_subroutine(
-    op: Option<InstructionOp>,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
 ) -> ClockEndStatus {
-    debug_assert!(op.is_none());
-
     match step {
         0 => {
             let data = read_pc(regs, memory);
@@ -564,11 +525,10 @@ fn jump_subroutine(
             let _ = memory.read(regs.addr.to_u16());
         }
         2 => write_stack(regs, memory, regs.pc.high_u8()),
-        3 => write_stack(regs, memory, regs.pc.low_u8() + 1), // Increment PC to point to the next instruction
+        3 => write_stack(regs, memory, regs.pc.low_u8()),
         4 => {
             let data = read_pc(regs, memory);
             regs.pc.set_high_u8(data);
-            regs.pc.inc();
             regs.pc.set_low_u8(regs.tmp.to_u8());
             return ClockEndStatus::EndInstruction;
         }
@@ -579,13 +539,10 @@ fn jump_subroutine(
 }
 
 fn return_subroutine(
-    op: Option<InstructionOp>,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
 ) -> ClockEndStatus {
-    debug_assert!(op.is_none());
-
     match step {
         0 => {
             let _ = read_pc(regs, memory);
@@ -614,10 +571,10 @@ fn return_subroutine(
 }
 
 fn implied(
-    op: Option<InstructionOp>,
     _step: u8,
     regs: &mut RegisterFile,
     _memory: &mut impl MemorySpace,
+    op: ImplicitOperation,
 ) -> ClockEndStatus {
     execute_implicit_op(op, regs);
 
@@ -625,10 +582,10 @@ fn implied(
 }
 
 fn immediate(
-    op: Option<InstructionOp>,
     _step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
+    op: RegisterMemoryOperation,
 ) -> ClockEndStatus {
     regs.addr = regs.pc;
     regs.pc.inc();
@@ -639,13 +596,10 @@ fn immediate(
 }
 
 fn absolute_jump(
-    op: Option<InstructionOp>,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
 ) -> ClockEndStatus {
-    debug_assert!(op.is_none());
-
     match step {
         0 => {
             let addr_low = read_pc(regs, memory);
@@ -665,10 +619,10 @@ fn absolute_jump(
 }
 
 fn absolute(
-    op: Option<InstructionOp>,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
+    op: RegisterMemoryOperation,
 ) -> ClockEndStatus {
     match step {
         0 => {
@@ -692,10 +646,10 @@ fn absolute(
 }
 
 fn absolute_rmw(
-    op: Option<InstructionOp>,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
+    op: MemoryModifyOperation,
 ) -> ClockEndStatus {
     match step {
         0 => {
@@ -727,10 +681,10 @@ fn absolute_rmw(
 }
 
 fn zero_page(
-    op: Option<InstructionOp>,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
+    op: RegisterMemoryOperation,
 ) -> ClockEndStatus {
     match step {
         0 => {
@@ -750,10 +704,10 @@ fn zero_page(
 }
 
 fn zero_page_rmw(
-    op: Option<InstructionOp>,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
+    op: MemoryModifyOperation,
 ) -> ClockEndStatus {
     match step {
         0 => {
@@ -781,11 +735,11 @@ fn zero_page_rmw(
 }
 
 fn zero_page_indexed(
-    op: Option<InstructionOp>,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
-    idx: Option<IndexRegister>,
+    op: RegisterMemoryOperation,
+    idx: IndexRegister,
 ) -> ClockEndStatus {
     match step {
         0 => {
@@ -810,11 +764,11 @@ fn zero_page_indexed(
 }
 
 fn zero_page_indexed_rmw(
-    op: Option<InstructionOp>,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
-    idx: Option<IndexRegister>,
+    op: MemoryModifyOperation,
+    idx: IndexRegister,
 ) -> ClockEndStatus {
     match step {
         0 => {
@@ -846,11 +800,11 @@ fn zero_page_indexed_rmw(
 }
 
 fn absolute_indexed_read(
-    op: Option<InstructionOp>,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
-    idx: Option<IndexRegister>,
+    op: RegisterMemoryOperation,
+    idx: IndexRegister,
 ) -> ClockEndStatus {
     match step {
         0 => {
@@ -881,11 +835,11 @@ fn absolute_indexed_read(
 }
 
 fn absolute_indexed_rmw(
-    op: Option<InstructionOp>,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
-    idx: Option<IndexRegister>,
+    op: MemoryModifyOperation,
+    idx: IndexRegister,
 ) -> ClockEndStatus {
     match step {
         0 => {
@@ -924,11 +878,11 @@ fn absolute_indexed_rmw(
 }
 
 fn absolute_indexed_write(
-    op: Option<InstructionOp>,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
-    idx: Option<IndexRegister>,
+    op: RegisterMemoryOperation,
+    idx: IndexRegister,
 ) -> ClockEndStatus {
     match step {
         0 => {
@@ -959,10 +913,10 @@ fn absolute_indexed_write(
 }
 
 fn relative(
-    op: Option<InstructionOp>,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
+    op: BranchOperation,
 ) -> ClockEndStatus {
     match step {
         0 => {
@@ -985,11 +939,11 @@ fn relative(
 }
 
 fn zero_page_indexed_indirect(
-    op: Option<InstructionOp>,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
-    idx: Option<IndexRegister>,
+    op: RegisterMemoryOperation,
+    idx: IndexRegister,
 ) -> ClockEndStatus {
     match step {
         0 => {
@@ -1028,11 +982,11 @@ fn zero_page_indexed_indirect(
 }
 
 fn zero_page_indexed_indirect_rmw(
-    op: Option<InstructionOp>,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
-    idx: Option<IndexRegister>,
+    op: MemoryModifyOperation,
+    idx: IndexRegister,
 ) -> ClockEndStatus {
     match step {
         0 => {
@@ -1079,11 +1033,11 @@ fn zero_page_indexed_indirect_rmw(
 }
 
 fn zero_page_indirect_indexed_read(
-    op: Option<InstructionOp>,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
-    idx: Option<IndexRegister>,
+    op: RegisterMemoryOperation,
+    idx: IndexRegister,
 ) -> ClockEndStatus {
     match step {
         0 => {
@@ -1120,11 +1074,11 @@ fn zero_page_indirect_indexed_read(
 }
 
 fn zero_page_indirect_indexed_rmw(
-    op: Option<InstructionOp>,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
-    idx: Option<IndexRegister>,
+    op: MemoryModifyOperation,
+    idx: IndexRegister,
 ) -> ClockEndStatus {
     match step {
         0 => {
@@ -1171,11 +1125,11 @@ fn zero_page_indirect_indexed_rmw(
 }
 
 fn zero_page_indirect_indexed_write(
-    op: Option<InstructionOp>,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
-    idx: Option<IndexRegister>,
+    op: RegisterMemoryOperation,
+    idx: IndexRegister,
 ) -> ClockEndStatus {
     match step {
         0 => {
@@ -1214,13 +1168,10 @@ fn zero_page_indirect_indexed_write(
 }
 
 fn absolute_indirect_jump(
-    op: Option<InstructionOp>,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
 ) -> ClockEndStatus {
-    debug_assert!(op.is_none());
-
     match step {
         0 => {
             let addr_low = memory.read(regs.pc.to_u16());
@@ -1253,67 +1204,71 @@ fn absolute_indirect_jump(
 
 #[allow(dead_code)]
 pub fn execute(
-    op: Option<InstructionOp>,
+    instr: InstructionSequenceMode2,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
-    idx: Option<IndexRegister>,
-    mode: InstructionSequenceMode,
 ) -> ClockEndStatus {
     #[cfg(feature = "logging")]
     {
         trace!("\t{:?}", mode);
     }
 
-    match mode {
-        InstructionSequenceMode::FetchInstr => fetch_instr(op, step, regs, memory),
-        InstructionSequenceMode::Break => break_instr(op, step, regs, memory),
-        InstructionSequenceMode::StartIrq => start_irq(op, step, regs, memory),
-        InstructionSequenceMode::StartNmi => start_nmi(op, step, regs, memory),
-        InstructionSequenceMode::Reset => reset(op, step, regs, memory),
-        InstructionSequenceMode::ReturnInterrupt => return_interrupt(op, step, regs, memory),
-        InstructionSequenceMode::JumpSubroutine => jump_subroutine(op, step, regs, memory),
-        InstructionSequenceMode::ReturnSubroutine => return_subroutine(op, step, regs, memory),
-        InstructionSequenceMode::Push => push(op, step, regs, memory),
-        InstructionSequenceMode::Pull => pull(op, step, regs, memory),
-        InstructionSequenceMode::Implied => implied(op, step, regs, memory),
-        InstructionSequenceMode::Immediate => immediate(op, step, regs, memory),
-        InstructionSequenceMode::AbsoluteJump => absolute_jump(op, step, regs, memory),
-        InstructionSequenceMode::Absolute => absolute(op, step, regs, memory),
-        InstructionSequenceMode::AbsoluteReadModifyWrite => absolute_rmw(op, step, regs, memory),
-        InstructionSequenceMode::ZeroPage => zero_page(op, step, regs, memory),
-        InstructionSequenceMode::ZeroPageReadModifyWrite => zero_page_rmw(op, step, regs, memory),
-        InstructionSequenceMode::ZeroPageIdx => zero_page_indexed(op, step, regs, memory, idx),
-        InstructionSequenceMode::ZeroPageIdxReadModifyWrite => {
-            zero_page_indexed_rmw(op, step, regs, memory, idx)
+    match instr {
+        InstructionSequenceMode2::FetchInstr => fetch_instr(step, regs, memory),
+        InstructionSequenceMode2::Break => break_instr(step, regs, memory),
+        InstructionSequenceMode2::StartIrq => start_irq(step, regs, memory),
+        InstructionSequenceMode2::StartNmi => start_nmi(step, regs, memory),
+        InstructionSequenceMode2::Reset => reset(step, regs, memory),
+        InstructionSequenceMode2::ReturnInterrupt => return_interrupt(step, regs, memory),
+        InstructionSequenceMode2::JumpSubroutine => jump_subroutine(step, regs, memory),
+        InstructionSequenceMode2::ReturnSubroutine => return_subroutine(step, regs, memory),
+        InstructionSequenceMode2::Push(op) => push(step, regs, memory, op),
+        InstructionSequenceMode2::Pull(op) => pull(step, regs, memory, op),
+        InstructionSequenceMode2::Implied(op) => implied(step, regs, memory, op),
+        InstructionSequenceMode2::Immediate(op) => immediate(step, regs, memory, op),
+        InstructionSequenceMode2::AbsoluteJump => absolute_jump(step, regs, memory),
+        InstructionSequenceMode2::Absolute(op) => absolute(step, regs, memory, op),
+        InstructionSequenceMode2::AbsoluteReadModifyWrite(op) => {
+            absolute_rmw(step, regs, memory, op)
         }
-        InstructionSequenceMode::AbsoluteIdxRead => {
-            absolute_indexed_read(op, step, regs, memory, idx)
+        InstructionSequenceMode2::ZeroPage(op) => zero_page(step, regs, memory, op),
+        InstructionSequenceMode2::ZeroPageReadModifyWrite(op) => {
+            zero_page_rmw(step, regs, memory, op)
         }
-        InstructionSequenceMode::AbsoluteIdxReadModifyWrite => {
-            absolute_indexed_rmw(op, step, regs, memory, idx)
+        InstructionSequenceMode2::ZeroPageIdx(op, idx) => {
+            zero_page_indexed(step, regs, memory, op, idx)
         }
-        InstructionSequenceMode::AbsoluteIdxWrite => {
-            absolute_indexed_write(op, step, regs, memory, idx)
+        InstructionSequenceMode2::ZeroPageIdxReadModifyWrite(op, idx) => {
+            zero_page_indexed_rmw(step, regs, memory, op, idx)
         }
-        InstructionSequenceMode::Relative => relative(op, step, regs, memory),
-        InstructionSequenceMode::ZeroPageIdxIndirect => {
-            zero_page_indexed_indirect(op, step, regs, memory, idx)
+        InstructionSequenceMode2::AbsoluteIdxRead(op, idx) => {
+            absolute_indexed_read(step, regs, memory, op, idx)
         }
-        InstructionSequenceMode::ZeroPageIdxIndirectReadModifyWrite => {
-            zero_page_indexed_indirect_rmw(op, step, regs, memory, idx)
+        InstructionSequenceMode2::AbsoluteIdxReadModifyWrite(op, idx) => {
+            absolute_indexed_rmw(step, regs, memory, op, idx)
         }
-        InstructionSequenceMode::ZeroPageIndirectIdxRead => {
-            zero_page_indirect_indexed_read(op, step, regs, memory, idx)
+        InstructionSequenceMode2::AbsoluteIdxWrite(op, idx) => {
+            absolute_indexed_write(step, regs, memory, op, idx)
         }
-        InstructionSequenceMode::ZeroPageIndirectIdxReadModifyWrite => {
-            zero_page_indirect_indexed_rmw(op, step, regs, memory, idx)
+        InstructionSequenceMode2::Relative(op) => relative(step, regs, memory, op),
+        InstructionSequenceMode2::ZeroPageIdxIndirect(op, idx) => {
+            zero_page_indexed_indirect(step, regs, memory, op, idx)
         }
-        InstructionSequenceMode::ZeroPageIndirectIdxWrite => {
-            zero_page_indirect_indexed_write(op, step, regs, memory, idx)
+        InstructionSequenceMode2::ZeroPageIdxIndirectReadModifyWrite(op, idx) => {
+            zero_page_indexed_indirect_rmw(step, regs, memory, op, idx)
         }
-        InstructionSequenceMode::AbsoluteIndirectJump => {
-            absolute_indirect_jump(op, step, regs, memory)
+        InstructionSequenceMode2::ZeroPageIndirectIdxRead(op, idx) => {
+            zero_page_indirect_indexed_read(step, regs, memory, op, idx)
+        }
+        InstructionSequenceMode2::ZeroPageIndirectIdxReadModifyWrite(op, idx) => {
+            zero_page_indirect_indexed_rmw(step, regs, memory, op, idx)
+        }
+        InstructionSequenceMode2::ZeroPageIndirectIdxWrite(op, idx) => {
+            zero_page_indirect_indexed_write(step, regs, memory, op, idx)
+        }
+        InstructionSequenceMode2::AbsoluteIndirectJump => {
+            absolute_indirect_jump(step, regs, memory)
         }
     }
 }

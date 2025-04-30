@@ -1,8 +1,7 @@
 use crate::instr::instr_impl::tests::MockMemory;
 use crate::instr::instr_impl::{execute, ClockEndStatus};
-use crate::instr::InstructionSequenceMode;
+use crate::instr::{BranchOperation, InstructionSequenceMode, InstructionSequenceMode2};
 use crate::registers::{RegisterFile, SelectedRegister16, StatusRegFlags};
-use crate::InstructionOp;
 
 #[test]
 fn break_instr() {
@@ -16,7 +15,7 @@ fn break_instr() {
 
     // Execute break_instr
     let mut step = 0;
-    while super::break_instr(None, step, &mut regs, &mut memory) == ClockEndStatus::Continue {
+    while super::break_instr(step, &mut regs, &mut memory) == ClockEndStatus::Continue {
         step += 1;
     }
 
@@ -47,12 +46,10 @@ fn execute_start_irq() {
     // Execute start_irq
     let mut step = 0;
     while execute(
-        None,
+        InstructionSequenceMode2::StartIrq,
         step,
         &mut regs,
         &mut memory,
-        None,
-        InstructionSequenceMode::StartIrq,
     ) == ClockEndStatus::Continue
     {
         step += 1;
@@ -82,12 +79,10 @@ fn execute_start_nmi() {
     // Execute start_nmi
     let mut step = 0;
     while execute(
-        None,
+        InstructionSequenceMode2::StartNmi,
         step,
         &mut regs,
         &mut memory,
-        None,
-        InstructionSequenceMode::StartNmi,
     ) == ClockEndStatus::Continue
     {
         step += 1;
@@ -117,12 +112,10 @@ fn execute_return_interrupt() {
     // Execute return_interrupt
     let mut step = 0;
     while execute(
-        None,
+        InstructionSequenceMode2::ReturnInterrupt,
         step,
         &mut regs,
         &mut memory,
-        None,
-        InstructionSequenceMode::ReturnInterrupt,
     ) == ClockEndStatus::Continue
     {
         step += 1;
@@ -151,12 +144,10 @@ fn execute_jump_subroutine() {
     // Execute jump_subroutine
     let mut step = 0;
     while execute(
-        None,
+        InstructionSequenceMode2::JumpSubroutine,
         step,
         &mut regs,
         &mut memory,
-        None,
-        InstructionSequenceMode::JumpSubroutine,
     ) == ClockEndStatus::Continue
     {
         step += 1;
@@ -166,7 +157,7 @@ fn execute_jump_subroutine() {
     assert_eq!(regs.pc.to_u16(), 0x1234);
     assert_eq!(regs.sp.to_u8(), 0xFD); // Stack pointer should be decremented 2 times
     assert_eq!(memory.data[0x01FF], 0x10); // High byte of return address should be on stack
-    assert_eq!(memory.data[0x01FE], 0x02); // Low byte of return address should be on stack
+    assert_eq!(memory.data[0x01FE], 0x01); // Low byte of return address should be on stack
     assert_eq!(step, 4);
 }
 
@@ -186,12 +177,10 @@ fn execute_return_subroutine() {
     // Execute return_subroutine
     let mut step = 0;
     while execute(
-        None,
+        InstructionSequenceMode2::ReturnSubroutine,
         step,
         &mut regs,
         &mut memory,
-        None,
-        InstructionSequenceMode::ReturnSubroutine,
     ) == ClockEndStatus::Continue
     {
         step += 1;
@@ -216,12 +205,10 @@ fn execute_absolute_jump() {
     // Execute absolute_jump
     let mut step = 0;
     while execute(
-        None,
+        InstructionSequenceMode2::AbsoluteJump,
         step,
         &mut regs,
         &mut memory,
-        None,
-        InstructionSequenceMode::AbsoluteJump,
     ) == ClockEndStatus::Continue
     {
         step += 1;
@@ -229,20 +216,19 @@ fn execute_absolute_jump() {
 
     // Verify the results
     assert_eq!(regs.pc.to_u16(), 0x1234); // PC should be set to the jump address
-    assert_eq!(step, 1);
+    assert_eq!(step, 1); // Ensure the step value is correct
 }
 
 fn execute_relative_branch(
-    op: Option<InstructionOp>,
+    mode: InstructionSequenceMode2,
     regs: &mut RegisterFile,
     memory: &mut MockMemory,
-    mode: InstructionSequenceMode,
 ) -> (ClockEndStatus, u8) {
     let mut step = 0;
     let mut status;
 
     loop {
-        status = execute(op, step, regs, memory, None, mode);
+        status = execute(mode, step, regs, memory);
         if status == ClockEndStatus::Continue {
             step += 1;
         } else {
@@ -264,10 +250,9 @@ fn execute_relative_branch_taken() {
 
     // Execute relative operation (BranchNotEqual)
     let (status, step) = execute_relative_branch(
-        Some(InstructionOp::BranchNotEqual),
+        InstructionSequenceMode2::Relative(BranchOperation::BranchNotEqual),
         &mut regs,
         &mut memory,
-        InstructionSequenceMode::Relative,
     );
 
     // Verify the results
@@ -288,16 +273,20 @@ fn execute_relative_branch_not_taken() {
 
     // Execute relative operation (BranchNotEqual)
     let (status, step) = execute_relative_branch(
-        Some(InstructionOp::BranchNotEqual),
+        InstructionSequenceMode2::Relative(BranchOperation::BranchNotEqual),
         &mut regs,
         &mut memory,
-        InstructionSequenceMode::Relative,
     );
 
     // Verify the results
     assert_eq!(regs.pc.to_u16(), 0x1002); // PC should be incremented by 2 (next instruction already fetched)
     assert_eq!(step, 1);
-    assert_eq!(status, ClockEndStatus::EndInstructionNextFetched); // Status should indicate the next instruction was fetched
+    assert_eq!(
+        status,
+        ClockEndStatus::EndInstructionNextFetched {
+            opcode_addr: 0x1001
+        }
+    ); // Status should indicate the next instruction was fetched
 }
 
 #[test]
@@ -311,10 +300,9 @@ fn execute_relative_branch_taken_page_boundary() {
 
     // Execute relative operation (BranchNotEqual)
     let (status, step) = execute_relative_branch(
-        Some(InstructionOp::BranchNotEqual),
+        InstructionSequenceMode2::Relative(BranchOperation::BranchNotEqual),
         &mut regs,
         &mut memory,
-        InstructionSequenceMode::Relative,
     );
 
     // Verify the results
@@ -334,10 +322,9 @@ fn execute_relative_branch_taken_negative_offset() {
 
     // Execute relative operation (BranchNotEqual)
     let (status, step) = execute_relative_branch(
-        Some(InstructionOp::BranchNotEqual),
+        InstructionSequenceMode2::Relative(BranchOperation::BranchNotEqual),
         &mut regs,
         &mut memory,
-        InstructionSequenceMode::Relative,
     );
 
     // Verify the results
@@ -361,12 +348,10 @@ fn execute_absolute_indirect_jump() {
     // Execute absolute indirect jump
     let mut step = 0;
     while execute(
-        None,
+        InstructionSequenceMode2::AbsoluteIndirectJump,
         step,
         &mut regs,
         &mut memory,
-        None,
-        InstructionSequenceMode::AbsoluteIndirectJump,
     ) == ClockEndStatus::Continue
     {
         step += 1;
@@ -392,12 +377,10 @@ fn execute_absolute_indirect_jump_page_boundary_bug() {
     // Execute absolute indirect jump
     let mut step = 0;
     while execute(
-        None,
+        InstructionSequenceMode2::AbsoluteIndirectJump,
         step,
         &mut regs,
         &mut memory,
-        None,
-        InstructionSequenceMode::AbsoluteIndirectJump,
     ) == ClockEndStatus::Continue
     {
         step += 1;

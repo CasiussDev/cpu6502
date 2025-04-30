@@ -24,8 +24,9 @@ impl DecodedOpcode {
     }
 }
 
-pub fn destruct_sequence(sequence: InstructionSequenceMode2)
-                     -> (InstructionSequenceMode, InstructionOp, IndexRegister) {
+pub fn destruct_sequence(
+    sequence: InstructionSequenceMode2,
+) -> (InstructionSequenceMode, InstructionOp, IndexRegister) {
     match sequence {
         InstructionSequenceMode2::Reset => (
             InstructionSequenceMode::Reset,
@@ -178,9 +179,9 @@ pub fn destruct_sequence(sequence: InstructionSequenceMode2)
 #[cfg(test)]
 mod tests {
     use crate::instr;
-    use crate::instr::InstructionSequenceMode;
-    use crate::instr::opcodes::*;
     use crate::instr::opcodes::decoded_opcode::destruct_sequence;
+    use crate::instr::opcodes::*;
+    use crate::instr::InstructionSequenceMode;
 
     #[test]
     fn g1_print() {

@@ -1,8 +1,10 @@
 use crate::instr::instr_impl::tests::MockMemory;
 use crate::instr::instr_impl::{execute, ClockEndStatus};
-use crate::instr::InstructionSequenceMode;
+use crate::instr::{
+    ImplicitOperation, InstructionSequenceMode, InstructionSequenceMode2, MemoryModifyOperation,
+    RegisterMemoryOperation,
+};
 use crate::registers::{IndexRegister, RegisterFile};
-use crate::InstructionOp;
 
 #[test]
 fn execute_implied() {
@@ -14,34 +16,15 @@ fn execute_implied() {
 
     // Execute implied operation (NOP)
     let result = execute(
-        Some(InstructionOp::Nop),
+        InstructionSequenceMode2::Implied(ImplicitOperation::Nop),
         0,
         &mut regs,
         &mut memory,
-        None,
-        InstructionSequenceMode::Implied,
     );
 
     // Verify the results
     assert_eq!(result, ClockEndStatus::EndInstruction);
     assert_eq!(regs.a.to_u8(), 0x01); // A register should remain unchanged
-}
-
-#[test]
-#[should_panic(expected = "unreachable")]
-fn execute_implied_unsupported_op() {
-    let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
-
-    // Execute implied operation with an unsupported operation
-    execute(
-        Some(InstructionOp::StoreA), // StoreA is not valid for implied mode
-        0,
-        &mut regs,
-        &mut memory,
-        None,
-        InstructionSequenceMode::Implied,
-    );
 }
 
 #[test]
@@ -58,12 +41,10 @@ fn execute_absolute() {
     // Execute absolute operation (LoadA)
     let mut step = 0;
     while execute(
-        Some(InstructionOp::LoadA),
+        InstructionSequenceMode2::Absolute(RegisterMemoryOperation::LoadA),
         step,
         &mut regs,
         &mut memory,
-        None,
-        InstructionSequenceMode::Absolute,
     ) == ClockEndStatus::Continue
     {
         step += 1;
@@ -89,12 +70,10 @@ fn execute_absolute_read_modify_write() {
     // Execute absolute read-modify-write operation (IncrementMemory)
     let mut step = 0;
     while execute(
-        Some(InstructionOp::IncrementMemory),
+        InstructionSequenceMode2::AbsoluteReadModifyWrite(MemoryModifyOperation::IncrementMemory),
         step,
         &mut regs,
         &mut memory,
-        None,
-        InstructionSequenceMode::AbsoluteReadModifyWrite,
     ) == ClockEndStatus::Continue
     {
         step += 1;
@@ -119,12 +98,10 @@ fn execute_zero_page() {
     // Execute zero page operation (LoadA)
     let mut step = 0;
     while execute(
-        Some(InstructionOp::LoadA),
+        InstructionSequenceMode2::ZeroPage(RegisterMemoryOperation::LoadA),
         step,
         &mut regs,
         &mut memory,
-        None,
-        InstructionSequenceMode::ZeroPage,
     ) == ClockEndStatus::Continue
     {
         step += 1;
@@ -149,12 +126,10 @@ fn execute_zero_page_read_modify_write() {
     // Execute zero page read-modify-write operation (IncrementMemory)
     let mut step = 0;
     while execute(
-        Some(InstructionOp::IncrementMemory),
+        InstructionSequenceMode2::ZeroPageReadModifyWrite(MemoryModifyOperation::IncrementMemory),
         step,
         &mut regs,
         &mut memory,
-        None,
-        InstructionSequenceMode::ZeroPageReadModifyWrite,
     ) == ClockEndStatus::Continue
     {
         step += 1;
@@ -180,12 +155,10 @@ fn execute_zero_page_indexed() {
     // Execute zero page indexed operation (LoadA)
     let mut step = 0;
     while execute(
-        Some(InstructionOp::LoadA),
+        InstructionSequenceMode2::ZeroPageIdx(RegisterMemoryOperation::LoadA, IndexRegister::X),
         step,
         &mut regs,
         &mut memory,
-        Some(IndexRegister::X),
-        InstructionSequenceMode::ZeroPageIdx,
     ) == ClockEndStatus::Continue
     {
         step += 1;
@@ -211,12 +184,13 @@ fn execute_zero_page_indexed_read_modify_write() {
     // Execute zero page indexed read-modify-write operation (IncrementMemory)
     let mut step = 0;
     while execute(
-        Some(InstructionOp::IncrementMemory),
+        InstructionSequenceMode2::ZeroPageIdxReadModifyWrite(
+            MemoryModifyOperation::IncrementMemory,
+            IndexRegister::X,
+        ),
         step,
         &mut regs,
         &mut memory,
-        Some(IndexRegister::X),
-        InstructionSequenceMode::ZeroPageIdxReadModifyWrite,
     ) == ClockEndStatus::Continue
     {
         step += 1;
@@ -243,12 +217,10 @@ fn execute_absolute_indexed_read() {
     // Execute absolute indexed read operation (LoadA)
     let mut step = 0;
     while execute(
-        Some(InstructionOp::LoadA),
+        InstructionSequenceMode2::AbsoluteIdxRead(RegisterMemoryOperation::LoadA, IndexRegister::X),
         step,
         &mut regs,
         &mut memory,
-        Some(IndexRegister::X),
-        InstructionSequenceMode::AbsoluteIdxRead,
     ) == ClockEndStatus::Continue
     {
         step += 1;
@@ -275,12 +247,10 @@ fn execute_absolute_indexed_read_extra_cycle() {
     // Execute absolute indexed read operation (LoadA)
     let mut step = 0;
     while execute(
-        Some(InstructionOp::LoadA),
+        InstructionSequenceMode2::AbsoluteIdxRead(RegisterMemoryOperation::LoadA, IndexRegister::X),
         step,
         &mut regs,
         &mut memory,
-        Some(IndexRegister::X),
-        InstructionSequenceMode::AbsoluteIdxRead,
     ) == ClockEndStatus::Continue
     {
         step += 1;
@@ -307,12 +277,13 @@ fn execute_absolute_indexed_read_modify_write() {
     // Execute absolute indexed read-modify-write operation (IncrementMemory)
     let mut step = 0;
     while execute(
-        Some(InstructionOp::IncrementMemory),
+        InstructionSequenceMode2::AbsoluteIdxReadModifyWrite(
+            MemoryModifyOperation::IncrementMemory,
+            IndexRegister::X,
+        ),
         step,
         &mut regs,
         &mut memory,
-        Some(IndexRegister::X),
-        InstructionSequenceMode::AbsoluteIdxReadModifyWrite,
     ) == ClockEndStatus::Continue
     {
         step += 1;
@@ -339,12 +310,13 @@ fn execute_absolute_indexed_write() {
     // Execute absolute indexed write operation (StoreA)
     let mut step = 0;
     while execute(
-        Some(InstructionOp::StoreA),
+        InstructionSequenceMode2::AbsoluteIdxWrite(
+            RegisterMemoryOperation::StoreA,
+            IndexRegister::X,
+        ),
         step,
         &mut regs,
         &mut memory,
-        Some(IndexRegister::X),
-        InstructionSequenceMode::AbsoluteIdxWrite,
     ) == ClockEndStatus::Continue
     {
         step += 1;
@@ -372,12 +344,13 @@ fn execute_zero_page_indexed_indirect() {
     // Execute zero page indexed indirect operation (LoadA)
     let mut step = 0;
     while execute(
-        Some(InstructionOp::LoadA),
+        InstructionSequenceMode2::ZeroPageIdxIndirect(
+            RegisterMemoryOperation::LoadA,
+            IndexRegister::X,
+        ),
         step,
         &mut regs,
         &mut memory,
-        Some(IndexRegister::X),
-        InstructionSequenceMode::ZeroPageIdxIndirect,
     ) == ClockEndStatus::Continue
     {
         step += 1;
@@ -405,12 +378,13 @@ fn execute_zero_page_indexed_indirect_read_modify_write() {
     // Execute zero page indexed indirect read-modify-write operation (IncrementMemory)
     let mut step = 0;
     while execute(
-        Some(InstructionOp::IncrementMemory),
+        InstructionSequenceMode2::ZeroPageIdxIndirectReadModifyWrite(
+            MemoryModifyOperation::IncrementMemory,
+            IndexRegister::X,
+        ),
         step,
         &mut regs,
         &mut memory,
-        Some(IndexRegister::X),
-        InstructionSequenceMode::ZeroPageIdxIndirectReadModifyWrite,
     ) == ClockEndStatus::Continue
     {
         step += 1;
@@ -438,12 +412,13 @@ fn execute_zero_page_indirect_idx_read() {
     // Execute zero page indirect indexed read operation (LoadA)
     let mut step = 0;
     while execute(
-        Some(InstructionOp::LoadA),
+        InstructionSequenceMode2::ZeroPageIndirectIdxRead(
+            RegisterMemoryOperation::LoadA,
+            IndexRegister::Y,
+        ),
         step,
         &mut regs,
         &mut memory,
-        Some(IndexRegister::Y),
-        InstructionSequenceMode::ZeroPageIndirectIdxRead,
     ) == ClockEndStatus::Continue
     {
         step += 1;
@@ -471,12 +446,13 @@ fn execute_zero_page_indirect_idx_read_modify_write() {
     // Execute zero page indirect indexed read-modify-write operation (IncrementMemory)
     let mut step = 0;
     while execute(
-        Some(InstructionOp::IncrementMemory),
+        InstructionSequenceMode2::ZeroPageIndirectIdxReadModifyWrite(
+            MemoryModifyOperation::IncrementMemory,
+            IndexRegister::Y,
+        ),
         step,
         &mut regs,
         &mut memory,
-        Some(IndexRegister::Y),
-        InstructionSequenceMode::ZeroPageIndirectIdxReadModifyWrite,
     ) == ClockEndStatus::Continue
     {
         step += 1;
@@ -504,12 +480,13 @@ fn execute_zero_page_indirect_idx_write() {
     // Execute zero page indirect indexed write operation (StoreA)
     let mut step = 0;
     while execute(
-        Some(InstructionOp::StoreA),
+        InstructionSequenceMode2::ZeroPageIndirectIdxWrite(
+            RegisterMemoryOperation::StoreA,
+            IndexRegister::Y,
+        ),
         step,
         &mut regs,
         &mut memory,
-        Some(IndexRegister::Y),
-        InstructionSequenceMode::ZeroPageIndirectIdxWrite,
     ) == ClockEndStatus::Continue
     {
         step += 1;

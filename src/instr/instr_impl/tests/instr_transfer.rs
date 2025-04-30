@@ -1,8 +1,7 @@
 use crate::instr::instr_impl::tests::MockMemory;
 use crate::instr::instr_impl::{execute, ClockEndStatus};
-use crate::instr::InstructionSequenceMode;
+use crate::instr::InstructionSequenceMode2;
 use crate::registers::RegisterFile;
-use crate::InstructionOp;
 
 #[test]
 fn execute_push_a() {
@@ -16,12 +15,10 @@ fn execute_push_a() {
     // Execute push_a
     let mut step = 0;
     while execute(
-        Some(InstructionOp::PushA),
+        InstructionSequenceMode2::Push(crate::instr::PushStackOperation::PushA),
         step,
         &mut regs,
         &mut memory,
-        None,
-        InstructionSequenceMode::Push,
     ) == ClockEndStatus::Continue
     {
         step += 1;
@@ -45,12 +42,10 @@ fn execute_pull_a() {
     // Execute pull_a
     let mut step = 0;
     while execute(
-        Some(InstructionOp::PullA),
+        InstructionSequenceMode2::Pull(crate::instr::PullStackOperation::PullA),
         step,
         &mut regs,
         &mut memory,
-        None,
-        InstructionSequenceMode::Pull,
     ) == ClockEndStatus::Continue
     {
         step += 1;
@@ -73,12 +68,10 @@ fn execute_immediate() {
 
     // Execute immediate operation (LoadA)
     let result = execute(
-        Some(InstructionOp::LoadA),
+        InstructionSequenceMode2::Immediate(crate::instr::RegisterMemoryOperation::LoadA),
         0,
         &mut regs,
         &mut memory,
-        None,
-        InstructionSequenceMode::Immediate,
     );
 
     // Verify the results

@@ -1,3 +1,4 @@
+#[cfg(feature = "disassembly")]
 extern crate disasm6502;
 
 #[cfg(feature = "logging")]
@@ -8,10 +9,12 @@ mod test_computer;
 use crate::test_computer::TestComputer;
 use std::io::{BufRead, Write};
 use std::{fs, io};
-
+#[cfg(feature = "disassembly")]
 const REFERENCE_FILE: &'static str = "testdata/reference.6502log";
+#[cfg(feature = "disassembly")]
 const OUTPUT_FILE: &'static str = "testdata/output.6502log";
 
+#[cfg(feature = "disassembly")]
 fn run(computer: &mut TestComputer, num_cycles: u128) {
     let log_file = fs::File::create(OUTPUT_FILE).expect("cannot open output log file");
 
@@ -48,6 +51,7 @@ fn run(computer: &mut TestComputer, num_cycles: u128) {
     log_file.flush().expect("could not flush file writer");
 }
 
+#[cfg(feature = "disassembly")]
 fn check_results() {
     let reference_file_len = fs::metadata(REFERENCE_FILE)
         .expect("could not read metadata of {REFERENCE_FILE}")
@@ -73,6 +77,7 @@ fn check_results() {
 }
 
 #[test]
+#[cfg(feature = "disassembly")]
 fn nes_rom_test() {
     #[cfg(feature = "logging")]
     {

@@ -5,6 +5,11 @@ mod interrupts;
 mod memory;
 mod registers;
 
+#[cfg(feature = "gen_write_cycle_query")]
+pub use crate::instr::instr_impl::execute;
+#[cfg(feature = "gen_write_cycle_query")]
+pub use crate::registers::RegisterFile;
+
 #[cfg(not(feature = "decode_switch"))]
 #[macro_use]
 extern crate enum_primitive_derive;

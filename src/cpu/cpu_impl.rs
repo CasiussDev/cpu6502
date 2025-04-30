@@ -1,4 +1,4 @@
-use crate::{instr};
+use crate::instr;
 use crate::instr::{destruct_sequence, MicroInstruction};
 use crate::interrupts::Interrupts;
 use crate::memory::MemorySpace;

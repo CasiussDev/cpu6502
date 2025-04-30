@@ -5,6 +5,12 @@ pub struct Interrupts {
     new_nmi: bool,
 }
 
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+pub enum InterruptType {
+    NonMaskableInterrupt,
+    Interrupt,
+}
+
 impl Interrupts {
     pub fn reset(&mut self) {}
 

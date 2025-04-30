@@ -19,9 +19,7 @@ fn main() {
     for opcode in 0..=u8::MAX {
         let decoded = decode(opcode);
 
-        switch_options.push_str(&format!(
-            "{opcode:#04X} => {decoded:?}\n,\n"
-        ));
+        switch_options.push_str(&format!("{opcode:#04X} => {decoded:?}\n,\n"));
     }
 
     fs::create_dir_all("src/instr/opcodes").expect("Could not create directory");
