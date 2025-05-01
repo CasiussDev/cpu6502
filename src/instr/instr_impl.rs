@@ -2,7 +2,7 @@
 mod tests;
 
 use super::{
-    BranchOperation, ImplicitOperation, InstructionSequenceMode2, MemoryModifyOperation,
+    BranchOperation, ImplicitOperation, Instruction, MemoryModifyOperation,
     PullStackOperation, PushStackOperation, RegisterMemoryOperation,
 };
 use crate::registers::{
@@ -1204,7 +1204,7 @@ fn absolute_indirect_jump(
 
 #[allow(dead_code)]
 pub fn execute(
-    instr: InstructionSequenceMode2,
+    instr: Instruction,
     step: u8,
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
@@ -1215,59 +1215,59 @@ pub fn execute(
     }
 
     match instr {
-        InstructionSequenceMode2::FetchInstr => fetch_instr(step, regs, memory),
-        InstructionSequenceMode2::Break => break_instr(step, regs, memory),
-        InstructionSequenceMode2::StartIrq => start_irq(step, regs, memory),
-        InstructionSequenceMode2::StartNmi => start_nmi(step, regs, memory),
-        InstructionSequenceMode2::Reset => reset(step, regs, memory),
-        InstructionSequenceMode2::ReturnInterrupt => return_interrupt(step, regs, memory),
-        InstructionSequenceMode2::JumpSubroutine => jump_subroutine(step, regs, memory),
-        InstructionSequenceMode2::ReturnSubroutine => return_subroutine(step, regs, memory),
-        InstructionSequenceMode2::Push(op) => push(step, regs, memory, op),
-        InstructionSequenceMode2::Pull(op) => pull(step, regs, memory, op),
-        InstructionSequenceMode2::Implied(op) => implied(step, regs, memory, op),
-        InstructionSequenceMode2::Immediate(op) => immediate(step, regs, memory, op),
-        InstructionSequenceMode2::AbsoluteJump => absolute_jump(step, regs, memory),
-        InstructionSequenceMode2::Absolute(op) => absolute(step, regs, memory, op),
-        InstructionSequenceMode2::AbsoluteReadModifyWrite(op) => {
+        Instruction::FetchInstr => fetch_instr(step, regs, memory),
+        Instruction::Break => break_instr(step, regs, memory),
+        Instruction::StartIrq => start_irq(step, regs, memory),
+        Instruction::StartNmi => start_nmi(step, regs, memory),
+        Instruction::Reset => reset(step, regs, memory),
+        Instruction::ReturnInterrupt => return_interrupt(step, regs, memory),
+        Instruction::JumpSubroutine => jump_subroutine(step, regs, memory),
+        Instruction::ReturnSubroutine => return_subroutine(step, regs, memory),
+        Instruction::Push(op) => push(step, regs, memory, op),
+        Instruction::Pull(op) => pull(step, regs, memory, op),
+        Instruction::Implied(op) => implied(step, regs, memory, op),
+        Instruction::Immediate(op) => immediate(step, regs, memory, op),
+        Instruction::AbsoluteJump => absolute_jump(step, regs, memory),
+        Instruction::Absolute(op) => absolute(step, regs, memory, op),
+        Instruction::AbsoluteReadModifyWrite(op) => {
             absolute_rmw(step, regs, memory, op)
         }
-        InstructionSequenceMode2::ZeroPage(op) => zero_page(step, regs, memory, op),
-        InstructionSequenceMode2::ZeroPageReadModifyWrite(op) => {
+        Instruction::ZeroPage(op) => zero_page(step, regs, memory, op),
+        Instruction::ZeroPageReadModifyWrite(op) => {
             zero_page_rmw(step, regs, memory, op)
         }
-        InstructionSequenceMode2::ZeroPageIdx(op, idx) => {
+        Instruction::ZeroPageIdx(op, idx) => {
             zero_page_indexed(step, regs, memory, op, idx)
         }
-        InstructionSequenceMode2::ZeroPageIdxReadModifyWrite(op, idx) => {
+        Instruction::ZeroPageIdxReadModifyWrite(op, idx) => {
             zero_page_indexed_rmw(step, regs, memory, op, idx)
         }
-        InstructionSequenceMode2::AbsoluteIdxRead(op, idx) => {
+        Instruction::AbsoluteIdxRead(op, idx) => {
             absolute_indexed_read(step, regs, memory, op, idx)
         }
-        InstructionSequenceMode2::AbsoluteIdxReadModifyWrite(op, idx) => {
+        Instruction::AbsoluteIdxReadModifyWrite(op, idx) => {
             absolute_indexed_rmw(step, regs, memory, op, idx)
         }
-        InstructionSequenceMode2::AbsoluteIdxWrite(op, idx) => {
+        Instruction::AbsoluteIdxWrite(op, idx) => {
             absolute_indexed_write(step, regs, memory, op, idx)
         }
-        InstructionSequenceMode2::Relative(op) => relative(step, regs, memory, op),
-        InstructionSequenceMode2::ZeroPageIdxIndirect(op, idx) => {
+        Instruction::Relative(op) => relative(step, regs, memory, op),
+        Instruction::ZeroPageIdxIndirect(op, idx) => {
             zero_page_indexed_indirect(step, regs, memory, op, idx)
         }
-        InstructionSequenceMode2::ZeroPageIdxIndirectReadModifyWrite(op, idx) => {
+        Instruction::ZeroPageIdxIndirectReadModifyWrite(op, idx) => {
             zero_page_indexed_indirect_rmw(step, regs, memory, op, idx)
         }
-        InstructionSequenceMode2::ZeroPageIndirectIdxRead(op, idx) => {
+        Instruction::ZeroPageIndirectIdxRead(op, idx) => {
             zero_page_indirect_indexed_read(step, regs, memory, op, idx)
         }
-        InstructionSequenceMode2::ZeroPageIndirectIdxReadModifyWrite(op, idx) => {
+        Instruction::ZeroPageIndirectIdxReadModifyWrite(op, idx) => {
             zero_page_indirect_indexed_rmw(step, regs, memory, op, idx)
         }
-        InstructionSequenceMode2::ZeroPageIndirectIdxWrite(op, idx) => {
+        Instruction::ZeroPageIndirectIdxWrite(op, idx) => {
             zero_page_indirect_indexed_write(step, regs, memory, op, idx)
         }
-        InstructionSequenceMode2::AbsoluteIndirectJump => {
+        Instruction::AbsoluteIndirectJump => {
             absolute_indirect_jump(step, regs, memory)
         }
     }

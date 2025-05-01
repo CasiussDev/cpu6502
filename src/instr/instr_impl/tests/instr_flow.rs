@@ -1,6 +1,6 @@
 use crate::instr::instr_impl::tests::MockMemory;
 use crate::instr::instr_impl::{execute, ClockEndStatus};
-use crate::instr::{BranchOperation, InstructionSequenceMode, InstructionSequenceMode2};
+use crate::instr::{BranchOperation, InstructionSequenceMode, Instruction};
 use crate::registers::{RegisterFile, SelectedRegister16, StatusRegFlags};
 
 #[test]
@@ -46,7 +46,7 @@ fn execute_start_irq() {
     // Execute start_irq
     let mut step = 0;
     while execute(
-        InstructionSequenceMode2::StartIrq,
+        Instruction::StartIrq,
         step,
         &mut regs,
         &mut memory,
@@ -79,7 +79,7 @@ fn execute_start_nmi() {
     // Execute start_nmi
     let mut step = 0;
     while execute(
-        InstructionSequenceMode2::StartNmi,
+        Instruction::StartNmi,
         step,
         &mut regs,
         &mut memory,
@@ -112,7 +112,7 @@ fn execute_return_interrupt() {
     // Execute return_interrupt
     let mut step = 0;
     while execute(
-        InstructionSequenceMode2::ReturnInterrupt,
+        Instruction::ReturnInterrupt,
         step,
         &mut regs,
         &mut memory,
@@ -144,7 +144,7 @@ fn execute_jump_subroutine() {
     // Execute jump_subroutine
     let mut step = 0;
     while execute(
-        InstructionSequenceMode2::JumpSubroutine,
+        Instruction::JumpSubroutine,
         step,
         &mut regs,
         &mut memory,
@@ -177,7 +177,7 @@ fn execute_return_subroutine() {
     // Execute return_subroutine
     let mut step = 0;
     while execute(
-        InstructionSequenceMode2::ReturnSubroutine,
+        Instruction::ReturnSubroutine,
         step,
         &mut regs,
         &mut memory,
@@ -205,7 +205,7 @@ fn execute_absolute_jump() {
     // Execute absolute_jump
     let mut step = 0;
     while execute(
-        InstructionSequenceMode2::AbsoluteJump,
+        Instruction::AbsoluteJump,
         step,
         &mut regs,
         &mut memory,
@@ -220,7 +220,7 @@ fn execute_absolute_jump() {
 }
 
 fn execute_relative_branch(
-    mode: InstructionSequenceMode2,
+    mode: Instruction,
     regs: &mut RegisterFile,
     memory: &mut MockMemory,
 ) -> (ClockEndStatus, u8) {
@@ -250,7 +250,7 @@ fn execute_relative_branch_taken() {
 
     // Execute relative operation (BranchNotEqual)
     let (status, step) = execute_relative_branch(
-        InstructionSequenceMode2::Relative(BranchOperation::BranchNotEqual),
+        Instruction::Relative(BranchOperation::BranchNotEqual),
         &mut regs,
         &mut memory,
     );
@@ -273,7 +273,7 @@ fn execute_relative_branch_not_taken() {
 
     // Execute relative operation (BranchNotEqual)
     let (status, step) = execute_relative_branch(
-        InstructionSequenceMode2::Relative(BranchOperation::BranchNotEqual),
+        Instruction::Relative(BranchOperation::BranchNotEqual),
         &mut regs,
         &mut memory,
     );
@@ -300,7 +300,7 @@ fn execute_relative_branch_taken_page_boundary() {
 
     // Execute relative operation (BranchNotEqual)
     let (status, step) = execute_relative_branch(
-        InstructionSequenceMode2::Relative(BranchOperation::BranchNotEqual),
+        Instruction::Relative(BranchOperation::BranchNotEqual),
         &mut regs,
         &mut memory,
     );
@@ -322,7 +322,7 @@ fn execute_relative_branch_taken_negative_offset() {
 
     // Execute relative operation (BranchNotEqual)
     let (status, step) = execute_relative_branch(
-        InstructionSequenceMode2::Relative(BranchOperation::BranchNotEqual),
+        Instruction::Relative(BranchOperation::BranchNotEqual),
         &mut regs,
         &mut memory,
     );
@@ -348,7 +348,7 @@ fn execute_absolute_indirect_jump() {
     // Execute absolute indirect jump
     let mut step = 0;
     while execute(
-        InstructionSequenceMode2::AbsoluteIndirectJump,
+        Instruction::AbsoluteIndirectJump,
         step,
         &mut regs,
         &mut memory,
@@ -377,7 +377,7 @@ fn execute_absolute_indirect_jump_page_boundary_bug() {
     // Execute absolute indirect jump
     let mut step = 0;
     while execute(
-        InstructionSequenceMode2::AbsoluteIndirectJump,
+        Instruction::AbsoluteIndirectJump,
         step,
         &mut regs,
         &mut memory,

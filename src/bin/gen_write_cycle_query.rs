@@ -1,6 +1,6 @@
 use cpu6502::instr::instr_impl::ClockEndStatus;
-use cpu6502::instr::InstructionSequenceMode2;
-use cpu6502::instr::InstructionSequenceMode2Discriminants;
+use cpu6502::instr::Instruction;
+use cpu6502::instr::InstructionSequenceMode;
 
 use cpu6502::MemorySpace;
 #[cfg(feature = "gen_write_cycle_query")]
@@ -35,7 +35,7 @@ fn main() {
 
     let mut switch_options = String::new();
 
-    for instr in InstructionSequenceMode2::iter() {
+    for instr in Instruction::iter() {
         let mut step = 0;
         loop {
             let mut memory = MemoryWriteDetector::default();
@@ -43,7 +43,7 @@ fn main() {
 
             let result = cpu6502::execute(instr, step, &mut regs, &mut memory);
 
-            let instr: InstructionSequenceMode2Discriminants = instr.into();
+            let instr: InstructionSequenceMode = instr.into();
             switch_options.push_str(&format!(
                 "({instr:?}, {step}) => {},\n",
                 memory.write_access

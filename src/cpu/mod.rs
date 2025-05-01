@@ -1,4 +1,4 @@
-mod cpu_impl2;
+mod cpu_impl;
 
 #[cfg(feature = "logging")]
 mod logging_memory;
@@ -6,4 +6,4 @@ mod logging_memory;
 #[cfg(not(feature = "gen_write_cycle_query"))]
 mod write_cycle_query;
 
-pub use cpu_impl2::*;
+pub use cpu_impl::*;

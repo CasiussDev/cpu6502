@@ -25,10 +25,4 @@ extern crate log;
 #[cfg(feature = "disassembly")]
 pub use instr::opcodes::decode;
 #[cfg(feature = "disassembly")]
-pub use instr::sequence_for_mode;
-#[cfg(feature = "disassembly")]
-pub use instr::FetchedInstr;
-#[cfg(feature = "disassembly")]
 pub use instr::InstructionOp;
-#[cfg(feature = "disassembly")]
-pub use instr::MicroInstruction;

@@ -1,4 +1,4 @@
-use crate::instr::{instr_impl, InstructionSequenceMode2};
+use crate::instr::{instr_impl, Instruction};
 use crate::interrupts::InterruptType;
 use crate::interrupts::Interrupts;
 use crate::registers::RegisterFile;
@@ -19,7 +19,7 @@ pub struct Cpu {
     pins: Interrupts,
     waiting_interrupt: Option<InterruptType>,
 
-    current_instruction: InstructionSequenceMode2,
+    current_instruction: Instruction,
     current_instruction_step: u8,
 
     cycle_count_since_reset: u128,
@@ -55,7 +55,7 @@ impl Cpu {
         self.pins.reset();
 
         self.waiting_interrupt = None;
-        self.current_instruction = InstructionSequenceMode2::Reset;
+        self.current_instruction = Instruction::Reset;
         self.current_instruction_step = 0;
 
         self.cycle_count_since_reset = 0;
@@ -137,11 +137,11 @@ impl Cpu {
         self.waiting_interrupt = waiting_interrupt(self.waiting_interrupt, &mut self.pins);
 
         if let Some(interrupt) = self.waiting_interrupt {
-            if self.current_instruction == InstructionSequenceMode2::FetchInstr {
+            if self.current_instruction == Instruction::FetchInstr {
                 if interrupt == InterruptType::NonMaskableInterrupt {
-                    self.current_instruction = InstructionSequenceMode2::StartNmi;
+                    self.current_instruction = Instruction::StartNmi;
                 } else {
-                    self.current_instruction = InstructionSequenceMode2::StartIrq;
+                    self.current_instruction = Instruction::StartIrq;
                 }
                 self.current_instruction_step = 0;
                 self.waiting_interrupt = None;
@@ -174,7 +174,7 @@ impl Cpu {
                 self.instr_count_since_reset += 1;
             }
             instr_impl::ClockEndStatus::EndInstruction => {
-                self.current_instruction = InstructionSequenceMode2::FetchInstr;
+                self.current_instruction = Instruction::FetchInstr;
                 self.current_instruction_step = 0;
 
                 self.instr_count_since_reset += 1;

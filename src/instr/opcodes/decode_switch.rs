@@ -6,12 +6,12 @@ use crate::instr::instr_operation::MemoryModifyOperation::*;
 use crate::instr::instr_operation::PullStackOperation::*;
 use crate::instr::instr_operation::PushStackOperation::*;
 use crate::instr::instr_operation::RegisterMemoryOperation::*;
-use crate::instr::InstructionSequenceMode2;
-use crate::instr::InstructionSequenceMode2::*;
+use crate::instr::Instruction;
+use crate::instr::Instruction::*;
 use crate::registers::IndexRegister::X;
 use crate::registers::IndexRegister::Y;
 
-pub fn decode(opcode: u8) -> InstructionSequenceMode2 {
+pub fn decode(opcode: u8) -> Instruction {
     match opcode {
         0x00 => Break,
         0x01 => ZeroPageIdxIndirect(Or, X),
