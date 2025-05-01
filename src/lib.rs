@@ -14,8 +14,6 @@ pub use crate::registers::RegisterFile;
 #[macro_use]
 extern crate enum_primitive_derive;
 
-extern crate enum_map;
-extern crate lazy_static;
 extern crate num_traits;
 
 pub use cpu::Cpu;
