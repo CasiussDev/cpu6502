@@ -3,7 +3,10 @@ use crate::registers::{IndexRegister, SelectedRegister16, SelectedRegister8, Sta
 use std::{collections, slice};
 use strum_macros::EnumDiscriminants;
 
-use crate::instr::{BranchOperation, ImplicitOperation, InstructionOp, MemoryModifyOperation, PullStackOperation, PushStackOperation, RegisterMemoryOperation};
+use crate::instr::{
+    BranchOperation, ImplicitOperation, InstructionOp, MemoryModifyOperation, PullStackOperation,
+    PushStackOperation, RegisterMemoryOperation,
+};
 #[cfg(test)]
 use strum::IntoEnumIterator;
 #[cfg(any(test, feature = "gen_write_cycle_query"))]
@@ -205,6 +208,90 @@ impl From<Instruction> for (InstructionSequenceMode, InstructionOp, IndexRegiste
                 InstructionOp::default(),
                 IndexRegister::default(),
             ),
+        }
+    }
+}
+
+impl Instruction {
+    pub fn new(
+        mode: InstructionSequenceMode,
+        operation: InstructionOp,
+        index: Option<IndexRegister>,
+    ) -> Self {
+        match mode {
+            InstructionSequenceMode::Immediate => {
+                Instruction::Immediate(operation.try_into().unwrap())
+            }
+            InstructionSequenceMode::ZeroPage => {
+                Instruction::ZeroPage(operation.try_into().unwrap())
+            }
+            InstructionSequenceMode::Absolute => {
+                Instruction::Absolute(operation.try_into().unwrap())
+            }
+            InstructionSequenceMode::ZeroPageIdxIndirect => {
+                Instruction::ZeroPageIdxIndirect(operation.try_into().unwrap(), index.unwrap())
+            }
+            InstructionSequenceMode::ZeroPageIdx => {
+                Instruction::ZeroPageIdx(operation.try_into().unwrap(), index.unwrap())
+            }
+            InstructionSequenceMode::AbsoluteIdxRead => {
+                Instruction::AbsoluteIdxRead(operation.try_into().unwrap(), index.unwrap())
+            }
+            InstructionSequenceMode::AbsoluteIdxWrite => {
+                Instruction::AbsoluteIdxWrite(operation.try_into().unwrap(), index.unwrap())
+            }
+            InstructionSequenceMode::ZeroPageIndirectIdxRead => {
+                Instruction::ZeroPageIndirectIdxRead(operation.try_into().unwrap(), index.unwrap())
+            }
+            InstructionSequenceMode::ZeroPageIndirectIdxWrite => {
+                Instruction::ZeroPageIndirectIdxWrite(operation.try_into().unwrap(), index.unwrap())
+            }
+            InstructionSequenceMode::ZeroPageReadModifyWrite => {
+                Instruction::ZeroPageReadModifyWrite(operation.try_into().unwrap())
+            }
+            InstructionSequenceMode::AbsoluteReadModifyWrite => {
+                Instruction::AbsoluteReadModifyWrite(operation.try_into().unwrap())
+            }
+            InstructionSequenceMode::ZeroPageIdxReadModifyWrite => {
+                Instruction::ZeroPageIdxReadModifyWrite(
+                    operation.try_into().unwrap(),
+                    index.unwrap(),
+                )
+            }
+            InstructionSequenceMode::AbsoluteIdxReadModifyWrite => {
+                Instruction::AbsoluteIdxReadModifyWrite(
+                    operation.try_into().unwrap(),
+                    index.unwrap(),
+                )
+            }
+            InstructionSequenceMode::Implied => Instruction::Implied(operation.try_into().unwrap()),
+            InstructionSequenceMode::AbsoluteJump => Instruction::AbsoluteJump,
+            InstructionSequenceMode::AbsoluteIndirectJump => Instruction::AbsoluteIndirectJump,
+            InstructionSequenceMode::Relative => {
+                Instruction::Relative(operation.try_into().unwrap())
+            }
+            InstructionSequenceMode::Push => Instruction::Push(operation.try_into().unwrap()),
+            InstructionSequenceMode::Pull => Instruction::Pull(operation.try_into().unwrap()),
+            InstructionSequenceMode::Break => Instruction::Break,
+            InstructionSequenceMode::JumpSubroutine => Instruction::JumpSubroutine,
+            InstructionSequenceMode::ReturnInterrupt => Instruction::ReturnInterrupt,
+            InstructionSequenceMode::ReturnSubroutine => Instruction::ReturnSubroutine,
+            InstructionSequenceMode::FetchInstr => Instruction::FetchInstr,
+            InstructionSequenceMode::StartIrq => Instruction::StartIrq,
+            InstructionSequenceMode::StartNmi => Instruction::StartNmi,
+            InstructionSequenceMode::Reset => Instruction::Reset,
+            InstructionSequenceMode::ZeroPageIdxIndirectReadModifyWrite => {
+                Instruction::ZeroPageIdxIndirectReadModifyWrite(
+                    operation.try_into().unwrap(),
+                    index.unwrap(),
+                )
+            }
+            InstructionSequenceMode::ZeroPageIndirectIdxReadModifyWrite => {
+                Instruction::ZeroPageIndirectIdxReadModifyWrite(
+                    operation.try_into().unwrap(),
+                    index.unwrap(),
+                )
+            }
         }
     }
 }
