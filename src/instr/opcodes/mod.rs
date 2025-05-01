@@ -8,7 +8,7 @@ mod decode_logic;
 pub use decode_switch::decode;
 
 #[cfg(not(feature = "decode_switch"))]
-pub use decode_logic::decode2 as decode;
+pub use decode_logic::decode;
 
 #[cfg(test)]
 mod tests {

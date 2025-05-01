@@ -504,7 +504,7 @@ fn illegal_instruction_g3(op: OpsG3, addr_mode: AddrModeG3) -> bool {
         || ((addr_mode == AddrModeG3::ZeroPageIdx) && !matches!(op, OpsG3::STY | OpsG3::LDY))
 }
 
-pub fn decode2(opcode: u8) -> Instruction {
+pub fn decode(opcode: u8) -> Instruction {
     let mut decoded_opcode = Instruction::default();
     match opcode & OPCODE_GROUP_MASK {
         1 => {
