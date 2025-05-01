@@ -1211,7 +1211,7 @@ pub fn execute(
 ) -> ClockEndStatus {
     #[cfg(feature = "logging")]
     {
-        trace!("\t{:?}", mode);
+        trace!("\t{:?}", instr);
     }
 
     match instr {

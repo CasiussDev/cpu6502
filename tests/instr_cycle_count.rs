@@ -1,6 +1,3 @@
-#[cfg(feature = "disassembly")]
-use cpu6502::instr::destruct_instruction;
-
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]

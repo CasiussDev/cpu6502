@@ -10,7 +10,7 @@ pub use crate::instr::instr_impl::execute;
 #[cfg(feature = "gen_write_cycle_query")]
 pub use crate::registers::RegisterFile;
 
-#[cfg(not(feature = "decode_switch"))]
+#[cfg(feature = "decode_logic")]
 #[macro_use]
 extern crate enum_primitive_derive;
 

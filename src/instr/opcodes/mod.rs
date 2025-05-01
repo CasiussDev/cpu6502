@@ -1,13 +1,13 @@
-#[cfg(feature = "decode_switch")]
+#[cfg(not(feature = "decode_logic"))]
 mod decode_switch;
 
-#[cfg(not(feature = "decode_switch"))]
+#[cfg(feature = "decode_logic")]
 mod decode_logic;
 
-#[cfg(feature = "decode_switch")]
+#[cfg(not(feature = "decode_logic"))]
 pub use decode_switch::decode;
 
-#[cfg(not(feature = "decode_switch"))]
+#[cfg(feature = "decode_logic")]
 pub use decode_logic::decode;
 
 #[cfg(test)]
@@ -15,7 +15,6 @@ mod tests {
     use crate::instr;
     use crate::instr::opcodes::*;
     use crate::instr::InstructionSequenceMode;
-    use crate::instr::destruct_instruction;
 
     #[test]
     fn g1_print() {
@@ -45,7 +44,7 @@ mod tests {
         for i in 0_u8..=0b_0011_1111 {
             let opcode = i << 2;
             let decoded = decode(opcode);
-            let (sequence, operation, _) = destruct_instruction(decoded);
+            let (sequence, operation, _) = decoded.into();
             if sequence != instr::InstructionSequenceMode::Relative
                 && (operation != instr::InstructionOp::Nop)
                 || matches!(
