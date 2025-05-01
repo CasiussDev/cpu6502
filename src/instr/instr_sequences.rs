@@ -1,16 +1,12 @@
-use crate::instr;
-use crate::registers::{IndexRegister, SelectedRegister16, SelectedRegister8, StatusRegFlags};
-use std::{collections, slice};
+use crate::registers::IndexRegister;
 use strum_macros::EnumDiscriminants;
 
 use crate::instr::{
     BranchOperation, ImplicitOperation, InstructionOp, MemoryModifyOperation, PullStackOperation,
     PushStackOperation, RegisterMemoryOperation,
 };
-#[cfg(test)]
-use strum::IntoEnumIterator;
-#[cfg(any(test, feature = "gen_write_cycle_query"))]
-use strum_macros::{Display, EnumIter};
+#[cfg(feature = "gen_write_cycle_query")]
+use strum_macros::EnumIter;
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Default, EnumDiscriminants)]
 #[cfg_attr(feature = "gen_write_cycle_query", derive(EnumIter))]

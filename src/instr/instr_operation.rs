@@ -1,11 +1,5 @@
-use crate::alu;
-use crate::instr;
-use crate::registers::{ReferenceableRegister8, SelectedRegister8, StatusRegFlags};
 use std::convert::TryFrom;
-use std::{collections, slice};
 
-#[cfg(test)]
-use strum::IntoEnumIterator;
 #[cfg(any(test, feature = "gen_write_cycle_query"))]
 use strum_macros::EnumIter;
 

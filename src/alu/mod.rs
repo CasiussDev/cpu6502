@@ -3,26 +3,6 @@ mod tests;
 
 use crate::registers::{Reg8, StatusReg, StatusRegFlags};
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub enum UnaryOp {
-    Inc,
-    Dec,
-    Asl,
-    Lsr,
-    Rol,
-    Ror,
-}
-
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub enum BinaryOp {
-    Add,
-    Sub,
-    And,
-    Or,
-    Xor,
-    Cmp,
-}
-
 pub fn update_status_nz(result: i8, status_register: &mut StatusReg) {
     if result < 0 {
         status_register.set_flags(StatusRegFlags::NEGATIVE);

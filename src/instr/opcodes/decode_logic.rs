@@ -1,6 +1,4 @@
-use super::*;
-use crate::instr;
-use crate::instr::{InstructionSequenceMode, Instruction};
+use crate::instr::{Instruction, InstructionOp, InstructionSequenceMode};
 use crate::num_traits::FromPrimitive;
 use crate::registers::IndexRegister;
 
@@ -131,210 +129,202 @@ pub enum OpsSingleByte2 {
     NOP = 0xEA,
 }
 
-fn instr_op_g1(op: OpsG1) -> instr::InstructionOp {
+fn instr_op_g1(op: OpsG1) -> InstructionOp {
     match op {
-        OpsG1::ORA => instr::InstructionOp::Or,
-        OpsG1::AND => instr::InstructionOp::And,
-        OpsG1::EOR => instr::InstructionOp::Xor,
-        OpsG1::ADC => instr::InstructionOp::Add,
-        OpsG1::STA => instr::InstructionOp::StoreA,
-        OpsG1::LDA => instr::InstructionOp::LoadA,
-        OpsG1::CMP => instr::InstructionOp::Cmp,
-        OpsG1::SBC => instr::InstructionOp::Sub,
+        OpsG1::ORA => InstructionOp::Or,
+        OpsG1::AND => InstructionOp::And,
+        OpsG1::EOR => InstructionOp::Xor,
+        OpsG1::ADC => InstructionOp::Add,
+        OpsG1::STA => InstructionOp::StoreA,
+        OpsG1::LDA => InstructionOp::LoadA,
+        OpsG1::CMP => InstructionOp::Cmp,
+        OpsG1::SBC => InstructionOp::Sub,
     }
 }
 
-fn instr_op_g2(op: OpsG2, addr_mode: AddrModeG2) -> instr::InstructionOp {
+fn instr_op_g2(op: OpsG2, addr_mode: AddrModeG2) -> InstructionOp {
     match op {
         OpsG2::ASL => match addr_mode {
-            AddrModeG2::Accumulator => instr::InstructionOp::ShiftLeftA,
-            _ => instr::InstructionOp::ShiftLeftMemory,
+            AddrModeG2::Accumulator => InstructionOp::ShiftLeftA,
+            _ => InstructionOp::ShiftLeftMemory,
         },
         OpsG2::ROL => match addr_mode {
-            AddrModeG2::Accumulator => instr::InstructionOp::RotateLeftA,
-            _ => instr::InstructionOp::RotateLeftMemory,
+            AddrModeG2::Accumulator => InstructionOp::RotateLeftA,
+            _ => InstructionOp::RotateLeftMemory,
         },
         OpsG2::LSR => match addr_mode {
-            AddrModeG2::Accumulator => instr::InstructionOp::ShiftRightA,
-            _ => instr::InstructionOp::ShiftRightMemory,
+            AddrModeG2::Accumulator => InstructionOp::ShiftRightA,
+            _ => InstructionOp::ShiftRightMemory,
         },
         OpsG2::ROR => match addr_mode {
-            AddrModeG2::Accumulator => instr::InstructionOp::RotateRightA,
-            _ => instr::InstructionOp::RotateRightMemory,
+            AddrModeG2::Accumulator => InstructionOp::RotateRightA,
+            _ => InstructionOp::RotateRightMemory,
         },
-        OpsG2::STX => instr::InstructionOp::StoreX,
-        OpsG2::LDX => instr::InstructionOp::LoadX,
-        OpsG2::DEC => instr::InstructionOp::DecrementMemory,
-        OpsG2::INC => instr::InstructionOp::IncrementMemory,
+        OpsG2::STX => InstructionOp::StoreX,
+        OpsG2::LDX => InstructionOp::LoadX,
+        OpsG2::DEC => InstructionOp::DecrementMemory,
+        OpsG2::INC => InstructionOp::IncrementMemory,
     }
 }
 
-fn instr_op_g3(op: OpsG3, addr_mode: AddrModeG3) -> instr::InstructionOp {
+fn instr_op_g3(op: OpsG3, addr_mode: AddrModeG3) -> InstructionOp {
     match op {
-        OpsG3::Unused => instr::InstructionOp::Nop,
+        OpsG3::Unused => InstructionOp::Nop,
         OpsG3::BIT => {
             if addr_mode == AddrModeG3::Immediate {
-                instr::InstructionOp::BitImmediate
+                InstructionOp::BitImmediate
             } else {
-                instr::InstructionOp::Bit
+                InstructionOp::Bit
             }
         }
-        OpsG3::JMP => instr::InstructionOp::Nop,
-        OpsG3::JMPInd => instr::InstructionOp::Nop,
-        OpsG3::STY => instr::InstructionOp::StoreY,
-        OpsG3::LDY => instr::InstructionOp::LoadY,
-        OpsG3::CPY => instr::InstructionOp::Cpy,
-        OpsG3::CPX => instr::InstructionOp::Cpx,
+        OpsG3::JMP => InstructionOp::Nop,
+        OpsG3::JMPInd => InstructionOp::Nop,
+        OpsG3::STY => InstructionOp::StoreY,
+        OpsG3::LDY => InstructionOp::LoadY,
+        OpsG3::CPY => InstructionOp::Cpy,
+        OpsG3::CPX => InstructionOp::Cpx,
     }
 }
 
-fn instr_op_cond_branch(op: OpsCompBranch) -> instr::InstructionOp {
+fn instr_op_cond_branch(op: OpsCompBranch) -> InstructionOp {
     match op {
-        OpsCompBranch::BPL => instr::InstructionOp::BranchPlus,
-        OpsCompBranch::BMI => instr::InstructionOp::BranchMinus,
-        OpsCompBranch::BVC => instr::InstructionOp::BranchOverflowClear,
-        OpsCompBranch::BVS => instr::InstructionOp::BranchOverflowSet,
-        OpsCompBranch::BCC => instr::InstructionOp::BranchCarryClear,
-        OpsCompBranch::BCS => instr::InstructionOp::BranchCarrySet,
-        OpsCompBranch::BNE => instr::InstructionOp::BranchNotEqual,
-        OpsCompBranch::BEQ => instr::InstructionOp::BranchEqual,
+        OpsCompBranch::BPL => InstructionOp::BranchPlus,
+        OpsCompBranch::BMI => InstructionOp::BranchMinus,
+        OpsCompBranch::BVC => InstructionOp::BranchOverflowClear,
+        OpsCompBranch::BVS => InstructionOp::BranchOverflowSet,
+        OpsCompBranch::BCC => InstructionOp::BranchCarryClear,
+        OpsCompBranch::BCS => InstructionOp::BranchCarrySet,
+        OpsCompBranch::BNE => InstructionOp::BranchNotEqual,
+        OpsCompBranch::BEQ => InstructionOp::BranchEqual,
     }
 }
 
-fn instr_op_single_byte0(op: OpsSingleByte0) -> instr::InstructionOp {
+fn instr_op_single_byte0(op: OpsSingleByte0) -> InstructionOp {
     match op {
-        OpsSingleByte0::PHP => instr::InstructionOp::PushStatus,
-        OpsSingleByte0::PLP => instr::InstructionOp::PullStatus,
-        OpsSingleByte0::PHA => instr::InstructionOp::PushA,
-        OpsSingleByte0::PLA => instr::InstructionOp::PullA,
-        OpsSingleByte0::DEY => instr::InstructionOp::DecrementY,
-        OpsSingleByte0::TAY => instr::InstructionOp::TransferAccumulatorToY,
-        OpsSingleByte0::INY => instr::InstructionOp::IncrementY,
-        OpsSingleByte0::INX => instr::InstructionOp::IncrementX,
-        OpsSingleByte0::CLC => instr::InstructionOp::ClearCarry,
-        OpsSingleByte0::SEC => instr::InstructionOp::SetCarry,
-        OpsSingleByte0::CLI => instr::InstructionOp::ClearInterruptDisable,
-        OpsSingleByte0::SEI => instr::InstructionOp::SetInterruptDisable,
-        OpsSingleByte0::TYA => instr::InstructionOp::TransferYToAccumulator,
-        OpsSingleByte0::CLV => instr::InstructionOp::ClearOverflow,
-        OpsSingleByte0::CLD => instr::InstructionOp::ClearDecimal,
-        OpsSingleByte0::SED => instr::InstructionOp::SetDecimal,
+        OpsSingleByte0::PHP => InstructionOp::PushStatus,
+        OpsSingleByte0::PLP => InstructionOp::PullStatus,
+        OpsSingleByte0::PHA => InstructionOp::PushA,
+        OpsSingleByte0::PLA => InstructionOp::PullA,
+        OpsSingleByte0::DEY => InstructionOp::DecrementY,
+        OpsSingleByte0::TAY => InstructionOp::TransferAccumulatorToY,
+        OpsSingleByte0::INY => InstructionOp::IncrementY,
+        OpsSingleByte0::INX => InstructionOp::IncrementX,
+        OpsSingleByte0::CLC => InstructionOp::ClearCarry,
+        OpsSingleByte0::SEC => InstructionOp::SetCarry,
+        OpsSingleByte0::CLI => InstructionOp::ClearInterruptDisable,
+        OpsSingleByte0::SEI => InstructionOp::SetInterruptDisable,
+        OpsSingleByte0::TYA => InstructionOp::TransferYToAccumulator,
+        OpsSingleByte0::CLV => InstructionOp::ClearOverflow,
+        OpsSingleByte0::CLD => InstructionOp::ClearDecimal,
+        OpsSingleByte0::SED => InstructionOp::SetDecimal,
     }
 }
 
-fn instr_op_single_byte2(op: OpsSingleByte2) -> instr::InstructionOp {
+fn instr_op_single_byte2(op: OpsSingleByte2) -> InstructionOp {
     match op {
-        OpsSingleByte2::TXA => instr::InstructionOp::TransferXToAccumulator,
-        OpsSingleByte2::TXS => instr::InstructionOp::TransferXToStackPtr,
-        OpsSingleByte2::TAX => instr::InstructionOp::TransferAccumulatorToX,
-        OpsSingleByte2::TSX => instr::InstructionOp::TransferStackPtrToX,
-        OpsSingleByte2::DEX => instr::InstructionOp::DecrementX,
-        OpsSingleByte2::NOP => instr::InstructionOp::Nop,
+        OpsSingleByte2::TXA => InstructionOp::TransferXToAccumulator,
+        OpsSingleByte2::TXS => InstructionOp::TransferXToStackPtr,
+        OpsSingleByte2::TAX => InstructionOp::TransferAccumulatorToX,
+        OpsSingleByte2::TSX => InstructionOp::TransferStackPtrToX,
+        OpsSingleByte2::DEX => InstructionOp::DecrementX,
+        OpsSingleByte2::NOP => InstructionOp::Nop,
     }
 }
 
-fn sequence_mode_g1(op: OpsG1, addr_mode: AddrModeG1) -> instr::InstructionSequenceMode {
+fn sequence_mode_g1(op: OpsG1, addr_mode: AddrModeG1) -> InstructionSequenceMode {
     match addr_mode {
-        AddrModeG1::ZeroPage => instr::InstructionSequenceMode::ZeroPage,
-        AddrModeG1::Immediate => instr::InstructionSequenceMode::Immediate,
-        AddrModeG1::Absolute => instr::InstructionSequenceMode::Absolute,
-        AddrModeG1::ZeroPageIndxIndirect => instr::InstructionSequenceMode::ZeroPageIdxIndirect,
-        AddrModeG1::ZeroPageIdx => instr::InstructionSequenceMode::ZeroPageIdx,
+        AddrModeG1::ZeroPage => InstructionSequenceMode::ZeroPage,
+        AddrModeG1::Immediate => InstructionSequenceMode::Immediate,
+        AddrModeG1::Absolute => InstructionSequenceMode::Absolute,
+        AddrModeG1::ZeroPageIndxIndirect => InstructionSequenceMode::ZeroPageIdxIndirect,
+        AddrModeG1::ZeroPageIdx => InstructionSequenceMode::ZeroPageIdx,
         AddrModeG1::AbsoluteIdxY | AddrModeG1::AbsoluteIdxX => match op {
-            OpsG1::STA => instr::InstructionSequenceMode::AbsoluteIdxWrite,
+            OpsG1::STA => InstructionSequenceMode::AbsoluteIdxWrite,
             OpsG1::ORA
             | OpsG1::AND
             | OpsG1::EOR
             | OpsG1::ADC
             | OpsG1::LDA
             | OpsG1::CMP
-            | OpsG1::SBC => instr::InstructionSequenceMode::AbsoluteIdxRead,
+            | OpsG1::SBC => InstructionSequenceMode::AbsoluteIdxRead,
         },
         AddrModeG1::ZeroPageIndirectIdx => match op {
-            OpsG1::STA => instr::InstructionSequenceMode::ZeroPageIndirectIdxWrite,
+            OpsG1::STA => InstructionSequenceMode::ZeroPageIndirectIdxWrite,
             OpsG1::ORA
             | OpsG1::AND
             | OpsG1::EOR
             | OpsG1::ADC
             | OpsG1::LDA
             | OpsG1::CMP
-            | OpsG1::SBC => instr::InstructionSequenceMode::ZeroPageIndirectIdxRead,
+            | OpsG1::SBC => InstructionSequenceMode::ZeroPageIndirectIdxRead,
         },
     }
 }
 
-fn sequence_mode_g2(op: OpsG2, addr_mode: AddrModeG2) -> instr::InstructionSequenceMode {
+fn sequence_mode_g2(op: OpsG2, addr_mode: AddrModeG2) -> InstructionSequenceMode {
     match op {
         OpsG2::ASL | OpsG2::ROL | OpsG2::LSR | OpsG2::ROR | OpsG2::DEC | OpsG2::INC => {
             match addr_mode {
-                AddrModeG2::ZeroPage => instr::InstructionSequenceMode::ZeroPageReadModifyWrite,
-                AddrModeG2::Immediate => instr::InstructionSequenceMode::Immediate, // Illegal
-                AddrModeG2::Absolute => instr::InstructionSequenceMode::AbsoluteReadModifyWrite,
-                AddrModeG2::ZeroPageIdx => {
-                    instr::InstructionSequenceMode::ZeroPageIdxReadModifyWrite
-                }
-                AddrModeG2::AbsoluteIdxX => {
-                    instr::InstructionSequenceMode::AbsoluteIdxReadModifyWrite
-                }
-                AddrModeG2::Accumulator => instr::InstructionSequenceMode::Implied, // Illegal for Inc and Dec
-                AddrModeG2::Unused1 | AddrModeG2::Unused2 => {
-                    instr::InstructionSequenceMode::default()
-                } // Illegal
+                AddrModeG2::ZeroPage => InstructionSequenceMode::ZeroPageReadModifyWrite,
+                AddrModeG2::Immediate => InstructionSequenceMode::Immediate, // Illegal
+                AddrModeG2::Absolute => InstructionSequenceMode::AbsoluteReadModifyWrite,
+                AddrModeG2::ZeroPageIdx => InstructionSequenceMode::ZeroPageIdxReadModifyWrite,
+                AddrModeG2::AbsoluteIdxX => InstructionSequenceMode::AbsoluteIdxReadModifyWrite,
+                AddrModeG2::Accumulator => InstructionSequenceMode::Implied, // Illegal for Inc and Dec
+                AddrModeG2::Unused1 | AddrModeG2::Unused2 => InstructionSequenceMode::default(), // Illegal
             }
         }
         OpsG2::STX | OpsG2::LDX => {
             match addr_mode {
-                AddrModeG2::Immediate => instr::InstructionSequenceMode::Immediate, // Illegal for STX
-                AddrModeG2::ZeroPage => instr::InstructionSequenceMode::ZeroPage,
-                AddrModeG2::Accumulator => instr::InstructionSequenceMode::Implied, // Illegal
-                AddrModeG2::Absolute => instr::InstructionSequenceMode::Absolute,
-                AddrModeG2::ZeroPageIdx => instr::InstructionSequenceMode::ZeroPageIdx,
+                AddrModeG2::Immediate => InstructionSequenceMode::Immediate, // Illegal for STX
+                AddrModeG2::ZeroPage => InstructionSequenceMode::ZeroPage,
+                AddrModeG2::Accumulator => InstructionSequenceMode::Implied, // Illegal
+                AddrModeG2::Absolute => InstructionSequenceMode::Absolute,
+                AddrModeG2::ZeroPageIdx => InstructionSequenceMode::ZeroPageIdx,
                 AddrModeG2::AbsoluteIdxX => {
                     if op == OpsG2::STX {
-                        instr::InstructionSequenceMode::AbsoluteIdxWrite // Illegal
+                        InstructionSequenceMode::AbsoluteIdxWrite // Illegal
                     } else {
-                        instr::InstructionSequenceMode::AbsoluteIdxRead
+                        InstructionSequenceMode::AbsoluteIdxRead
                     }
                 }
-                AddrModeG2::Unused1 | AddrModeG2::Unused2 => {
-                    instr::InstructionSequenceMode::default()
-                } // Illegal
+                AddrModeG2::Unused1 | AddrModeG2::Unused2 => InstructionSequenceMode::default(), // Illegal
             }
         }
     }
 }
 
-fn sequence_mode_g3(op: OpsG3, addr_mode: AddrModeG3) -> instr::InstructionSequenceMode {
+fn sequence_mode_g3(op: OpsG3, addr_mode: AddrModeG3) -> InstructionSequenceMode {
     match op {
-        OpsG3::JMP => instr::InstructionSequenceMode::AbsoluteJump,
-        OpsG3::JMPInd => instr::InstructionSequenceMode::AbsoluteIndirectJump,
+        OpsG3::JMP => InstructionSequenceMode::AbsoluteJump,
+        OpsG3::JMPInd => InstructionSequenceMode::AbsoluteIndirectJump,
         _ => match addr_mode {
-            AddrModeG3::Immediate => instr::InstructionSequenceMode::Immediate, // Illegal for BIT, Jumps and STY
-            AddrModeG3::ZeroPage => instr::InstructionSequenceMode::ZeroPage,   // Illegal for Jumps
+            AddrModeG3::Immediate => InstructionSequenceMode::Immediate, // Illegal for BIT, Jumps and STY
+            AddrModeG3::ZeroPage => InstructionSequenceMode::ZeroPage,   // Illegal for Jumps
             AddrModeG3::Unused1 | AddrModeG3::Unused2 | AddrModeG3::Unused3 => {
-                instr::InstructionSequenceMode::default()
+                InstructionSequenceMode::default()
             } // Illegal
-            AddrModeG3::Absolute => instr::InstructionSequenceMode::Absolute,
-            AddrModeG3::ZeroPageIdx => instr::InstructionSequenceMode::ZeroPageIdx, // Illegal for BIT, Jumps and Cp
-            AddrModeG3::AbsoluteIdxX => instr::InstructionSequenceMode::AbsoluteIdxRead, // Only legal for LDY
+            AddrModeG3::Absolute => InstructionSequenceMode::Absolute,
+            AddrModeG3::ZeroPageIdx => InstructionSequenceMode::ZeroPageIdx, // Illegal for BIT, Jumps and Cp
+            AddrModeG3::AbsoluteIdxX => InstructionSequenceMode::AbsoluteIdxRead, // Only legal for LDY
         },
     }
 }
 
-fn sequence_mode_subroutine(op: OpsSubroutine) -> instr::InstructionSequenceMode {
+fn sequence_mode_subroutine(op: OpsSubroutine) -> InstructionSequenceMode {
     match op {
-        OpsSubroutine::BRK => instr::InstructionSequenceMode::Break,
-        OpsSubroutine::JSR => instr::InstructionSequenceMode::JumpSubroutine,
-        OpsSubroutine::RTI => instr::InstructionSequenceMode::ReturnInterrupt,
-        OpsSubroutine::RTS => instr::InstructionSequenceMode::ReturnSubroutine,
+        OpsSubroutine::BRK => InstructionSequenceMode::Break,
+        OpsSubroutine::JSR => InstructionSequenceMode::JumpSubroutine,
+        OpsSubroutine::RTI => InstructionSequenceMode::ReturnInterrupt,
+        OpsSubroutine::RTS => InstructionSequenceMode::ReturnSubroutine,
     }
 }
 
-fn sequence_mode_single_byte0(op: OpsSingleByte0) -> instr::InstructionSequenceMode {
+fn sequence_mode_single_byte0(op: OpsSingleByte0) -> InstructionSequenceMode {
     match op {
-        OpsSingleByte0::PHP | OpsSingleByte0::PHA => instr::InstructionSequenceMode::Push,
-        OpsSingleByte0::PLP | OpsSingleByte0::PLA => instr::InstructionSequenceMode::Pull,
-        _ => instr::InstructionSequenceMode::Implied,
+        OpsSingleByte0::PHP | OpsSingleByte0::PHA => InstructionSequenceMode::Push,
+        OpsSingleByte0::PLP | OpsSingleByte0::PLA => InstructionSequenceMode::Pull,
+        _ => InstructionSequenceMode::Implied,
     }
 }
 
@@ -433,8 +423,7 @@ pub fn decode(opcode: u8) -> Instruction {
                 decoded_instruction = Instruction::new(sequence, operation, index);
             } else if let Some(op) = OpsSingleByte2::from_u8(opcode) {
                 let operation = instr_op_single_byte2(op);
-                decoded_instruction =
-                    Instruction::Implied(operation.try_into().unwrap());
+                decoded_instruction = Instruction::Implied(operation.try_into().unwrap());
             } else if cfg!(feature = "undoc_opcodes") {
                 todo!();
             }
@@ -454,7 +443,7 @@ pub fn decode(opcode: u8) -> Instruction {
                 decoded_instruction = Instruction::Relative(operation.try_into().unwrap());
             } else if let Some(op) = OpsSubroutine::from_u8(opcode) {
                 let sequence = sequence_mode_subroutine(op);
-                decoded_instruction = Instruction::new(sequence, instr::InstructionOp::Nop, None);
+                decoded_instruction = Instruction::new(sequence, InstructionOp::Nop, None);
             } else if let Some(op) = OpsSingleByte0::from_u8(opcode) {
                 let operation = instr_op_single_byte0(op);
                 let sequence = sequence_mode_single_byte0(op);

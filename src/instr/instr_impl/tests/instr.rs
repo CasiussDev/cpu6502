@@ -1,7 +1,7 @@
 use super::execute;
 use crate::instr::instr_impl::tests::MockMemory;
 use crate::instr::instr_impl::ClockEndStatus;
-use crate::instr::{InstructionSequenceMode, Instruction};
+use crate::instr::Instruction;
 use crate::registers::{RegisterFile, SelectedRegister16};
 
 #[test]
@@ -42,13 +42,7 @@ fn reset() {
 
     // Execute reset
     let mut step = 0;
-    while execute(
-        Instruction::Reset,
-        step,
-        &mut regs,
-        &mut memory,
-    ) == ClockEndStatus::Continue
-    {
+    while execute(Instruction::Reset, step, &mut regs, &mut memory) == ClockEndStatus::Continue {
         step += 1;
     }
 

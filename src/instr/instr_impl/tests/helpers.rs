@@ -2,7 +2,7 @@ use crate::instr::instr_impl::tests::MockMemory;
 use crate::instr::instr_impl::{
     add_index_to_address, fix_addr_or_run_op_finish, ClockEndStatus, FixAddressResult,
 };
-use crate::instr::{InstructionOp, RegisterMemoryOperation};
+use crate::instr::RegisterMemoryOperation;
 use crate::registers::{IndexRegister, RegisterFile};
 
 #[test]

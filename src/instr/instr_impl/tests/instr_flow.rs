@@ -1,6 +1,6 @@
 use crate::instr::instr_impl::tests::MockMemory;
 use crate::instr::instr_impl::{execute, ClockEndStatus};
-use crate::instr::{BranchOperation, InstructionSequenceMode, Instruction};
+use crate::instr::{BranchOperation, Instruction};
 use crate::registers::{RegisterFile, SelectedRegister16, StatusRegFlags};
 
 #[test]
@@ -45,13 +45,7 @@ fn execute_start_irq() {
 
     // Execute start_irq
     let mut step = 0;
-    while execute(
-        Instruction::StartIrq,
-        step,
-        &mut regs,
-        &mut memory,
-    ) == ClockEndStatus::Continue
-    {
+    while execute(Instruction::StartIrq, step, &mut regs, &mut memory) == ClockEndStatus::Continue {
         step += 1;
     }
 
@@ -78,13 +72,7 @@ fn execute_start_nmi() {
 
     // Execute start_nmi
     let mut step = 0;
-    while execute(
-        Instruction::StartNmi,
-        step,
-        &mut regs,
-        &mut memory,
-    ) == ClockEndStatus::Continue
-    {
+    while execute(Instruction::StartNmi, step, &mut regs, &mut memory) == ClockEndStatus::Continue {
         step += 1;
     }
 
@@ -111,12 +99,8 @@ fn execute_return_interrupt() {
 
     // Execute return_interrupt
     let mut step = 0;
-    while execute(
-        Instruction::ReturnInterrupt,
-        step,
-        &mut regs,
-        &mut memory,
-    ) == ClockEndStatus::Continue
+    while execute(Instruction::ReturnInterrupt, step, &mut regs, &mut memory)
+        == ClockEndStatus::Continue
     {
         step += 1;
     }
@@ -143,12 +127,8 @@ fn execute_jump_subroutine() {
 
     // Execute jump_subroutine
     let mut step = 0;
-    while execute(
-        Instruction::JumpSubroutine,
-        step,
-        &mut regs,
-        &mut memory,
-    ) == ClockEndStatus::Continue
+    while execute(Instruction::JumpSubroutine, step, &mut regs, &mut memory)
+        == ClockEndStatus::Continue
     {
         step += 1;
     }
@@ -176,12 +156,8 @@ fn execute_return_subroutine() {
 
     // Execute return_subroutine
     let mut step = 0;
-    while execute(
-        Instruction::ReturnSubroutine,
-        step,
-        &mut regs,
-        &mut memory,
-    ) == ClockEndStatus::Continue
+    while execute(Instruction::ReturnSubroutine, step, &mut regs, &mut memory)
+        == ClockEndStatus::Continue
     {
         step += 1;
     }
@@ -204,12 +180,8 @@ fn execute_absolute_jump() {
 
     // Execute absolute_jump
     let mut step = 0;
-    while execute(
-        Instruction::AbsoluteJump,
-        step,
-        &mut regs,
-        &mut memory,
-    ) == ClockEndStatus::Continue
+    while execute(Instruction::AbsoluteJump, step, &mut regs, &mut memory)
+        == ClockEndStatus::Continue
     {
         step += 1;
     }

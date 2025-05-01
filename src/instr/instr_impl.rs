@@ -2,8 +2,8 @@
 mod tests;
 
 use super::{
-    BranchOperation, ImplicitOperation, Instruction, MemoryModifyOperation,
-    PullStackOperation, PushStackOperation, RegisterMemoryOperation,
+    BranchOperation, ImplicitOperation, Instruction, MemoryModifyOperation, PullStackOperation,
+    PushStackOperation, RegisterMemoryOperation,
 };
 use crate::registers::{
     IndexRegister, RegisterFile, SelectedRegister16, SelectedRegister8, StatusRegFlags,
@@ -1229,22 +1229,14 @@ pub fn execute(
         Instruction::Immediate(op) => immediate(step, regs, memory, op),
         Instruction::AbsoluteJump => absolute_jump(step, regs, memory),
         Instruction::Absolute(op) => absolute(step, regs, memory, op),
-        Instruction::AbsoluteReadModifyWrite(op) => {
-            absolute_rmw(step, regs, memory, op)
-        }
+        Instruction::AbsoluteReadModifyWrite(op) => absolute_rmw(step, regs, memory, op),
         Instruction::ZeroPage(op) => zero_page(step, regs, memory, op),
-        Instruction::ZeroPageReadModifyWrite(op) => {
-            zero_page_rmw(step, regs, memory, op)
-        }
-        Instruction::ZeroPageIdx(op, idx) => {
-            zero_page_indexed(step, regs, memory, op, idx)
-        }
+        Instruction::ZeroPageReadModifyWrite(op) => zero_page_rmw(step, regs, memory, op),
+        Instruction::ZeroPageIdx(op, idx) => zero_page_indexed(step, regs, memory, op, idx),
         Instruction::ZeroPageIdxReadModifyWrite(op, idx) => {
             zero_page_indexed_rmw(step, regs, memory, op, idx)
         }
-        Instruction::AbsoluteIdxRead(op, idx) => {
-            absolute_indexed_read(step, regs, memory, op, idx)
-        }
+        Instruction::AbsoluteIdxRead(op, idx) => absolute_indexed_read(step, regs, memory, op, idx),
         Instruction::AbsoluteIdxReadModifyWrite(op, idx) => {
             absolute_indexed_rmw(step, regs, memory, op, idx)
         }
@@ -1267,8 +1259,6 @@ pub fn execute(
         Instruction::ZeroPageIndirectIdxWrite(op, idx) => {
             zero_page_indirect_indexed_write(step, regs, memory, op, idx)
         }
-        Instruction::AbsoluteIndirectJump => {
-            absolute_indirect_jump(step, regs, memory)
-        }
+        Instruction::AbsoluteIndirectJump => absolute_indirect_jump(step, regs, memory),
     }
 }

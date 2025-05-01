@@ -3,8 +3,7 @@ use crate::instr::instr_impl::{
     execute_branch_op, execute_implicit_op, execute_memory_modify_op, execute_op, ClockEndStatus,
 };
 use crate::instr::{
-    BranchOperation, ImplicitOperation, InstructionOp, MemoryModifyOperation,
-    RegisterMemoryOperation,
+    BranchOperation, ImplicitOperation, MemoryModifyOperation, RegisterMemoryOperation,
 };
 use crate::registers::{RegisterFile, StatusRegFlags};
 

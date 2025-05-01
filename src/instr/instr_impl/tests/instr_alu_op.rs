@@ -1,8 +1,7 @@
 use crate::instr::instr_impl::tests::MockMemory;
 use crate::instr::instr_impl::{execute, ClockEndStatus};
 use crate::instr::{
-    ImplicitOperation, InstructionSequenceMode, Instruction, MemoryModifyOperation,
-    RegisterMemoryOperation,
+    ImplicitOperation, Instruction, MemoryModifyOperation, RegisterMemoryOperation,
 };
 use crate::registers::{IndexRegister, RegisterFile};
 
@@ -310,10 +309,7 @@ fn execute_absolute_indexed_write() {
     // Execute absolute indexed write operation (StoreA)
     let mut step = 0;
     while execute(
-        Instruction::AbsoluteIdxWrite(
-            RegisterMemoryOperation::StoreA,
-            IndexRegister::X,
-        ),
+        Instruction::AbsoluteIdxWrite(RegisterMemoryOperation::StoreA, IndexRegister::X),
         step,
         &mut regs,
         &mut memory,
@@ -344,10 +340,7 @@ fn execute_zero_page_indexed_indirect() {
     // Execute zero page indexed indirect operation (LoadA)
     let mut step = 0;
     while execute(
-        Instruction::ZeroPageIdxIndirect(
-            RegisterMemoryOperation::LoadA,
-            IndexRegister::X,
-        ),
+        Instruction::ZeroPageIdxIndirect(RegisterMemoryOperation::LoadA, IndexRegister::X),
         step,
         &mut regs,
         &mut memory,
@@ -412,10 +405,7 @@ fn execute_zero_page_indirect_idx_read() {
     // Execute zero page indirect indexed read operation (LoadA)
     let mut step = 0;
     while execute(
-        Instruction::ZeroPageIndirectIdxRead(
-            RegisterMemoryOperation::LoadA,
-            IndexRegister::Y,
-        ),
+        Instruction::ZeroPageIndirectIdxRead(RegisterMemoryOperation::LoadA, IndexRegister::Y),
         step,
         &mut regs,
         &mut memory,
@@ -480,10 +470,7 @@ fn execute_zero_page_indirect_idx_write() {
     // Execute zero page indirect indexed write operation (StoreA)
     let mut step = 0;
     while execute(
-        Instruction::ZeroPageIndirectIdxWrite(
-            RegisterMemoryOperation::StoreA,
-            IndexRegister::Y,
-        ),
+        Instruction::ZeroPageIndirectIdxWrite(RegisterMemoryOperation::StoreA, IndexRegister::Y),
         step,
         &mut regs,
         &mut memory,
