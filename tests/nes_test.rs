@@ -6,8 +6,11 @@ extern crate simplelog;
 
 mod test_computer;
 
+#[cfg(feature = "disassembly")]
 use crate::test_computer::TestComputer;
+#[cfg(feature = "disassembly")]
 use std::io::{BufRead, Write};
+#[cfg(feature = "disassembly")]
 use std::{fs, io};
 #[cfg(feature = "disassembly")]
 const REFERENCE_FILE: &'static str = "testdata/reference.6502log";

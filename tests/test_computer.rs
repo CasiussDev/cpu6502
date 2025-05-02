@@ -55,8 +55,8 @@ impl TestComputer {
             (ROM_DESTINATION + NUM_ROM_BYTES)..(ROM_DESTINATION + NUM_ROM_BYTES * 2),
         ];
 
-        for i in 0..2 {
-            let dst = &mut self.memory[ranges[i].clone()];
+        for range in ranges {
+            let dst = &mut self.memory[range];
             dst.copy_from_slice(&read_rom_content);
         }
 

@@ -11,7 +11,7 @@ fn get_index_value() {
     regs.x.set_u8(0x12);
     regs.y.set_u8(0xFF);
     let idx = IndexRegister::X;
-    assert_eq!(super::get_index_value(idx, &mut regs), 0x12);
+    assert_eq!(super::get_index_value(&mut regs, idx), 0x12);
 }
 
 #[test]
@@ -20,7 +20,7 @@ fn get_index_value_y() {
     regs.x.set_u8(0x12);
     regs.y.set_u8(0xFF);
     let idx = IndexRegister::Y;
-    assert_eq!(super::get_index_value(idx, &mut regs), 0xFF);
+    assert_eq!(super::get_index_value(&mut regs, idx), 0xFF);
 }
 
 #[test]

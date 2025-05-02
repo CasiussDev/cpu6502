@@ -58,7 +58,7 @@ impl StatusReg {
     }
 
     pub fn update_flags(&mut self, flags_to_update: StatusRegFlags, value: bool) {
-        if value == true {
+        if value {
             self.set_flags(flags_to_update);
         } else {
             self.clear_flags(flags_to_update);

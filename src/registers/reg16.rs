@@ -80,7 +80,7 @@ impl Reg16 {
     }
 
     pub fn high_u8(&self) -> u8 {
-        self.value.to_be_bytes()[0] as u8
+        self.value.to_be_bytes()[0]
     }
 
     pub fn set_high_u8(&mut self, value: u8) {
@@ -114,7 +114,7 @@ impl fmt::Debug for Reg16 {
         write!(
             f,
             "{:#06X} ( {}, {} )",
-            self.value, self.value as u16, self.value as i16
+            self.value, self.value, self.value as i16
         )
     }
 }

@@ -25,7 +25,7 @@ pub enum FixAddressResult {
     Untouched,
 }
 
-fn get_index_value(idx: IndexRegister, regs: &mut RegisterFile) -> u8 {
+fn get_index_value(regs: &mut RegisterFile, idx: IndexRegister) -> u8 {
     let index_reg = regs.copy_selected_register8(idx.into());
     index_reg.to_u8()
 }
@@ -39,7 +39,7 @@ fn set_stack_address(regs: &mut RegisterFile) {
 }
 
 fn add_index_to_address(regs: &mut RegisterFile, idx: IndexRegister) {
-    let index_value = get_index_value(idx, regs);
+    let index_value = get_index_value(regs, idx);
 
     let addr_low = regs.addr.low_u8();
     let addr_low = addr_low.wrapping_add(index_value);
@@ -64,7 +64,7 @@ fn fix_addr_or_run_op_finish(
     memory: &mut impl MemorySpace,
     idx: IndexRegister,
 ) -> ClockEndStatus {
-    let index_value = get_index_value(idx, regs);
+    let index_value = get_index_value(regs, idx);
 
     if fix_addr(regs, index_value) == FixAddressResult::Untouched {
         execute_op(op, regs, memory);
@@ -88,18 +88,18 @@ fn branch_if(
         regs.pc.set_u16(new_pc);
         if old_pch != regs.pc.high_u8() {
             // Crossed a page boundary
-            return ClockEndStatus::Continue;
+            ClockEndStatus::Continue
         } else {
-            return ClockEndStatus::EndInstruction;
+            ClockEndStatus::EndInstruction
         }
+    } else {
+        let status = ClockEndStatus::EndInstructionNextFetched {
+            opcode_addr: regs.pc.to_u16(),
+        };
+        regs.pc.inc();
+        regs.ir.set_u8(next_opcode);
+        status
     }
-
-    let status = ClockEndStatus::EndInstructionNextFetched {
-        opcode_addr: regs.pc.to_u16(),
-    };
-    regs.pc.inc();
-    regs.ir.set_u8(next_opcode);
-    status
 }
 
 fn execute_branch_op(
@@ -192,15 +192,15 @@ fn execute_op(op: RegisterMemoryOperation, regs: &mut RegisterFile, memory: &mut
         }
         RegisterMemoryOperation::Cmp => {
             regs.tmp.set_u8(memory.read(regs.addr.to_u16()));
-            alu::cmp(&mut regs.a, &regs.tmp, &mut regs.status)
+            alu::cmp(&regs.a, &regs.tmp, &mut regs.status)
         }
         RegisterMemoryOperation::Cpx => {
             regs.tmp.set_u8(memory.read(regs.addr.to_u16()));
-            alu::cmp(&mut regs.x, &regs.tmp, &mut regs.status)
+            alu::cmp(&regs.x, &regs.tmp, &mut regs.status)
         }
         RegisterMemoryOperation::Cpy => {
             regs.tmp.set_u8(memory.read(regs.addr.to_u16()));
-            alu::cmp(&mut regs.y, &regs.tmp, &mut regs.status)
+            alu::cmp(&regs.y, &regs.tmp, &mut regs.status)
         }
         RegisterMemoryOperation::LoadA => {
             regs.a.set_u8(memory.read(regs.addr.to_u16()));
@@ -856,7 +856,7 @@ fn absolute_indexed_rmw(
             add_index_to_address(regs, idx);
             let _ = memory.read(regs.addr.to_u16());
 
-            let index_value = get_index_value(idx, regs);
+            let index_value = get_index_value(regs, idx);
             fix_addr(regs, index_value);
         }
         3 => {
@@ -899,7 +899,7 @@ fn absolute_indexed_write(
             add_index_to_address(regs, idx);
             let _ = memory.read(regs.addr.to_u16());
 
-            let index_value = get_index_value(idx, regs);
+            let index_value = get_index_value(regs, idx);
             fix_addr(regs, index_value);
         }
         3 => {
@@ -1103,7 +1103,7 @@ fn zero_page_indirect_indexed_rmw(
         }
         3 => {
             let _ = memory.read(regs.addr.to_u16());
-            let index_value = get_index_value(idx, regs);
+            let index_value = get_index_value(regs, idx);
             fix_addr(regs, index_value);
         }
         4 => {
@@ -1154,7 +1154,7 @@ fn zero_page_indirect_indexed_write(
         }
         3 => {
             let _ = memory.read(regs.addr.to_u16());
-            let index_value = get_index_value(idx, regs);
+            let index_value = get_index_value(regs, idx);
             fix_addr(regs, index_value);
         }
         4 => {

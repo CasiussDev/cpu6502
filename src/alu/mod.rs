@@ -63,7 +63,7 @@ pub fn sub(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusR
         let (mut result, mut overflow) = accumulator.to_i8().overflowing_sub(operand.to_i8());
         let (_, mut carry) = accumulator.to_u8().overflowing_sub(operand.to_u8());
 
-        if status_register.are_all_flags_set(StatusRegFlags::CARRY) == false {
+        if !status_register.are_all_flags_set(StatusRegFlags::CARRY) {
             let (_, dec_carry) = (result as u8).overflowing_sub(1);
             let (new_result, dec_overflow) = result.overflowing_sub(1);
             result = new_result;
@@ -97,7 +97,7 @@ pub fn dec(src_dst: &mut Reg8, status_register: &mut StatusReg) {
     } else {
         let result = src_dst.to_i8().wrapping_sub(1);
 
-        update_status_nz(result as i8, status_register);
+        update_status_nz(result, status_register);
 
         src_dst.set_i8(result);
     }

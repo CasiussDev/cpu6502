@@ -77,7 +77,7 @@ impl fmt::Debug for Reg8 {
         write!(
             f,
             "{:#04X} ( {}, {} )",
-            self.value, self.value as u8, self.value as i8
+            self.value, self.value, self.value as i8
         )
     }
 }

@@ -27,14 +27,14 @@ impl Interrupts {
     }
 
     pub fn set_nmi_input(&mut self) {
-        if self.nmi_input == false {
+        if !self.nmi_input {
             self.nmi_input = true;
             self.new_nmi = true;
         }
     }
 
     pub fn set_nmi_input_value(&mut self, value: bool) {
-        if value && (self.nmi_input == false) {
+        if value && !self.nmi_input {
             self.new_nmi = true;
         }
         self.nmi_input = value;
