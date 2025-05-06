@@ -1,9 +1,9 @@
 {}
 
-use crate::instr::InstructionSequenceMode2Discriminants;
-use crate::instr::InstructionSequenceMode2Discriminants::*;
+use crate::instr::InstructionSequenceMode;
+use crate::instr::InstructionSequenceMode::*;
 
-pub fn write_cycle_query(instr: InstructionSequenceMode2Discriminants, step: u8) -> bool {{
+pub fn write_cycle_query(instr: InstructionSequenceMode, step: u8) -> bool {{
     match (instr, step) {{
         {}
         _ => unreachable!(),
