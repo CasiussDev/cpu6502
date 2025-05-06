@@ -59,14 +59,6 @@ impl From<ReferenceableRegister8> for SelectedRegister8 {
 pub enum SelectedRegister16 {
     PC,
     Addr,
-
-    // "virtual" registers
-    NMInterruptAddrLow = 0xFFFA,
-    NMInterruptAddHigh = 0xFFFB,
-    ProgramStartAddrLow = 0xFFFC,
-    ProgramStartAddrHigh = 0xFFFD,
-    InterruptAddrLow = 0xFFFE,
-    InterruptAddrHigh = 0xFFFF,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
@@ -101,8 +93,6 @@ impl RegisterFile {
         match selection {
             SelectedRegister16::Addr => self.addr,
             SelectedRegister16::PC => self.pc,
-            //virtual registers
-            v => Reg16::new(v as u16),
         }
     }
 
@@ -110,8 +100,6 @@ impl RegisterFile {
         match selection {
             SelectedRegister16::Addr => &mut self.addr,
             SelectedRegister16::PC => &mut self.pc,
-            //virtual registers
-            _ => panic!("trying to get a mutable ref of a virtual register"),
         }
     }
 
@@ -142,41 +130,9 @@ impl RegisterFile {
     }
 
     pub fn set_selected_register16(&mut self, selection: SelectedRegister16, reg: Reg16) {
-        debug_assert_ne!(
-            selection,
-            SelectedRegister16::NMInterruptAddHigh,
-            "Attempting to write a read only register"
-        );
-        debug_assert_ne!(
-            selection,
-            SelectedRegister16::NMInterruptAddrLow,
-            "Attempting to write a read only register"
-        );
-        debug_assert_ne!(
-            selection,
-            SelectedRegister16::InterruptAddrHigh,
-            "Attempting to write a read only register"
-        );
-        debug_assert_ne!(
-            selection,
-            SelectedRegister16::InterruptAddrLow,
-            "Attempting to write a read only register"
-        );
-        debug_assert_ne!(
-            selection,
-            SelectedRegister16::ProgramStartAddrHigh,
-            "Attempting to write a read only register"
-        );
-        debug_assert_ne!(
-            selection,
-            SelectedRegister16::ProgramStartAddrLow,
-            "Attempting to write a read only register"
-        );
-
         match selection {
             SelectedRegister16::Addr => self.addr = reg,
             SelectedRegister16::PC => self.pc = reg,
-            _ => (),
         }
     }
 

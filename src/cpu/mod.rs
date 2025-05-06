@@ -3,6 +3,7 @@ mod cpu_impl;
 #[cfg(feature = "logging")]
 mod logging_memory;
 
+pub(crate) mod interrupt;
 #[cfg(not(feature = "gen_write_cycle_query"))]
 mod write_cycle_query;
 

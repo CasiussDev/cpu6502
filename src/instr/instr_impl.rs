@@ -6,9 +6,10 @@ use super::{
     PushStackOperation, RegisterMemoryOperation,
 };
 use crate::registers::{
-    IndexRegister, RegisterFile, SelectedRegister16, SelectedRegister8, StatusRegFlags,
+    IndexRegister, RegisterFile, SelectedRegister8, StatusRegFlags,
 };
 use crate::{alu, MemorySpace};
+use crate::cpu::interrupt::{InterruptVector, InterruptVectorAddrBytePos};
 #[cfg(feature = "logging")]
 use log::trace;
 
@@ -273,20 +274,50 @@ fn write_stack(regs: &mut RegisterFile, memory: &mut impl MemorySpace, value: u8
 fn read_interrupt_vector(
     regs: &mut RegisterFile,
     memory: &mut impl MemorySpace,
-    vector: SelectedRegister16,
+    vector: InterruptVector,
+    pos: InterruptVectorAddrBytePos
 ) {
-    regs.addr.set_u16(vector as u16);
+    regs.addr.set_u16(vector.addr(pos));
     let value = memory.read(regs.addr.to_u16());
+    
+    match pos {
+        InterruptVectorAddrBytePos::Low => regs.pc.set_low_u8(value),
+        InterruptVectorAddrBytePos::High => regs.pc.set_high_u8(value),
+    }
+}
 
-    match vector {
-        SelectedRegister16::InterruptAddrLow
-        | SelectedRegister16::ProgramStartAddrLow
-        | SelectedRegister16::NMInterruptAddrLow => regs.pc.set_low_u8(value),
-        SelectedRegister16::InterruptAddrHigh
-        | SelectedRegister16::ProgramStartAddrHigh
-        | SelectedRegister16::NMInterruptAddHigh => regs.pc.set_high_u8(value),
+fn handle_interrupt(
+    step: u8,
+    regs: &mut RegisterFile,
+    memory: &mut impl MemorySpace,
+    vector: InterruptVector,
+    set_break_flag: bool,
+) -> ClockEndStatus {
+    match step {
+        0 => {
+            let _ = read_pc(regs, memory);
+        }
+        1 => {
+            let _ = read_pc(regs, memory);
+        }
+        2 => write_stack(regs, memory, regs.pc.high_u8()),
+        3 => write_stack(regs, memory, regs.pc.low_u8()),
+        4 => {
+            let mut status = regs.status;
+            if set_break_flag {
+                status.set_flags(StatusRegFlags::BREAK);
+            }
+            write_stack(regs, memory, status.to_u8());
+            regs.status.set_flags(StatusRegFlags::IRQ_DISABLE);
+        }
+        5 => read_interrupt_vector(regs, memory, vector, InterruptVectorAddrBytePos::Low),
+        6 => {
+            read_interrupt_vector(regs, memory, vector, InterruptVectorAddrBytePos::High);
+            return ClockEndStatus::EndInstruction;
+        }
         _ => unreachable!(),
     }
+    ClockEndStatus::Continue
 }
 
 fn fetch_instr(step: u8, regs: &mut RegisterFile, memory: &mut impl MemorySpace) -> ClockEndStatus {
@@ -340,9 +371,9 @@ fn break_instr(step: u8, regs: &mut RegisterFile, memory: &mut impl MemorySpace)
             write_stack(regs, memory, status.to_u8());
             regs.status.set_flags(StatusRegFlags::IRQ_DISABLE);
         }
-        4 => read_interrupt_vector(regs, memory, SelectedRegister16::InterruptAddrLow),
+        4 => read_interrupt_vector(regs, memory, InterruptVector::Interrupt, InterruptVectorAddrBytePos::Low),
         5 => {
-            read_interrupt_vector(regs, memory, SelectedRegister16::InterruptAddrHigh);
+            read_interrupt_vector(regs, memory, InterruptVector::Interrupt, InterruptVectorAddrBytePos::High);
             return ClockEndStatus::EndInstruction;
         }
         _ => unreachable!(),
@@ -375,28 +406,13 @@ fn break_instr(step: u8, regs: &mut RegisterFile, memory: &mut impl MemorySpace)
 /// * `ClockEndStatus` - Indicates whether the sequence should continue (`Continue`) or if the
 ///   interrupt handling sequence is complete (`EndInstruction`).
 fn start_irq(step: u8, regs: &mut RegisterFile, memory: &mut impl MemorySpace) -> ClockEndStatus {
-    match step {
-        0 => {
-            let _ = read_pc(regs, memory);
-        }
-        1 => {
-            let _ = read_pc(regs, memory);
-        }
-        2 => write_stack(regs, memory, regs.pc.high_u8()),
-        3 => write_stack(regs, memory, regs.pc.low_u8()),
-        4 => {
-            write_stack(regs, memory, regs.status.to_u8());
-            regs.status.set_flags(StatusRegFlags::IRQ_DISABLE);
-        }
-        5 => read_interrupt_vector(regs, memory, SelectedRegister16::InterruptAddrLow),
-        6 => {
-            read_interrupt_vector(regs, memory, SelectedRegister16::InterruptAddrHigh);
-            return ClockEndStatus::EndInstruction;
-        }
-        _ => unreachable!(),
-    }
-
-    ClockEndStatus::Continue
+    handle_interrupt(
+        step,
+        regs,
+        memory,
+        InterruptVector::Interrupt,
+        false,
+    )
 }
 
 /// Executes one step of the NMI (Non-Maskable Interrupt) sequence.
@@ -423,28 +439,13 @@ fn start_irq(step: u8, regs: &mut RegisterFile, memory: &mut impl MemorySpace) -
 /// * `ClockEndStatus` - Indicates whether the sequence should continue (`Continue`) or if the
 ///   interrupt handling sequence is complete (`EndInstruction`).
 fn start_nmi(step: u8, regs: &mut RegisterFile, memory: &mut impl MemorySpace) -> ClockEndStatus {
-    match step {
-        0 => {
-            let _ = read_pc(regs, memory);
-        }
-        1 => {
-            let _ = read_pc(regs, memory);
-        }
-        2 => write_stack(regs, memory, regs.pc.high_u8()),
-        3 => write_stack(regs, memory, regs.pc.low_u8()),
-        4 => {
-            write_stack(regs, memory, regs.status.to_u8());
-            regs.status.set_flags(StatusRegFlags::IRQ_DISABLE);
-        }
-        5 => read_interrupt_vector(regs, memory, SelectedRegister16::NMInterruptAddrLow),
-        6 => {
-            read_interrupt_vector(regs, memory, SelectedRegister16::NMInterruptAddHigh);
-            return ClockEndStatus::EndInstruction;
-        }
-        _ => unreachable!(),
-    }
-
-    ClockEndStatus::Continue
+    handle_interrupt(
+        step,
+        regs,
+        memory,
+        InterruptVector::NonMaskableInterrupt,
+        false,
+    )
 }
 
 fn push(
@@ -538,10 +539,10 @@ fn reset(step: u8, regs: &mut RegisterFile, memory: &mut impl MemorySpace) -> Cl
             write_stack(regs, memory, regs.status.to_u8());
         }
         4 => {
-            read_interrupt_vector(regs, memory, SelectedRegister16::ProgramStartAddrLow);
+            read_interrupt_vector(regs, memory, InterruptVector::ProgramStart, InterruptVectorAddrBytePos::Low);
         }
         5 => {
-            read_interrupt_vector(regs, memory, SelectedRegister16::ProgramStartAddrHigh);
+            read_interrupt_vector(regs, memory, InterruptVector::ProgramStart, InterruptVectorAddrBytePos::High);
             return ClockEndStatus::EndInstruction;
         }
         _ => unreachable!(),

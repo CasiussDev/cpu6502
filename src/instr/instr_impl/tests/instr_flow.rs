@@ -1,7 +1,8 @@
+use crate::cpu::interrupt::{InterruptVector, InterruptVectorAddrBytePos};
 use crate::instr::instr_impl::tests::MockMemory;
 use crate::instr::instr_impl::{execute, ClockEndStatus};
 use crate::instr::{BranchOperation, Instruction};
-use crate::registers::{RegisterFile, SelectedRegister16, StatusReg, StatusRegFlags};
+use crate::registers::{RegisterFile, StatusReg, StatusRegFlags};
 
 #[test]
 fn break_instr() {
@@ -41,8 +42,8 @@ fn execute_start_irq() {
     regs.status.set_u8(0x00);
 
     // Set interrupt vector values in memory
-    memory.data[SelectedRegister16::InterruptAddrLow as usize] = 0x34;
-    memory.data[SelectedRegister16::InterruptAddrHigh as usize] = 0x12;
+    memory.data[InterruptVector::Interrupt.addr(InterruptVectorAddrBytePos::Low) as usize] = 0x34;
+    memory.data[InterruptVector::Interrupt.addr(InterruptVectorAddrBytePos::High) as usize] = 0x12;
 
     // Execute start_irq
     let mut step = 0;
@@ -68,8 +69,8 @@ fn execute_start_nmi() {
     regs.status.set_u8(0x00);
 
     // Set NMI vector values in memory
-    memory.data[SelectedRegister16::NMInterruptAddrLow as usize] = 0x34;
-    memory.data[SelectedRegister16::NMInterruptAddHigh as usize] = 0x12;
+    memory.data[InterruptVector::NonMaskableInterrupt.addr(InterruptVectorAddrBytePos::Low) as usize] = 0x34;
+    memory.data[InterruptVector::NonMaskableInterrupt.addr(InterruptVectorAddrBytePos::High) as usize] = 0x12;
 
     // Execute start_nmi
     let mut step = 0;

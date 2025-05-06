@@ -1,8 +1,9 @@
 use super::execute;
+use crate::cpu::interrupt::{InterruptVector, InterruptVectorAddrBytePos};
 use crate::instr::instr_impl::tests::MockMemory;
 use crate::instr::instr_impl::ClockEndStatus;
 use crate::instr::Instruction;
-use crate::registers::{RegisterFile, SelectedRegister16};
+use crate::registers::RegisterFile;
 
 #[test]
 fn fetch_instr() {
@@ -37,8 +38,10 @@ fn reset() {
     regs.status.set_u8(0x00);
 
     // Set interrupt vector values in memory
-    memory.data[SelectedRegister16::ProgramStartAddrLow as usize] = 0x78;
-    memory.data[SelectedRegister16::ProgramStartAddrHigh as usize] = 0x56;
+    memory.data[InterruptVector::ProgramStart.addr(InterruptVectorAddrBytePos::Low) as usize] =
+        0x78;
+    memory.data[InterruptVector::ProgramStart.addr(InterruptVectorAddrBytePos::High) as usize] =
+        0x56;
 
     // Execute reset
     let mut step = 0;

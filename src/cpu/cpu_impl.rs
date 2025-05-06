@@ -1,6 +1,5 @@
+use crate::cpu::interrupt::{waiting_interrupt, InterruptType, Interrupts};
 use crate::instr::{instr_impl, Instruction};
-use crate::interrupts::InterruptType;
-use crate::interrupts::Interrupts;
 use crate::registers::RegisterFile;
 use crate::{instr, MemorySpace};
 
@@ -27,20 +26,6 @@ pub struct Cpu {
 
     #[cfg(feature = "disassembly")]
     fetched_instr_addr: Option<u16>,
-}
-
-fn waiting_interrupt(
-    prev_waiting_interrupt: Option<InterruptType>,
-    pins: &mut Interrupts,
-    irq_disabled: bool,
-) -> Option<InterruptType> {
-    if pins.waiting_nmi() || (prev_waiting_interrupt == Some(InterruptType::NonMaskableInterrupt)) {
-        Some(InterruptType::NonMaskableInterrupt)
-    } else if pins.is_irq_set() && !irq_disabled {
-        Some(InterruptType::Interrupt)
-    } else {
-        None
-    }
 }
 
 impl Cpu {
@@ -193,8 +178,8 @@ impl Cpu {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cpu::interrupt::InterruptType::{Interrupt, NonMaskableInterrupt};
     use crate::instr::MemoryModifyOperation;
-    use crate::interrupts::InterruptType::{Interrupt, NonMaskableInterrupt};
     use crate::registers::StatusRegFlags;
 
     struct MockMemory {
