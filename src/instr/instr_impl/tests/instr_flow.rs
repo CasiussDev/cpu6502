@@ -1,7 +1,7 @@
 use crate::instr::instr_impl::tests::MockMemory;
 use crate::instr::instr_impl::{execute, ClockEndStatus};
 use crate::instr::{BranchOperation, Instruction};
-use crate::registers::{RegisterFile, SelectedRegister16, StatusRegFlags};
+use crate::registers::{RegisterFile, SelectedRegister16, StatusReg, StatusRegFlags};
 
 #[test]
 fn break_instr() {
@@ -19,12 +19,13 @@ fn break_instr() {
         step += 1;
     }
 
+    let pushed_status_byte = memory.data[0x01FD];
+    let pushed_status_register: StatusReg = pushed_status_byte.into();
+
     // Verify the results
     assert_eq!(regs.sp.to_u8(), 0xFC); // Stack pointer should be decremented 3 times
-    assert_eq!(
-        regs.status.to_u8(),
-        StatusRegFlags::IRQ_DISABLE.bits() | StatusRegFlags::BREAK.bits()
-    ); // Status register should have IRQ_DISABLE and BREAK flags set
+    assert_eq!(regs.status.to_u8(), StatusRegFlags::IRQ_DISABLE.bits()); // Status register should have IRQ_DISABLE flag set
+    assert_eq!(pushed_status_register.to_u8(), StatusRegFlags::BREAK.bits()); // Status register in stack should have BREAK flag set
     assert_eq!(regs.pc.to_u16(), 0x0000); // Program counter should be set to the interrupt vector address
     assert_eq!(step, 5); // Ensure the step value is correct
 }
@@ -53,7 +54,7 @@ fn execute_start_irq() {
     assert_eq!(regs.pc.to_u16(), 0x1234);
     assert_eq!(regs.sp.to_u8(), 0xFC); // Stack pointer should be decremented 3 times
     assert!(regs.status.are_all_flags_set(StatusRegFlags::IRQ_DISABLE)); // IRQ_DISABLE flag should be set
-    assert_eq!(step, 5);
+    assert_eq!(step, 6);
 }
 
 #[test]
@@ -79,7 +80,7 @@ fn execute_start_nmi() {
     // Verify the results
     assert_eq!(regs.pc.to_u16(), 0x1234);
     assert_eq!(regs.sp.to_u8(), 0xFC); // Stack pointer should be decremented 3 times
-    assert_eq!(step, 5);
+    assert_eq!(step, 6);
 }
 
 #[test]

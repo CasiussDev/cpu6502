@@ -88,6 +88,10 @@ impl StatusReg {
     pub fn overflow(&self) -> bool {
         self.flags.contains(StatusRegFlags::OVERFLOW)
     }
+
+    pub fn irq_disable(&self) -> bool {
+        self.flags.contains(StatusRegFlags::IRQ_DISABLE)
+    }
 }
 
 impl fmt::Debug for StatusReg {

@@ -32,10 +32,11 @@ pub struct Cpu {
 fn waiting_interrupt(
     prev_waiting_interrupt: Option<InterruptType>,
     pins: &mut Interrupts,
+    irq_disabled: bool,
 ) -> Option<InterruptType> {
     if pins.waiting_nmi() || (prev_waiting_interrupt == Some(InterruptType::NonMaskableInterrupt)) {
         Some(InterruptType::NonMaskableInterrupt)
-    } else if pins.is_irq_set() || (prev_waiting_interrupt == Some(InterruptType::Interrupt)) {
+    } else if pins.is_irq_set() && !irq_disabled {
         Some(InterruptType::Interrupt)
     } else {
         None
@@ -134,7 +135,11 @@ impl Cpu {
             self.fetched_instr_addr = None;
         }
 
-        self.waiting_interrupt = waiting_interrupt(self.waiting_interrupt, &mut self.pins);
+        self.waiting_interrupt = waiting_interrupt(
+            self.waiting_interrupt,
+            &mut self.pins,
+            self.regs.status.irq_disable(),
+        );
 
         if let Some(interrupt) = self.waiting_interrupt {
             if self.current_instruction == Instruction::FetchInstr {
@@ -182,5 +187,338 @@ impl Cpu {
         }
 
         self.cycle_count_since_reset += 1;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::instr::MemoryModifyOperation;
+    use crate::interrupts::InterruptType::{Interrupt, NonMaskableInterrupt};
+    use crate::registers::StatusRegFlags;
+
+    struct MockMemory {
+        mem: Vec<u8>,
+    }
+    impl MemorySpace for MockMemory {
+        fn read(&mut self, addr: u16) -> u8 {
+            self.mem[addr as usize]
+        }
+        fn write(&mut self, value: u8, addr: u16) {
+            self.mem[addr as usize] = value;
+        }
+    }
+
+    fn setup_cpu() -> (Cpu, MockMemory) {
+        let mut cpu = Cpu::new();
+
+        let regs = &mut cpu.regs;
+        let mut memory = MockMemory {
+            mem: vec![0; u16::MAX as usize + 1],
+        };
+
+        // Define the IRQ vector ($FFFE/$FFFF) pointing to a known address
+        memory.mem[0xFFFE] = 0xEF;
+        memory.mem[0xFFFF] = 0xBE;
+
+        // Set INC zeropage as the first and second instructions
+        let initial_pc = 0x2000;
+        regs.pc.set_u16(initial_pc);
+        memory.mem[0x2000] = 0xE6;
+        memory.mem[0x2001] = 0x01;
+        memory.mem[0x2002] = 0xE6;
+        memory.mem[0x2003] = 0x01;
+
+        // Set known initial values for SP
+        let initial_sp = 0xFD;
+        regs.sp.set_u8(initial_sp);
+
+        regs.status.clear_flags(StatusRegFlags::IRQ_DISABLE); // Ensure I flag is clear
+
+        // Set cpu to fetch, to avoid executing reset sequence
+        cpu.current_instruction = Instruction::FetchInstr;
+        cpu.current_instruction_step = 0;
+
+        (cpu, memory)
+    }
+
+    #[test]
+    fn nmi_start() {
+        let (mut cpu, mut memory) = setup_cpu();
+
+        // Initial Fetch
+        cpu.run(&mut memory);
+
+        // Set NMI Pin
+        cpu.set_nmi_pin();
+
+        // Execute INC zeropage
+        for _ in 0..=3 {
+            cpu.run(&mut memory);
+        }
+
+        // Check instruction finished execution and waiting_interrupt is set
+        assert_eq!(cpu.current_instruction, Instruction::FetchInstr);
+        assert_eq!(cpu.current_instruction_step, 0);
+        assert_eq!(
+            cpu.waiting_interrupt,
+            Some(NonMaskableInterrupt),
+            "Waiting interrupt should be set to NMI"
+        );
+        assert_eq!(
+            memory.mem[0x0001], 0x01,
+            "INC should have incremented memory"
+        );
+
+        // Run first cycle of servicing interrupt request
+        cpu.run(&mut memory);
+        assert_eq!(cpu.current_instruction, Instruction::StartNmi);
+        assert_eq!(cpu.current_instruction_step, 1);
+        assert_eq!(
+            cpu.waiting_interrupt, None,
+            "Waiting interrupt should be cleared after starting NMI"
+        );
+    }
+
+    #[test]
+    fn nmi_irq_disabled() {
+        let (mut cpu, mut memory) = setup_cpu();
+        cpu.regs.status.set_flags(StatusRegFlags::IRQ_DISABLE);
+
+        // Initial Fetch
+        cpu.run(&mut memory);
+
+        // Set NMI Pin
+        cpu.set_nmi_pin();
+
+        // Execute INC zeropage
+        for _ in 0..=3 {
+            cpu.run(&mut memory);
+        }
+
+        // Check instruction finished execution and waiting_interrupt is set
+        assert_eq!(cpu.current_instruction, Instruction::FetchInstr);
+        assert_eq!(cpu.current_instruction_step, 0);
+        assert_eq!(
+            cpu.waiting_interrupt,
+            Some(NonMaskableInterrupt),
+            "Waiting interrupt should be set to NMI"
+        );
+        assert_eq!(
+            memory.mem[0x0001], 0x01,
+            "INC should have incremented memory"
+        );
+
+        // Run first cycle of servicing interrupt request
+        cpu.run(&mut memory);
+        assert_eq!(cpu.current_instruction, Instruction::StartNmi);
+        assert_eq!(cpu.current_instruction_step, 1);
+        assert_eq!(
+            cpu.waiting_interrupt, None,
+            "Waiting interrupt should be cleared after starting NMI"
+        );
+    }
+
+    #[test]
+    fn nmi_edge_sensitive() {
+        let (mut cpu, mut memory) = setup_cpu();
+
+        // Initial Fetch
+        cpu.run(&mut memory);
+
+        // Set NMI Pin
+        cpu.set_nmi_pin();
+
+        // Execute first cycle of INC zeropage
+        cpu.run(&mut memory);
+        cpu.clear_nmi_pin();
+
+        // Execute INC zeropage
+        for _ in 1..=3 {
+            cpu.run(&mut memory);
+        }
+
+        // Check instruction finished execution and waiting_interrupt is set
+        assert_eq!(cpu.current_instruction, Instruction::FetchInstr);
+        assert_eq!(cpu.current_instruction_step, 0);
+        assert_eq!(
+            cpu.waiting_interrupt,
+            Some(NonMaskableInterrupt),
+            "Waiting interrupt should be set to NMI"
+        );
+        assert_eq!(
+            memory.mem[0x0001], 0x01,
+            "INC should have incremented memory"
+        );
+
+        // Run first cycle of servicing interrupt request
+        cpu.run(&mut memory);
+        assert_eq!(cpu.current_instruction, Instruction::StartNmi);
+        assert_eq!(cpu.current_instruction_step, 1);
+        assert_eq!(
+            cpu.waiting_interrupt, None,
+            "Waiting interrupt should be cleared after starting NMI"
+        );
+    }
+
+    #[test]
+    fn irq_start() {
+        let (mut cpu, mut memory) = setup_cpu();
+
+        // Initial Fetch
+        cpu.run(&mut memory);
+
+        // Set IRQ Pin
+        cpu.set_irq_pin();
+
+        // Execute INC zeropage
+        for _ in 0..=3 {
+            cpu.run(&mut memory);
+        }
+
+        // Check instruction finished execution and waiting_interrupt is set
+        assert_eq!(cpu.current_instruction, Instruction::FetchInstr);
+        assert_eq!(cpu.current_instruction_step, 0);
+        assert_eq!(
+            cpu.waiting_interrupt,
+            Some(Interrupt),
+            "Waiting interrupt should be set to IRQ"
+        );
+        assert_eq!(
+            memory.mem[0x0001], 0x01,
+            "INC should have incremented memory"
+        );
+
+        // Run first cycle of servicing interrupt request
+        cpu.run(&mut memory);
+        assert_eq!(cpu.current_instruction, Instruction::StartIrq);
+        assert_eq!(cpu.current_instruction_step, 1);
+        assert_eq!(
+            cpu.waiting_interrupt, None,
+            "Waiting interrupt should be cleared after starting IRQ"
+        );
+    }
+
+    #[test]
+    fn irq_disabled() {
+        let (mut cpu, mut memory) = setup_cpu();
+        cpu.regs.status.set_flags(StatusRegFlags::IRQ_DISABLE);
+
+        // Initial Fetch
+        cpu.run(&mut memory);
+
+        // Set IRQ Pin
+        cpu.set_irq_pin();
+
+        // Execute INC zeropage
+        for _ in 0..=3 {
+            cpu.run(&mut memory);
+        }
+
+        // Check instruction finished execution and waiting_interrupt is not set
+        assert_eq!(cpu.current_instruction, Instruction::FetchInstr);
+        assert_eq!(cpu.current_instruction_step, 0);
+        assert_eq!(
+            cpu.waiting_interrupt, None,
+            "Waiting interrupt should be set to None"
+        );
+        assert_eq!(
+            memory.mem[0x0001], 0x01,
+            "INC should have incremented memory"
+        );
+
+        // Run next fetch
+        cpu.run(&mut memory);
+        assert_eq!(
+            cpu.current_instruction,
+            Instruction::ZeroPageReadModifyWrite(MemoryModifyOperation::IncrementMemory)
+        );
+        assert_eq!(cpu.current_instruction_step, 0);
+        assert_eq!(
+            cpu.waiting_interrupt, None,
+            "Waiting interrupt should be set to None"
+        );
+    }
+
+    #[test]
+    fn irq_level_sensitive() {
+        let (mut cpu, mut memory) = setup_cpu();
+
+        // Initial Fetch
+        cpu.run(&mut memory);
+
+        // Set IRQ Pin
+        cpu.set_irq_pin();
+
+        // Execute INC zeropage
+        for _ in 0..=3 {
+            cpu.run(&mut memory);
+        }
+
+        cpu.clear_irq_pin();
+
+        // Check instruction finished execution and waiting_interrupt is not set
+        assert_eq!(cpu.current_instruction, Instruction::FetchInstr);
+        assert_eq!(cpu.current_instruction_step, 0);
+        assert_eq!(
+            cpu.waiting_interrupt,
+            Some(Interrupt),
+            "Waiting interrupt should be set to IRQ"
+        );
+        assert_eq!(
+            memory.mem[0x0001], 0x01,
+            "INC should have incremented memory"
+        );
+
+        // Run next fetch
+        cpu.run(&mut memory);
+        assert_eq!(
+            cpu.current_instruction,
+            Instruction::ZeroPageReadModifyWrite(MemoryModifyOperation::IncrementMemory)
+        );
+        assert_eq!(cpu.current_instruction_step, 0);
+        assert_eq!(
+            cpu.waiting_interrupt, None,
+            "Waiting interrupt should be set to None since irq was cleared before running fetch"
+        );
+    }
+
+    #[test]
+    fn interrupt_priority() {
+        let (mut cpu, mut memory) = setup_cpu();
+
+        // Initial Fetch
+        cpu.run(&mut memory);
+
+        // Set NMI Pin
+        cpu.set_nmi_pin();
+        cpu.set_irq_pin();
+
+        // Execute INC zeropage
+        for _ in 0..=3 {
+            cpu.run(&mut memory);
+        }
+
+        // Check instruction finished execution and waiting_interrupt is set
+        assert_eq!(cpu.current_instruction, Instruction::FetchInstr);
+        assert_eq!(cpu.current_instruction_step, 0);
+        assert_eq!(
+            cpu.waiting_interrupt,
+            Some(NonMaskableInterrupt),
+            "Waiting interrupt should be set to NMI"
+        );
+        assert_eq!(
+            memory.mem[0x0001], 0x01,
+            "INC should have incremented memory"
+        );
+
+        // Run first cycle of servicing interrupt request
+        cpu.run(&mut memory);
+        assert_eq!(cpu.current_instruction, Instruction::StartNmi);
+        assert_eq!(cpu.current_instruction_step, 1);
+        assert_eq!(
+            cpu.waiting_interrupt, None,
+            "Waiting interrupt should be cleared after starting NMI"
+        );
     }
 }

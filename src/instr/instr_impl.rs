@@ -304,6 +304,29 @@ fn fetch_instr(step: u8, regs: &mut RegisterFile, memory: &mut impl MemorySpace)
     }
 }
 
+/// Executes one step of the BRK (Break) instruction sequence.
+///
+/// The BRK instruction initiates a software interrupt. This multi-cycle process typically involves:
+/// (Cycle 1: Fetch BRK opcode - handled externally)
+/// Step 0 (Cycle 2): Read and discard the byte after BRK (padding), increment PC.
+/// Step 1 (Cycle 3): Push high byte of PC onto stack.
+/// Step 2 (Cycle 4): Push low byte of PC onto stack.
+/// Step 3 (Cycle 5): Push the processor status register (P) onto the stack, with the B (Break) flag set. Set the I (Interrupt Disable) flag.
+/// Step 4 (Cycle 6): Load the low byte of the interrupt vector address ($FFFE) into PCL.
+/// Step 5 (Cycle 7): Load the high byte of the interrupt vector address ($FFFF) into PCH.
+///
+/// This function performs a single step of this sequence based on the `step` parameter.
+///
+/// # Arguments
+///
+/// * `step` - The current step number (0-5) within the multi-cycle sequence, corresponding to cycles 2-7.
+/// * `regs` - A mutable reference to the CPU's register file.
+/// * `memory` - A mutable reference to the memory space for reading/writing.
+///
+/// # Returns
+///
+/// * `ClockEndStatus` - Indicates whether the sequence should continue (`Continue`) or if the
+///   interrupt handling sequence is complete (`EndInstruction`).
 fn break_instr(step: u8, regs: &mut RegisterFile, memory: &mut impl MemorySpace) -> ClockEndStatus {
     match step {
         0 => {
@@ -312,10 +335,10 @@ fn break_instr(step: u8, regs: &mut RegisterFile, memory: &mut impl MemorySpace)
         1 => write_stack(regs, memory, regs.pc.high_u8()),
         2 => write_stack(regs, memory, regs.pc.low_u8()),
         3 => {
-            regs.status
-                .set_flags(StatusRegFlags::IRQ_DISABLE | StatusRegFlags::BREAK);
-            let status = regs.status.to_u8();
-            write_stack(regs, memory, status);
+            let mut status = regs.status;
+            status.set_flags(StatusRegFlags::BREAK);
+            write_stack(regs, memory, status.to_u8());
+            regs.status.set_flags(StatusRegFlags::IRQ_DISABLE);
         }
         4 => read_interrupt_vector(regs, memory, SelectedRegister16::InterruptAddrLow),
         5 => {
@@ -328,19 +351,45 @@ fn break_instr(step: u8, regs: &mut RegisterFile, memory: &mut impl MemorySpace)
     ClockEndStatus::Continue
 }
 
+/// Executes one step of the NMI (Non-Maskable Interrupt) sequence.
+///
+/// An NMI is triggered externally and cannot be disabled by the I flag. This multi-cycle process typically involves:
+/// Step 0 (Cycle 1): Perform dummy read (e.g., re-read last instruction byte).
+/// Step 1 (Cycle 2): Perform dummy read (e.g., re-read last instruction byte).
+/// Step 2 (Cycle 3): Push high byte of the current PC onto stack.
+/// Step 3 (Cycle 4): Push low byte of the current PC onto stack.
+/// Step 4 (Cycle 5): Push the processor status register (P) onto the stack, with the B (Break) flag clear. Set the I (Interrupt Disable) flag.
+/// Step 5 (Cycle 6): Load the low byte of the NMI vector address ($FFFA) into PCL.
+/// Step 6 (Cycle 7): Load the high byte of the NMI vector address ($FFFB) into PCH.
+///
+/// This function performs a single step of this sequence based on the `step` parameter.
+///
+/// # Arguments
+///
+/// * `step` - The current step number (0-6) within the multi-cycle sequence, corresponding to cycles 1-7.
+/// * `regs` - A mutable reference to the CPU's register file.
+/// * `memory` - A mutable reference to the memory space for reading/writing.
+///
+/// # Returns
+///
+/// * `ClockEndStatus` - Indicates whether the sequence should continue (`Continue`) or if the
+///   interrupt handling sequence is complete (`EndInstruction`).
 fn start_irq(step: u8, regs: &mut RegisterFile, memory: &mut impl MemorySpace) -> ClockEndStatus {
     match step {
         0 => {
             let _ = read_pc(regs, memory);
         }
-        1 => write_stack(regs, memory, regs.pc.high_u8()),
-        2 => write_stack(regs, memory, regs.pc.low_u8()),
-        3 => {
-            regs.status.set_flags(StatusRegFlags::IRQ_DISABLE);
-            write_stack(regs, memory, regs.status.to_u8());
+        1 => {
+            let _ = read_pc(regs, memory);
         }
-        4 => read_interrupt_vector(regs, memory, SelectedRegister16::InterruptAddrLow),
-        5 => {
+        2 => write_stack(regs, memory, regs.pc.high_u8()),
+        3 => write_stack(regs, memory, regs.pc.low_u8()),
+        4 => {
+            write_stack(regs, memory, regs.status.to_u8());
+            regs.status.set_flags(StatusRegFlags::IRQ_DISABLE);
+        }
+        5 => read_interrupt_vector(regs, memory, SelectedRegister16::InterruptAddrLow),
+        6 => {
             read_interrupt_vector(regs, memory, SelectedRegister16::InterruptAddrHigh);
             return ClockEndStatus::EndInstruction;
         }
@@ -350,16 +399,45 @@ fn start_irq(step: u8, regs: &mut RegisterFile, memory: &mut impl MemorySpace) -
     ClockEndStatus::Continue
 }
 
+/// Executes one step of the NMI (Non-Maskable Interrupt) sequence.
+///
+/// An NMI is triggered externally and cannot be disabled by the I flag. This multi-cycle process typically involves:
+/// Step 0 (Cycle 1): Perform dummy read (e.g., re-read last instruction byte).
+/// Step 1 (Cycle 2): Perform dummy read (e.g., re-read last instruction byte).
+/// Step 2 (Cycle 3): Push high byte of the current PC onto stack.
+/// Step 3 (Cycle 4): Push low byte of the current PC onto stack.
+/// Step 4 (Cycle 5): Push the processor status register (P) onto the stack, with the B (Break) flag clear. Set the I (Interrupt Disable) flag.
+/// Step 5 (Cycle 6): Load the low byte of the NMI vector address ($FFFA) into PCL.
+/// Step 6 (Cycle 7): Load the high byte of the NMI vector address ($FFFB) into PCH.
+///
+/// This function performs a single step of this sequence based on the `step` parameter.
+///
+/// # Arguments
+///
+/// * `step` - The current step number (0-6) within the multi-cycle sequence, corresponding to cycles 1-7.
+/// * `regs` - A mutable reference to the CPU's register file.
+/// * `memory` - A mutable reference to the memory space for reading/writing.
+///
+/// # Returns
+///
+/// * `ClockEndStatus` - Indicates whether the sequence should continue (`Continue`) or if the
+///   interrupt handling sequence is complete (`EndInstruction`).
 fn start_nmi(step: u8, regs: &mut RegisterFile, memory: &mut impl MemorySpace) -> ClockEndStatus {
     match step {
         0 => {
             let _ = read_pc(regs, memory);
         }
-        1 => write_stack(regs, memory, regs.pc.high_u8()),
-        2 => write_stack(regs, memory, regs.pc.low_u8()),
-        3 => write_stack(regs, memory, regs.status.to_u8()),
-        4 => read_interrupt_vector(regs, memory, SelectedRegister16::NMInterruptAddrLow),
-        5 => {
+        1 => {
+            let _ = read_pc(regs, memory);
+        }
+        2 => write_stack(regs, memory, regs.pc.high_u8()),
+        3 => write_stack(regs, memory, regs.pc.low_u8()),
+        4 => {
+            write_stack(regs, memory, regs.status.to_u8());
+            regs.status.set_flags(StatusRegFlags::IRQ_DISABLE);
+        }
+        5 => read_interrupt_vector(regs, memory, SelectedRegister16::NMInterruptAddrLow),
+        6 => {
             read_interrupt_vector(regs, memory, SelectedRegister16::NMInterruptAddHigh);
             return ClockEndStatus::EndInstruction;
         }
