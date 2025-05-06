@@ -18,7 +18,6 @@ pub enum SelectedRegister8 {
 
     // "virtual" registers
     StackPage = 0x01,
-    Discard,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Default)]
@@ -68,9 +67,6 @@ pub enum SelectedRegister16 {
     ProgramStartAddrHigh = 0xFFFD,
     InterruptAddrLow = 0xFFFE,
     InterruptAddrHigh = 0xFFFF,
-
-    #[allow(dead_code)]
-    Discard,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
@@ -142,7 +138,6 @@ impl RegisterFile {
             SelectedRegister8::AddrHigh => Reg8::new(self.addr.high_u8()),
             SelectedRegister8::AddrLow => Reg8::new(self.addr.low_u8()),
             SelectedRegister8::StackPage => Reg8::new(SelectedRegister8::StackPage as u8),
-            SelectedRegister8::Discard => Reg8::default(),
         }
     }
 
@@ -206,7 +201,6 @@ impl RegisterFile {
             SelectedRegister8::AddrHigh => self.addr.set_high_u8(value),
             SelectedRegister8::AddrLow => self.addr.set_low_u8(value),
             SelectedRegister8::StackPage => (),
-            SelectedRegister8::Discard => (),
         };
     }
 
