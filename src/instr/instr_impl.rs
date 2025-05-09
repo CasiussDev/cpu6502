@@ -450,6 +450,25 @@ fn start_nmi(step: u8, regs: &mut RegisterFile, memory: &mut impl MemorySpace) -
     )
 }
 
+/// Executes one step of the push operation (PHA or PHP instruction) sequence.
+///
+/// The push operation stores a value from either the Accumulator (A) or Status register (P) onto the stack.
+/// This multi-cycle process involves:
+/// (Cycle 1: Fetch opcode - handled externally)
+/// Step 0 (Cycle 2): Dummy read from the PC address.
+/// Step 1 (Cycle 3): Push the value (A or P) onto the stack at the current stack pointer address, then decrement SP.
+///
+/// # Arguments
+///
+/// * `step` - The current step number (0-1) within the multi-cycle sequence.
+/// * `regs` - A mutable reference to the CPU's register file.
+/// * `memory` - A mutable reference to the memory space for reading/writing.
+/// * `op` - The specific push operation (PushA for accumulator, PushStatus for processor status).
+///
+/// # Returns
+///
+/// * `ClockEndStatus` - Indicates whether the sequence should continue (`Continue`) or if the
+///   instruction is complete (`EndInstruction`).
 fn push(
     step: u8,
     regs: &mut RegisterFile,
@@ -485,6 +504,27 @@ fn push(
     ClockEndStatus::Continue
 }
 
+/// Executes one step of the pull operation (PLA or PLP instruction) sequence.
+///
+/// The pull operation retrieves a value from the stack and loads it into either the Accumulator (A)
+/// or Status register (P). This multi-cycle process involves:
+/// (Cycle 1: Fetch opcode - handled externally)
+/// Step 0 (Cycle 2): Dummy read from the PC address.
+/// Step 1 (Cycle 3): Increment the stack pointer.
+/// Step 2 (Cycle 4): Read the value from the stack at the current stack pointer address and load it
+///                    into either A or P. For PLA, update the N and Z status flags based on the value.
+///
+/// # Arguments
+///
+/// * `step` - The current step number (0-2) within the multi-cycle sequence.
+/// * `regs` - A mutable reference to the CPU's register file.
+/// * `memory` - A mutable reference to the memory space for reading/writing.
+/// * `op` - The specific pull operation (PullA for accumulator, PullStatus for processor status).
+///
+/// # Returns
+///
+/// * `ClockEndStatus` - Indicates whether the sequence should continue (`Continue`) or if the
+///   instruction is complete (`EndInstruction`).
 fn pull(
     step: u8,
     regs: &mut RegisterFile,
