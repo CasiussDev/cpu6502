@@ -1,18 +1,18 @@
 use super::execute;
 use crate::cpu::interrupt::{InterruptVector, InterruptVectorAddrBytePos};
-use crate::instr::instr_impl::tests::MockMemory;
 use crate::instr::instr_impl::ClockEndStatus;
 use crate::instr::Instruction;
+use crate::memory::memory_space::new_basic_ram;
 use crate::registers::RegisterFile;
 
 #[test]
 fn fetch_instr() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
 
     // Set initial values
     regs.pc.set_u16(0x1000);
-    memory.data[0x1000] = 0xA9; // Example instruction
+    memory[0x1000] = 0xA9; // Example instruction
 
     // Execute fetch_instr
     let result = super::fetch_instr(0, &mut regs, &mut memory);
@@ -30,7 +30,7 @@ fn fetch_instr() {
 #[test]
 fn reset() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
 
     // Set initial values
     regs.pc.set_u16(0x1234);
@@ -38,9 +38,9 @@ fn reset() {
     regs.status.set_u8(0x00);
 
     // Set interrupt vector values in memory
-    memory.data[InterruptVector::ProgramStart.addr(InterruptVectorAddrBytePos::Low) as usize] =
+    memory[InterruptVector::ProgramStart.addr(InterruptVectorAddrBytePos::Low) as usize] =
         0x78;
-    memory.data[InterruptVector::ProgramStart.addr(InterruptVectorAddrBytePos::High) as usize] =
+    memory[InterruptVector::ProgramStart.addr(InterruptVectorAddrBytePos::High) as usize] =
         0x56;
 
     // Execute reset

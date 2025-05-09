@@ -1,13 +1,14 @@
 use crate::cpu::interrupt::{InterruptVector, InterruptVectorAddrBytePos};
-use crate::instr::instr_impl::tests::MockMemory;
 use crate::instr::instr_impl::{execute, ClockEndStatus};
 use crate::instr::{BranchOperation, Instruction};
+use crate::memory::memory_space::new_basic_ram;
 use crate::registers::{RegisterFile, StatusReg, StatusRegFlags};
+use crate::MemorySpace;
 
 #[test]
 fn break_instr() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
 
     // Set initial values
     regs.pc.set_u16(0x1000);
@@ -20,7 +21,7 @@ fn break_instr() {
         step += 1;
     }
 
-    let pushed_status_byte = memory.data[0x01FD];
+    let pushed_status_byte = memory[0x01FD];
     let pushed_status_register: StatusReg = pushed_status_byte.into();
 
     // Verify the results
@@ -34,7 +35,7 @@ fn break_instr() {
 #[test]
 fn execute_start_irq() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
 
     // Set initial values
     regs.pc.set_u16(0x1000);
@@ -42,8 +43,8 @@ fn execute_start_irq() {
     regs.status.set_u8(0x00);
 
     // Set interrupt vector values in memory
-    memory.data[InterruptVector::Interrupt.addr(InterruptVectorAddrBytePos::Low) as usize] = 0x34;
-    memory.data[InterruptVector::Interrupt.addr(InterruptVectorAddrBytePos::High) as usize] = 0x12;
+    memory[InterruptVector::Interrupt.addr(InterruptVectorAddrBytePos::Low) as usize] = 0x34;
+    memory[InterruptVector::Interrupt.addr(InterruptVectorAddrBytePos::High) as usize] = 0x12;
 
     // Execute start_irq
     let mut step = 0;
@@ -61,7 +62,7 @@ fn execute_start_irq() {
 #[test]
 fn execute_start_nmi() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
 
     // Set initial values
     regs.pc.set_u16(0x1000);
@@ -73,8 +74,8 @@ fn execute_start_nmi() {
         InterruptVector::NonMaskableInterrupt.addr(InterruptVectorAddrBytePos::Low) as usize;
     let nmi_addr_high =
         InterruptVector::NonMaskableInterrupt.addr(InterruptVectorAddrBytePos::High) as usize;
-    memory.data[nmi_addr_low] = 0x34;
-    memory.data[nmi_addr_high] = 0x12;
+    memory[nmi_addr_low] = 0x34;
+    memory[nmi_addr_high] = 0x12;
 
     // Execute start_nmi
     let mut step = 0;
@@ -91,7 +92,7 @@ fn execute_start_nmi() {
 #[test]
 fn execute_return_interrupt() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
 
     // Set initial values
     regs.pc.set_u16(0x1000);
@@ -99,9 +100,9 @@ fn execute_return_interrupt() {
     regs.status.set_u8(0x00);
 
     // Set stack values in memory
-    memory.data[0x01FD] = StatusRegFlags::CARRY.bits(); // Status
-    memory.data[0x01FE] = 0x34; // PCL
-    memory.data[0x01FF] = 0x12; // PCH
+    memory[0x01FD] = StatusRegFlags::CARRY.bits(); // Status
+    memory[0x01FE] = 0x34; // PCL
+    memory[0x01FF] = 0x12; // PCH
 
     // Execute return_interrupt
     let mut step = 0;
@@ -121,15 +122,15 @@ fn execute_return_interrupt() {
 #[test]
 fn execute_jump_subroutine() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
 
     // Set initial values
     regs.pc.set_u16(0x1000);
     regs.sp.set_u8(0xFF);
 
     // Set subroutine address in memory
-    memory.data[0x1000] = 0x34; // Low byte of subroutine address
-    memory.data[0x1001] = 0x12; // High byte of subroutine address
+    memory[0x1000] = 0x34; // Low byte of subroutine address
+    memory[0x1001] = 0x12; // High byte of subroutine address
 
     // Execute jump_subroutine
     let mut step = 0;
@@ -142,23 +143,23 @@ fn execute_jump_subroutine() {
     // Verify the results
     assert_eq!(regs.pc.to_u16(), 0x1234);
     assert_eq!(regs.sp.to_u8(), 0xFD); // Stack pointer should be decremented 2 times
-    assert_eq!(memory.data[0x01FF], 0x10); // High byte of return address should be on stack
-    assert_eq!(memory.data[0x01FE], 0x01); // Low byte of return address should be on stack
+    assert_eq!(memory[0x01FF], 0x10); // High byte of return address should be on stack
+    assert_eq!(memory[0x01FE], 0x01); // Low byte of return address should be on stack
     assert_eq!(step, 4);
 }
 
 #[test]
 fn execute_return_subroutine() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
 
     // Set initial values
     regs.pc.set_u16(0x1000);
     regs.sp.set_u8(0xFC);
 
     // Set stack values in memory
-    memory.data[0x01FD] = 0x34; // PCL
-    memory.data[0x01FE] = 0x12; // PCH
+    memory[0x01FD] = 0x34; // PCL
+    memory[0x01FE] = 0x12; // PCH
 
     // Execute return_subroutine
     let mut step = 0;
@@ -177,12 +178,12 @@ fn execute_return_subroutine() {
 #[test]
 fn execute_absolute_jump() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
 
     // Set initial values
     regs.pc.set_u16(0x1000);
-    memory.data[0x1000] = 0x34; // Low byte of jump address
-    memory.data[0x1001] = 0x12; // High byte of jump address
+    memory[0x1000] = 0x34; // Low byte of jump address
+    memory[0x1001] = 0x12; // High byte of jump address
 
     // Execute absolute_jump
     let mut step = 0;
@@ -200,7 +201,7 @@ fn execute_absolute_jump() {
 fn execute_relative_branch(
     mode: Instruction,
     regs: &mut RegisterFile,
-    memory: &mut MockMemory,
+    memory: &mut impl MemorySpace,
 ) -> (ClockEndStatus, u8) {
     let mut step = 0;
     let mut status;
@@ -220,11 +221,11 @@ fn execute_relative_branch(
 #[test]
 fn execute_relative_branch_taken() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
 
     // Set initial values
     regs.pc.set_u16(0x1000);
-    memory.data[0x1000] = 0x02; // Branch offset
+    memory[0x1000] = 0x02; // Branch offset
 
     // Execute relative operation (BranchNotEqual)
     let (status, step) = execute_relative_branch(
@@ -242,11 +243,11 @@ fn execute_relative_branch_taken() {
 #[test]
 fn execute_relative_branch_not_taken() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
 
     // Set initial values
     regs.pc.set_u16(0x1000);
-    memory.data[0x1000] = 0x02; // Branch offset
+    memory[0x1000] = 0x02; // Branch offset
     regs.status.set_flags(StatusRegFlags::ZERO); // Set ZERO flag to prevent branch
 
     // Execute relative operation (BranchNotEqual)
@@ -270,11 +271,11 @@ fn execute_relative_branch_not_taken() {
 #[test]
 fn execute_relative_branch_taken_page_boundary() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
 
     // Set initial values
     regs.pc.set_u16(0x10F0);
-    memory.data[0x10F0] = 0x10; // Branch offset
+    memory[0x10F0] = 0x10; // Branch offset
 
     // Execute relative operation (BranchNotEqual)
     let (status, step) = execute_relative_branch(
@@ -292,11 +293,11 @@ fn execute_relative_branch_taken_page_boundary() {
 #[test]
 fn execute_relative_branch_taken_negative_offset() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
 
     // Set initial values
     regs.pc.set_u16(0x1001);
-    memory.data[0x1001] = 0xFE; // Branch offset (-2 in two's complement)
+    memory[0x1001] = 0xFE; // Branch offset (-2 in two's complement)
 
     // Execute relative operation (BranchNotEqual)
     let (status, step) = execute_relative_branch(
@@ -314,14 +315,14 @@ fn execute_relative_branch_taken_negative_offset() {
 #[test]
 fn execute_absolute_indirect_jump() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
 
     // Set initial values
     regs.pc.set_u16(0x1000);
-    memory.data[0x1000] = 0x34; // Low byte of indirect address
-    memory.data[0x1001] = 0x12; // High byte of indirect address
-    memory.data[0x1234] = 0x78; // Low byte of jump target
-    memory.data[0x1235] = 0x56; // High byte of jump target
+    memory[0x1000] = 0x34; // Low byte of indirect address
+    memory[0x1001] = 0x12; // High byte of indirect address
+    memory[0x1234] = 0x78; // Low byte of jump target
+    memory[0x1235] = 0x56; // High byte of jump target
 
     // Execute absolute indirect jump
     let mut step = 0;
@@ -343,14 +344,14 @@ fn execute_absolute_indirect_jump() {
 #[test]
 fn execute_absolute_indirect_jump_page_boundary_bug() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
 
     // Set initial values
     regs.pc.set_u16(0x1000);
-    memory.data[0x1000] = 0xFF; // Low byte of indirect address
-    memory.data[0x1001] = 0x12; // High byte of indirect address
-    memory.data[0x12FF] = 0x78; // Low byte of jump target
-    memory.data[0x1200] = 0x56; // High byte of jump target (6502 bug: wraps to 0x1200 instead of 0x1300)
+    memory[0x1000] = 0xFF; // Low byte of indirect address
+    memory[0x1001] = 0x12; // High byte of indirect address
+    memory[0x12FF] = 0x78; // Low byte of jump target
+    memory[0x1200] = 0x56; // High byte of jump target (6502 bug: wraps to 0x1200 instead of 0x1300)
 
     // Execute absolute indirect jump
     let mut step = 0;

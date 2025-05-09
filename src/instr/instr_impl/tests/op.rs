@@ -1,10 +1,10 @@
-use crate::instr::instr_impl::tests::MockMemory;
 use crate::instr::instr_impl::{
     execute_branch_op, execute_implicit_op, execute_memory_modify_op, execute_op, ClockEndStatus,
 };
 use crate::instr::{
     BranchOperation, ImplicitOperation, MemoryModifyOperation, RegisterMemoryOperation,
 };
+use crate::memory::memory_space::new_basic_ram;
 use crate::registers::{RegisterFile, StatusRegFlags};
 
 #[test]
@@ -166,8 +166,8 @@ fn execute_transfer_x_to_stack_ptr() {
 #[test]
 fn execute_or() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
-    memory.data[0x1000] = 0x01;
+    let mut memory = new_basic_ram();
+    memory[0x1000] = 0x01;
     regs.a.set_u8(0x02);
     regs.addr.set_u16(0x1000);
     execute_op(RegisterMemoryOperation::Or, &mut regs, &mut memory);
@@ -177,8 +177,8 @@ fn execute_or() {
 #[test]
 fn execute_and() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
-    memory.data[0x1000] = 0x01;
+    let mut memory = new_basic_ram();
+    memory[0x1000] = 0x01;
     regs.a.set_u8(0x03);
     regs.addr.set_u16(0x1000);
     execute_op(RegisterMemoryOperation::And, &mut regs, &mut memory);
@@ -188,8 +188,8 @@ fn execute_and() {
 #[test]
 fn execute_xor() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
-    memory.data[0x1000] = 0x01;
+    let mut memory = new_basic_ram();
+    memory[0x1000] = 0x01;
     regs.a.set_u8(0x03);
     regs.addr.set_u16(0x1000);
     execute_op(RegisterMemoryOperation::Xor, &mut regs, &mut memory);
@@ -199,8 +199,8 @@ fn execute_xor() {
 #[test]
 fn execute_add() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
-    memory.data[0x1000] = 0x01;
+    let mut memory = new_basic_ram();
+    memory[0x1000] = 0x01;
     regs.a.set_u8(0x03);
     regs.addr.set_u16(0x1000);
     execute_op(RegisterMemoryOperation::Add, &mut regs, &mut memory);
@@ -210,8 +210,8 @@ fn execute_add() {
 #[test]
 fn execute_sub() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
-    memory.data[0x1000] = 0x01;
+    let mut memory = new_basic_ram();
+    memory[0x1000] = 0x01;
     regs.a.set_u8(0x03);
     regs.status.set_flags(StatusRegFlags::CARRY);
     regs.addr.set_u16(0x1000);
@@ -222,8 +222,8 @@ fn execute_sub() {
 #[test]
 fn execute_cmp() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
-    memory.data[0x1000] = 0x01;
+    let mut memory = new_basic_ram();
+    memory[0x1000] = 0x01;
     regs.a.set_u8(0x03);
     regs.addr.set_u16(0x1000);
     execute_op(RegisterMemoryOperation::Cmp, &mut regs, &mut memory);
@@ -233,8 +233,8 @@ fn execute_cmp() {
 #[test]
 fn execute_cpx() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
-    memory.data[0x1000] = 0x01;
+    let mut memory = new_basic_ram();
+    memory[0x1000] = 0x01;
     regs.x.set_u8(0x03);
     regs.addr.set_u16(0x1000);
     execute_op(RegisterMemoryOperation::Cpx, &mut regs, &mut memory);
@@ -244,8 +244,8 @@ fn execute_cpx() {
 #[test]
 fn execute_cpy() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
-    memory.data[0x1000] = 0x01;
+    let mut memory = new_basic_ram();
+    memory[0x1000] = 0x01;
     regs.y.set_u8(0x03);
     regs.addr.set_u16(0x1000);
     execute_op(RegisterMemoryOperation::Cpy, &mut regs, &mut memory);
@@ -263,8 +263,8 @@ fn execute_shift_left_a() {
 #[test]
 fn execute_shift_load_a() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
-    memory.data[0x1000] = 0x01;
+    let mut memory = new_basic_ram();
+    memory[0x1000] = 0x01;
     regs.addr.set_u16(0x1000);
     execute_op(RegisterMemoryOperation::LoadA, &mut regs, &mut memory);
     assert_eq!(regs.a.to_u8(), 0x01);
@@ -273,8 +273,8 @@ fn execute_shift_load_a() {
 #[test]
 fn execute_bit() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
-    memory.data[0x1000] = 0xC0; // 1100 0000
+    let mut memory = new_basic_ram();
+    memory[0x1000] = 0xC0; // 1100 0000
     regs.a.set_u8(0x80); // 1000 0000
     regs.addr.set_u16(0x1000);
     regs.status.clear_flags(StatusRegFlags::ZERO);
@@ -288,13 +288,14 @@ fn execute_bit() {
 #[test]
 fn execute_bit_immediate() {
     let mut regs = RegisterFile::default();
+    let mut memory = new_basic_ram();
     regs.a.set_u8(0x80); // 1000 0000
     regs.tmp.set_u8(0xC0); // 1100 0000
     regs.status.clear_flags(StatusRegFlags::ZERO);
     execute_op(
         RegisterMemoryOperation::BitImmediate,
         &mut regs,
-        &mut MockMemory { data: [0; 65536] },
+        &mut memory,
     );
     assert!(!regs.status.are_all_flags_set(StatusRegFlags::ZERO));
     assert!(!regs
@@ -365,18 +366,18 @@ fn execute_rotate_right_memory() {
 #[test]
 fn execute_store_a() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
     regs.a.set_u8(0x42);
     regs.addr.set_u16(0x1000);
     execute_op(RegisterMemoryOperation::StoreA, &mut regs, &mut memory);
-    assert_eq!(memory.data[0x1000], 0x42);
+    assert_eq!(memory[0x1000], 0x42);
 }
 
 #[test]
 fn execute_load_a() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
-    memory.data[0x1000] = 0x42;
+    let mut memory = new_basic_ram();
+    memory[0x1000] = 0x42;
     regs.addr.set_u16(0x1000);
     execute_op(RegisterMemoryOperation::LoadA, &mut regs, &mut memory);
     assert_eq!(regs.a.to_u8(), 0x42);
@@ -385,18 +386,18 @@ fn execute_load_a() {
 #[test]
 fn execute_store_x() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
     regs.x.set_u8(0x42);
     regs.addr.set_u16(0x1000);
     execute_op(RegisterMemoryOperation::StoreX, &mut regs, &mut memory);
-    assert_eq!(memory.data[0x1000], 0x42);
+    assert_eq!(memory[0x1000], 0x42);
 }
 
 #[test]
 fn execute_load_x() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
-    memory.data[0x1000] = 0x42;
+    let mut memory = new_basic_ram();
+    memory[0x1000] = 0x42;
     regs.addr.set_u16(0x1000);
     execute_op(RegisterMemoryOperation::LoadX, &mut regs, &mut memory);
     assert_eq!(regs.x.to_u8(), 0x42);
@@ -405,18 +406,18 @@ fn execute_load_x() {
 #[test]
 fn execute_store_y() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
     regs.y.set_u8(0x42);
     regs.addr.set_u16(0x1000);
     execute_op(RegisterMemoryOperation::StoreY, &mut regs, &mut memory);
-    assert_eq!(memory.data[0x1000], 0x42);
+    assert_eq!(memory[0x1000], 0x42);
 }
 
 #[test]
 fn execute_load_y() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
-    memory.data[0x1000] = 0x42;
+    let mut memory = new_basic_ram();
+    memory[0x1000] = 0x42;
     regs.addr.set_u16(0x1000);
     execute_op(RegisterMemoryOperation::LoadY, &mut regs, &mut memory);
     assert_eq!(regs.y.to_u8(), 0x42);
@@ -425,7 +426,7 @@ fn execute_load_y() {
 #[test]
 fn execute_branch_plus() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
     regs.status.clear_flags(StatusRegFlags::NEGATIVE);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
@@ -437,11 +438,11 @@ fn execute_branch_plus() {
 #[test]
 fn execute_branch_plus_not_taken() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
     regs.status.set_flags(StatusRegFlags::NEGATIVE);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
-    memory.data[0x1000] = 0xEA; // next opcode
+    memory[0x1000] = 0xEA; // next opcode
     let status = execute_branch_op(BranchOperation::BranchPlus, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1001);
     assert_eq!(regs.ir.to_u8(), 0xEA);
@@ -456,7 +457,7 @@ fn execute_branch_plus_not_taken() {
 #[test]
 fn execute_branch_minus() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
     regs.status.set_flags(StatusRegFlags::NEGATIVE);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
@@ -468,11 +469,11 @@ fn execute_branch_minus() {
 #[test]
 fn execute_branch_minus_not_taken() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
     regs.status.clear_flags(StatusRegFlags::NEGATIVE);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
-    memory.data[0x1000] = 0xEA; // next opcode
+    memory[0x1000] = 0xEA; // next opcode
     let status = execute_branch_op(BranchOperation::BranchMinus, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1001);
     assert_eq!(regs.ir.to_u8(), 0xEA);
@@ -487,7 +488,7 @@ fn execute_branch_minus_not_taken() {
 #[test]
 fn execute_branch_overflow_clear() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
     regs.status.clear_flags(StatusRegFlags::OVERFLOW);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
@@ -499,11 +500,11 @@ fn execute_branch_overflow_clear() {
 #[test]
 fn execute_branch_overflow_clear_not_taken() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
     regs.status.set_flags(StatusRegFlags::OVERFLOW);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
-    memory.data[0x1000] = 0xEA; // next opcode
+    memory[0x1000] = 0xEA; // next opcode
     let status = execute_branch_op(BranchOperation::BranchOverflowClear, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1001);
     assert_eq!(regs.ir.to_u8(), 0xEA);
@@ -518,7 +519,7 @@ fn execute_branch_overflow_clear_not_taken() {
 #[test]
 fn execute_branch_overflow_set() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
     regs.status.set_flags(StatusRegFlags::OVERFLOW);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
@@ -530,11 +531,11 @@ fn execute_branch_overflow_set() {
 #[test]
 fn execute_branch_overflow_set_not_taken() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
     regs.status.clear_flags(StatusRegFlags::OVERFLOW);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
-    memory.data[0x1000] = 0xEA; // next opcode
+    memory[0x1000] = 0xEA; // next opcode
     let status = execute_branch_op(BranchOperation::BranchOverflowSet, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1001);
     assert_eq!(regs.ir.to_u8(), 0xEA);
@@ -549,7 +550,7 @@ fn execute_branch_overflow_set_not_taken() {
 #[test]
 fn execute_branch_carry_clear() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
     regs.status.clear_flags(StatusRegFlags::CARRY);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
@@ -561,11 +562,11 @@ fn execute_branch_carry_clear() {
 #[test]
 fn execute_branch_carry_clear_not_taken() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
     regs.status.set_flags(StatusRegFlags::CARRY);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
-    memory.data[0x1000] = 0xEA; // next opcode
+    memory[0x1000] = 0xEA; // next opcode
     let status = execute_branch_op(BranchOperation::BranchCarryClear, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1001);
     assert_eq!(regs.ir.to_u8(), 0xEA);
@@ -580,7 +581,7 @@ fn execute_branch_carry_clear_not_taken() {
 #[test]
 fn execute_branch_carry_set() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
     regs.status.set_flags(StatusRegFlags::CARRY);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
@@ -592,11 +593,11 @@ fn execute_branch_carry_set() {
 #[test]
 fn execute_branch_carry_set_not_taken() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
     regs.status.clear_flags(StatusRegFlags::CARRY);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
-    memory.data[0x1000] = 0xEA; // next opcode
+    memory[0x1000] = 0xEA; // next opcode
     let status = execute_branch_op(BranchOperation::BranchCarrySet, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1001);
     assert_eq!(regs.ir.to_u8(), 0xEA);
@@ -611,7 +612,7 @@ fn execute_branch_carry_set_not_taken() {
 #[test]
 fn execute_branch_not_equal() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
     regs.status.clear_flags(StatusRegFlags::ZERO);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
@@ -623,11 +624,11 @@ fn execute_branch_not_equal() {
 #[test]
 fn execute_branch_not_equal_not_taken() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
     regs.status.set_flags(StatusRegFlags::ZERO);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
-    memory.data[0x1000] = 0xEA; // next opcode
+    memory[0x1000] = 0xEA; // next opcode
     let status = execute_branch_op(BranchOperation::BranchNotEqual, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1001);
     assert_eq!(regs.ir.to_u8(), 0xEA);
@@ -642,7 +643,7 @@ fn execute_branch_not_equal_not_taken() {
 #[test]
 fn execute_branch_equal() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
     regs.status.set_flags(StatusRegFlags::ZERO);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
@@ -654,11 +655,11 @@ fn execute_branch_equal() {
 #[test]
 fn execute_branch_equal_not_taken() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
     regs.status.clear_flags(StatusRegFlags::ZERO);
     regs.pc.set_u16(0x1000);
     regs.tmp.set_u8(0x10); // Branch offset
-    memory.data[0x1000] = 0xEA; // next opcode
+    memory[0x1000] = 0xEA; // next opcode
     let status = execute_branch_op(BranchOperation::BranchEqual, &mut regs, &mut memory);
     assert_eq!(regs.pc.to_u16(), 0x1001);
     assert_eq!(regs.ir.to_u8(), 0xEA);

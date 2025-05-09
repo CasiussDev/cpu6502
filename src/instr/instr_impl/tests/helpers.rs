@@ -1,8 +1,8 @@
-use crate::instr::instr_impl::tests::MockMemory;
 use crate::instr::instr_impl::{
     add_index_to_address, fix_addr_or_run_op_finish, ClockEndStatus, FixAddressResult,
 };
 use crate::instr::RegisterMemoryOperation;
+use crate::memory::memory_space::new_basic_ram;
 use crate::registers::{IndexRegister, RegisterFile};
 
 #[test]
@@ -75,8 +75,8 @@ fn fix_addr_or_run_op_finish_x() {
     regs.a.set_u8(0x0F);
     regs.x.set_u8(0x01);
     regs.addr.set_u16(0x1010);
-    let mut memory = MockMemory { data: [0; 65536] };
-    memory.data[0x1010] = 0x01;
+    let mut memory = new_basic_ram();
+    memory[0x1010] = 0x01;
 
     let result = fix_addr_or_run_op_finish(
         RegisterMemoryOperation::Add,
@@ -94,8 +94,8 @@ fn fix_addr_or_run_op_finish_x_fixed() {
     regs.a.set_u8(0x0F);
     regs.x.set_u8(0x11);
     regs.addr.set_u16(0x1010);
-    let mut memory = MockMemory { data: [0; 65536] };
-    memory.data[0x1010] = 0x01;
+    let mut memory = new_basic_ram();
+    memory[0x1010] = 0x01;
 
     let result = fix_addr_or_run_op_finish(
         RegisterMemoryOperation::Add,
@@ -114,8 +114,8 @@ fn fix_addr_or_run_op_finish_y() {
     regs.a.set_u8(0x0F);
     regs.y.set_u8(0x01);
     regs.addr.set_u16(0x1010);
-    let mut memory = MockMemory { data: [0; 65536] };
-    memory.data[0x1010] = 0x01;
+    let mut memory = new_basic_ram();
+    memory[0x1010] = 0x01;
 
     let result = fix_addr_or_run_op_finish(
         RegisterMemoryOperation::Add,
@@ -133,8 +133,8 @@ fn fix_addr_or_run_op_finish_y_fixed() {
     regs.a.set_u8(0x0F);
     regs.y.set_u8(0x11);
     regs.addr.set_u16(0x1010);
-    let mut memory = MockMemory { data: [0; 65536] };
-    memory.data[0x1010] = 0x01;
+    let mut memory = new_basic_ram();
+    memory[0x1010] = 0x01;
 
     let result = fix_addr_or_run_op_finish(
         RegisterMemoryOperation::Add,

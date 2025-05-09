@@ -8,9 +8,10 @@ pub trait MemorySpace {
     }
 }
 
-const MEMORY_64K: usize = (u16::MAX as usize) + 1;
+pub(crate) const MEMORY_64K: usize = (u16::MAX as usize) + 1;
+pub(crate) type BasicRam = [u8; MEMORY_64K];
 
-impl MemorySpace for [u8; MEMORY_64K] {
+impl MemorySpace for BasicRam {
     fn read(&mut self, addr: u16) -> u8 {
         self[addr as usize]
     }
@@ -22,4 +23,8 @@ impl MemorySpace for [u8; MEMORY_64K] {
         let start = addr as usize;
         out.clone_from_slice(&self[start..(start + out.len())]);
     }
+}
+
+pub fn new_basic_ram() -> BasicRam {
+    [0; MEMORY_64K]
 }

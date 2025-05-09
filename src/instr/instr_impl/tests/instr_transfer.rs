@@ -1,12 +1,12 @@
-use crate::instr::instr_impl::tests::MockMemory;
 use crate::instr::instr_impl::{execute, ClockEndStatus};
 use crate::instr::Instruction;
+use crate::memory::memory_space::new_basic_ram;
 use crate::registers::RegisterFile;
 
 #[test]
 fn execute_push_a() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
 
     // Set initial values
     regs.a.set_u8(0x42);
@@ -26,18 +26,18 @@ fn execute_push_a() {
 
     // Verify the results
     assert_eq!(regs.sp.to_u8(), 0xFE); // Stack pointer should be decremented
-    assert_eq!(memory.data[0x01FF], 0x42); // Value of A should be on stack
+    assert_eq!(memory[0x01FF], 0x42); // Value of A should be on stack
     assert_eq!(step, 1);
 }
 
 #[test]
 fn execute_pull_a() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
 
     // Set initial values
     regs.sp.set_u8(0xFE);
-    memory.data[0x01FF] = 0x42; // Value to pull into A
+    memory[0x01FF] = 0x42; // Value to pull into A
 
     // Execute pull_a
     let mut step = 0;
@@ -60,11 +60,11 @@ fn execute_pull_a() {
 #[test]
 fn execute_immediate() {
     let mut regs = RegisterFile::default();
-    let mut memory = MockMemory { data: [0; 65536] };
+    let mut memory = new_basic_ram();
 
     // Set initial values
     regs.pc.set_u16(0x1000);
-    memory.data[0x1000] = 0x42; // Immediate value
+    memory[0x1000] = 0x42; // Immediate value
 
     // Execute immediate operation (LoadA)
     let result = execute(

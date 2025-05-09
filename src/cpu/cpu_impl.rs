@@ -180,39 +180,25 @@ mod tests {
     use super::*;
     use crate::cpu::interrupt::InterruptType::{Interrupt, NonMaskableInterrupt};
     use crate::instr::MemoryModifyOperation;
+    use crate::memory::memory_space::{BasicRam, MEMORY_64K};
     use crate::registers::StatusRegFlags;
 
-    struct MockMemory {
-        mem: Vec<u8>,
-    }
-    impl MemorySpace for MockMemory {
-        fn read(&mut self, addr: u16) -> u8 {
-            self.mem[addr as usize]
-        }
-        fn write(&mut self, value: u8, addr: u16) {
-            self.mem[addr as usize] = value;
-        }
-    }
-
-    fn setup_cpu() -> (Cpu, MockMemory) {
+    fn setup_cpu(memory: &mut BasicRam) -> Cpu {
         let mut cpu = Cpu::new();
 
         let regs = &mut cpu.regs;
-        let mut memory = MockMemory {
-            mem: vec![0; u16::MAX as usize + 1],
-        };
 
         // Define the IRQ vector ($FFFE/$FFFF) pointing to a known address
-        memory.mem[0xFFFE] = 0xEF;
-        memory.mem[0xFFFF] = 0xBE;
+        memory[0xFFFE] = 0xEF;
+        memory[0xFFFF] = 0xBE;
 
         // Set INC zeropage as the first and second instructions
         let initial_pc = 0x2000;
         regs.pc.set_u16(initial_pc);
-        memory.mem[0x2000] = 0xE6;
-        memory.mem[0x2001] = 0x01;
-        memory.mem[0x2002] = 0xE6;
-        memory.mem[0x2003] = 0x01;
+        memory[0x2000] = 0xE6;
+        memory[0x2001] = 0x01;
+        memory[0x2002] = 0xE6;
+        memory[0x2003] = 0x01;
 
         // Set known initial values for SP
         let initial_sp = 0xFD;
@@ -224,13 +210,13 @@ mod tests {
         cpu.current_instruction = Instruction::FetchInstr;
         cpu.current_instruction_step = 0;
 
-        (cpu, memory)
+        cpu
     }
 
     #[test]
     fn nmi_start() {
-        let (mut cpu, mut memory) = setup_cpu();
-
+        let mut memory = [0; MEMORY_64K];
+        let mut cpu = setup_cpu(&mut memory);
         // Initial Fetch
         cpu.run(&mut memory);
 
@@ -250,10 +236,7 @@ mod tests {
             Some(NonMaskableInterrupt),
             "Waiting interrupt should be set to NMI"
         );
-        assert_eq!(
-            memory.mem[0x0001], 0x01,
-            "INC should have incremented memory"
-        );
+        assert_eq!(memory[0x0001], 0x01, "INC should have incremented memory");
 
         // Run first cycle of servicing interrupt request
         cpu.run(&mut memory);
@@ -267,7 +250,8 @@ mod tests {
 
     #[test]
     fn nmi_irq_disabled() {
-        let (mut cpu, mut memory) = setup_cpu();
+        let mut memory = [0; MEMORY_64K];
+        let mut cpu = setup_cpu(&mut memory);
         cpu.regs.status.set_flags(StatusRegFlags::IRQ_DISABLE);
 
         // Initial Fetch
@@ -289,10 +273,7 @@ mod tests {
             Some(NonMaskableInterrupt),
             "Waiting interrupt should be set to NMI"
         );
-        assert_eq!(
-            memory.mem[0x0001], 0x01,
-            "INC should have incremented memory"
-        );
+        assert_eq!(memory[0x0001], 0x01, "INC should have incremented memory");
 
         // Run first cycle of servicing interrupt request
         cpu.run(&mut memory);
@@ -306,7 +287,8 @@ mod tests {
 
     #[test]
     fn nmi_edge_sensitive() {
-        let (mut cpu, mut memory) = setup_cpu();
+        let mut memory = [0; MEMORY_64K];
+        let mut cpu = setup_cpu(&mut memory);
 
         // Initial Fetch
         cpu.run(&mut memory);
@@ -331,10 +313,7 @@ mod tests {
             Some(NonMaskableInterrupt),
             "Waiting interrupt should be set to NMI"
         );
-        assert_eq!(
-            memory.mem[0x0001], 0x01,
-            "INC should have incremented memory"
-        );
+        assert_eq!(memory[0x0001], 0x01, "INC should have incremented memory");
 
         // Run first cycle of servicing interrupt request
         cpu.run(&mut memory);
@@ -348,7 +327,8 @@ mod tests {
 
     #[test]
     fn irq_start() {
-        let (mut cpu, mut memory) = setup_cpu();
+        let mut memory = [0; MEMORY_64K];
+        let mut cpu = setup_cpu(&mut memory);
 
         // Initial Fetch
         cpu.run(&mut memory);
@@ -369,10 +349,7 @@ mod tests {
             Some(Interrupt),
             "Waiting interrupt should be set to IRQ"
         );
-        assert_eq!(
-            memory.mem[0x0001], 0x01,
-            "INC should have incremented memory"
-        );
+        assert_eq!(memory[0x0001], 0x01, "INC should have incremented memory");
 
         // Run first cycle of servicing interrupt request
         cpu.run(&mut memory);
@@ -386,7 +363,8 @@ mod tests {
 
     #[test]
     fn irq_disabled() {
-        let (mut cpu, mut memory) = setup_cpu();
+        let mut memory = [0; MEMORY_64K];
+        let mut cpu = setup_cpu(&mut memory);
         cpu.regs.status.set_flags(StatusRegFlags::IRQ_DISABLE);
 
         // Initial Fetch
@@ -407,10 +385,7 @@ mod tests {
             cpu.waiting_interrupt, None,
             "Waiting interrupt should be set to None"
         );
-        assert_eq!(
-            memory.mem[0x0001], 0x01,
-            "INC should have incremented memory"
-        );
+        assert_eq!(memory[0x0001], 0x01, "INC should have incremented memory");
 
         // Run next fetch
         cpu.run(&mut memory);
@@ -427,7 +402,8 @@ mod tests {
 
     #[test]
     fn irq_level_sensitive() {
-        let (mut cpu, mut memory) = setup_cpu();
+        let mut memory = [0; MEMORY_64K];
+        let mut cpu = setup_cpu(&mut memory);
 
         // Initial Fetch
         cpu.run(&mut memory);
@@ -450,10 +426,7 @@ mod tests {
             Some(Interrupt),
             "Waiting interrupt should be set to IRQ"
         );
-        assert_eq!(
-            memory.mem[0x0001], 0x01,
-            "INC should have incremented memory"
-        );
+        assert_eq!(memory[0x0001], 0x01, "INC should have incremented memory");
 
         // Run next fetch
         cpu.run(&mut memory);
@@ -470,7 +443,8 @@ mod tests {
 
     #[test]
     fn interrupt_priority() {
-        let (mut cpu, mut memory) = setup_cpu();
+        let mut memory = [0; MEMORY_64K];
+        let mut cpu = setup_cpu(&mut memory);
 
         // Initial Fetch
         cpu.run(&mut memory);
@@ -492,10 +466,7 @@ mod tests {
             Some(NonMaskableInterrupt),
             "Waiting interrupt should be set to NMI"
         );
-        assert_eq!(
-            memory.mem[0x0001], 0x01,
-            "INC should have incremented memory"
-        );
+        assert_eq!(memory[0x0001], 0x01, "INC should have incremented memory");
 
         // Run first cycle of servicing interrupt request
         cpu.run(&mut memory);

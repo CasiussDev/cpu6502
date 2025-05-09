@@ -14,6 +14,7 @@ pub use crate::registers::RegisterFile;
 extern crate enum_primitive_derive;
 
 pub use cpu::Cpu;
+pub use memory::memory_space::new_basic_ram;
 pub use memory::MemorySpace;
 
 #[cfg(feature = "logging")]
