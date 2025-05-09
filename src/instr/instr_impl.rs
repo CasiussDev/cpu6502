@@ -521,6 +521,28 @@ fn pull(
     ClockEndStatus::Continue
 }
 
+/// Executes one step of the Reset sequence.
+///
+/// The Reset sequence initializes the CPU. This multi-cycle process typically involves:
+/// Step 0 (Cycle 1): Dummy read of the current PC.
+/// Step 1 (Cycle 2): Dummy read from stack pointer address, decrement SP.
+/// Step 2 (Cycle 3): Dummy read from stack pointer address, decrement SP.
+/// Step 3 (Cycle 4): Dummy write to stack pointer address (status register is pushed), decrement SP.
+/// Step 4 (Cycle 5): Read the low byte of the program start vector address ($FFFC) into PCL.
+/// Step 5 (Cycle 6): Read the high byte of the program start vector address ($FFFD) into PCH.
+///
+/// This function performs a single step of this sequence based on the `step` parameter.
+///
+/// # Arguments
+///
+/// * `step` - The current step number (0-5) within the multi-cycle sequence.
+/// * `regs` - A mutable reference to the CPU's register file.
+/// * `memory` - A mutable reference to the memory space for reading/writing.
+///
+/// # Returns
+///
+/// * `ClockEndStatus` - Indicates whether the sequence should continue (`Continue`) or if the
+///   reset sequence is complete and the CPU should start fetching the first instruction (`EndInstruction`).
 fn reset(step: u8, regs: &mut RegisterFile, memory: &mut impl MemorySpace) -> ClockEndStatus {
     match step {
         0 => {
@@ -563,6 +585,28 @@ fn reset(step: u8, regs: &mut RegisterFile, memory: &mut impl MemorySpace) -> Cl
     ClockEndStatus::Continue
 }
 
+/// Executes one step of the RTI (Return from Interrupt) instruction sequence.
+///
+/// The RTI instruction is used to return from an interrupt service routine. This multi-cycle process involves:
+/// (Cycle 1: Fetch RTI opcode - handled externally)
+/// Step 0 (Cycle 2): Dummy read of the byte after the opcode.
+/// Step 1 (Cycle 3): Increment stack pointer (points to the stored status register).
+/// Step 2 (Cycle 4): Pull the status register (P) from the stack and update the CPU's status register. Increment stack pointer.
+/// Step 3 (Cycle 5): Pull the low byte of the program counter (PCL) from the stack and update PCL. Increment stack pointer.
+/// Step 4 (Cycle 6): Pull the high byte of the program counter (PCH) from the stack and update PCH.
+///
+/// This function performs a single step of this sequence based on the `step` parameter.
+///
+/// # Arguments
+///
+/// * `step` - The current step number (0-4) within the multi-cycle sequence, corresponding to cycles 2-6.
+/// * `regs` - A mutable reference to the CPU's register file.
+/// * `memory` - A mutable reference to the memory space for reading.
+///
+/// # Returns
+///
+/// * `ClockEndStatus` - Indicates whether the sequence should continue (`Continue`) or if the
+///   instruction is complete (`EndInstruction`).
 fn return_interrupt(
     step: u8,
     regs: &mut RegisterFile,
