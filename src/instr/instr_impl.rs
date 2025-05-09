@@ -684,6 +684,27 @@ fn return_interrupt(
     ClockEndStatus::Continue
 }
 
+/// Executes one step of the JSR (Jump to Subroutine) instruction sequence.
+///
+/// The JSR instruction saves the return address and transfers control to a subroutine at a specified address.
+/// This multi-cycle process involves:
+/// (Cycle 1: Fetch JSR opcode - handled externally)
+/// Step 0 (Cycle 2): Read the low byte of the subroutine address from the next byte after the opcode into temp register.
+/// Step 1 (Cycle 3): Perform an internal operation (setting up stack address, performing a dummy read).
+/// Step 2 (Cycle 4): Push the high byte of the return address (PC+1) onto the stack.
+/// Step 3 (Cycle 5): Push the low byte of the return address onto the stack.
+/// Step 4 (Cycle 6): Read the high byte of the subroutine address and combine with the previously read low byte to set the program counter.
+///
+/// # Arguments
+///
+/// * `step` - The current step number (0-4) within the multi-cycle sequence, corresponding to cycles 2-6.
+/// * `regs` - A mutable reference to the CPU's register file.
+/// * `memory` - A mutable reference to the memory space for reading/writing.
+///
+/// # Returns
+///
+/// * `ClockEndStatus` - Indicates whether the sequence should continue (`Continue`) or if the
+///   instruction is complete (`EndInstruction`).
 fn jump_subroutine(
     step: u8,
     regs: &mut RegisterFile,
