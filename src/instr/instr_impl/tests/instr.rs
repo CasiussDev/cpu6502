@@ -38,10 +38,8 @@ fn reset() {
     regs.status.set_u8(0x00);
 
     // Set interrupt vector values in memory
-    memory[InterruptVector::ProgramStart.addr(InterruptVectorAddrBytePos::Low) as usize] =
-        0x78;
-    memory[InterruptVector::ProgramStart.addr(InterruptVectorAddrBytePos::High) as usize] =
-        0x56;
+    memory[InterruptVector::ProgramStart.addr(InterruptVectorAddrBytePos::Low) as usize] = 0x78;
+    memory[InterruptVector::ProgramStart.addr(InterruptVectorAddrBytePos::High) as usize] = 0x56;
 
     // Execute reset
     let mut step = 0;
