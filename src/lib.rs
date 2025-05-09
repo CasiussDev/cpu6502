@@ -13,8 +13,6 @@ pub use crate::registers::RegisterFile;
 #[macro_use]
 extern crate enum_primitive_derive;
 
-extern crate num_traits;
-
 pub use cpu::Cpu;
 pub use memory::MemorySpace;
 

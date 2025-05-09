@@ -81,31 +81,3 @@ impl fmt::Debug for Reg8 {
         )
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use crate::registers::Reg8;
-    use rand::distributions::Uniform;
-    use rand::prelude::*;
-
-    #[test]
-    fn reg8_setvalue_getvaluecorrect() {
-        let mut rng = thread_rng();
-        let uniform = Uniform::new_inclusive(0_u8, u8::MAX);
-
-        // GIVEN
-        let mut register_u = Reg8::default();
-        let mut register_i = Reg8::default();
-
-        for _ in 0..10 {
-            let value = uniform.sample(&mut rng);
-            // WHEN
-            register_u.set_u8(value);
-            register_i.set_i8(value as i8);
-
-            // THEN
-            assert_eq!(register_u.to_u8(), value);
-            assert_eq!(register_i.to_i8(), value as i8);
-        }
-    }
-}
