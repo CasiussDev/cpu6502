@@ -17,4 +17,9 @@ impl MemorySpace for [u8; MEMORY_64K] {
     fn write(&mut self, data: u8, addr: u16) {
         self[addr as usize] = data;
     }
+
+    fn read_array(&mut self, addr: u16, out: &mut [u8]) {
+        let start = addr as usize;
+        out.clone_from_slice(&self[start..(start + out.len())]);
+    }
 }
