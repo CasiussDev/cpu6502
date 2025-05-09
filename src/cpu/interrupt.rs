@@ -28,7 +28,7 @@ pub(crate) enum InterruptVector {
 }
 
 #[derive(Clone, Copy)]
-pub (crate) enum InterruptVectorAddrBytePos {
+pub(crate) enum InterruptVectorAddrBytePos {
     Low,
     High,
 }
@@ -41,7 +41,7 @@ impl InterruptVector {
             InterruptVector::ProgramStart => PROGRAM_START_ADDR_LOW,
         }
     }
-    
+
     pub fn addr_high_byte(&self) -> u16 {
         match self {
             InterruptVector::NonMaskableInterrupt => NMINTERRUPT_ADDR_HIGH,
@@ -49,7 +49,7 @@ impl InterruptVector {
             InterruptVector::ProgramStart => PROGRAM_START_ADDR_HIGH,
         }
     }
-    
+
     pub fn addr(&self, byte_pos: InterruptVectorAddrBytePos) -> u16 {
         match byte_pos {
             InterruptVectorAddrBytePos::Low => self.addr_low_byte(),

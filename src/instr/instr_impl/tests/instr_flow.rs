@@ -69,8 +69,12 @@ fn execute_start_nmi() {
     regs.status.set_u8(0x00);
 
     // Set NMI vector values in memory
-    memory.data[InterruptVector::NonMaskableInterrupt.addr(InterruptVectorAddrBytePos::Low) as usize] = 0x34;
-    memory.data[InterruptVector::NonMaskableInterrupt.addr(InterruptVectorAddrBytePos::High) as usize] = 0x12;
+    let nmi_addr_low =
+        InterruptVector::NonMaskableInterrupt.addr(InterruptVectorAddrBytePos::Low) as usize;
+    let nmi_addr_high =
+        InterruptVector::NonMaskableInterrupt.addr(InterruptVectorAddrBytePos::High) as usize;
+    memory.data[nmi_addr_low] = 0x34;
+    memory.data[nmi_addr_high] = 0x12;
 
     // Execute start_nmi
     let mut step = 0;

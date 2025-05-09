@@ -59,7 +59,7 @@ mod inner {
             include_str!("write_cycle_query.rs.txt"),
             COMMENT_HEADER, switch_options
         )
-            .expect("Could not write file");
+        .expect("Could not write file");
 
         std::process::Command::new("rustfmt")
             .arg("src/cpu/write_cycle_query.rs")
@@ -73,4 +73,3 @@ pub use inner::main;
 
 #[cfg(not(feature = "gen_write_cycle_query"))]
 fn main() {}
-
