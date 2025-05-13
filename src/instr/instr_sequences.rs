@@ -8,51 +8,114 @@ use crate::instr::{
 #[cfg(feature = "gen_write_cycle_query")]
 use strum_macros::EnumIter;
 
+/// Represents the complete set of instruction execution sequences for the 6502 CPU.
+///
+/// This enum defines all the instruction types that the 6502 can execute, categorized
+/// by their addressing modes and operation types. Each variant encapsulates:
+///
+/// 1. The instruction sequence mode (how the instruction progresses through cycles)
+/// 2. (Optional) The specific operation to perform (e.g., Add, Or, LoadA)
+/// 3. (Optional) Index register to use when calculating the memory address
+///
+/// The CPU's execution logic uses this enum to determine how to process each instruction
+/// over multiple clock cycles, following the 6502's cycle-accurate behavior. Each variant
+/// corresponds to a specific combination of opcode and addressing mode.
+///
+/// The enum is used both for execution and for features like cycle-accurate write access
+/// detection, which is important for emulating hardware effects precisely.
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Default, EnumDiscriminants)]
 #[cfg_attr(feature = "gen_write_cycle_query", derive(EnumIter))]
 #[strum_discriminants(name(InstructionSequenceMode))]
 #[strum_discriminants(derive(Default))]
 pub enum Instruction {
+    /// Fetches the next instruction from memory. This is the starting point
+    /// of every instruction execution cycle.
     #[default]
     #[strum_discriminants(default)]
     FetchInstr,
+
+    /// Handles the BRK instruction (software interrupt).
     Break,
+
+    /// Initiates an Interrupt Request (IRQ) sequence.
     StartIrq,
+
+    /// Initiates a Non-Maskable Interrupt (NMI) sequence.
     StartNmi,
+
+    /// Executes a CPU reset sequence.
     Reset,
+
+    /// Returns from an interrupt (RTI instruction).
     ReturnInterrupt,
 
+    /// Jumps to a subroutine (JSR instruction).
     JumpSubroutine,
+
+    /// Returns from a subroutine (RTS instruction).
     ReturnSubroutine,
 
+    /// Pushes a value onto the stack (PHA, PHP instructions).
     Push(PushStackOperation),
+
+    /// Pulls a value from the stack (PLA, PLP instructions).
     Pull(PullStackOperation),
+
+    /// Executes an implied mode instruction (e.g., TAX, INX, CLC).
     Implied(ImplicitOperation),
+
+    /// Executes an immediate mode instruction (e.g., LDA #$00).
     Immediate(RegisterMemoryOperation),
 
+    /// Jumps to an absolute address (JMP instruction).
     AbsoluteJump,
+
+    /// Executes an absolute mode instruction (e.g., LDA $1234).
     Absolute(RegisterMemoryOperation),
+
+    /// Executes a read-modify-write instruction with absolute addressing (e.g., INC $1234).
     AbsoluteReadModifyWrite(MemoryModifyOperation),
 
+    /// Executes a zero-page mode instruction (e.g., LDA $12).
     ZeroPage(RegisterMemoryOperation),
+
+    /// Executes a read-modify-write instruction with zero-page addressing (e.g., INC $12).
     ZeroPageReadModifyWrite(MemoryModifyOperation),
 
+    /// Executes a zero-page indexed mode instruction (e.g., LDA $12,X).
     ZeroPageIdx(RegisterMemoryOperation, IndexRegister),
+
+    /// Executes a read-modify-write instruction with zero-page indexed addressing (e.g., INC $12,X).
     ZeroPageIdxReadModifyWrite(MemoryModifyOperation, IndexRegister),
 
+    /// Executes an absolute indexed read instruction (e.g., LDA $1234,X).
     AbsoluteIdxRead(RegisterMemoryOperation, IndexRegister),
+
+    /// Executes a read-modify-write instruction with absolute indexed addressing (e.g., INC $1234,X).
     AbsoluteIdxReadModifyWrite(MemoryModifyOperation, IndexRegister),
+
+    /// Executes an absolute indexed write instruction (e.g., STA $1234,X).
     AbsoluteIdxWrite(RegisterMemoryOperation, IndexRegister),
 
+    /// Executes a relative branch instruction (e.g., BEQ, BNE).
     Relative(BranchOperation),
 
+    /// Executes a zero-page indexed indirect instruction (pre-indexed, e.g., LDA ($12,X)).
     ZeroPageIdxIndirect(RegisterMemoryOperation, IndexRegister),
+
+    /// Executes a read-modify-write instruction with zero-page indexed indirect addressing.
     ZeroPageIdxIndirectReadModifyWrite(MemoryModifyOperation, IndexRegister),
 
+    /// Executes a zero-page indirect indexed read instruction (post-indexed, e.g., LDA ($12),Y).
     ZeroPageIndirectIdxRead(RegisterMemoryOperation, IndexRegister),
+
+    /// Executes a read-modify-write instruction with zero-page indirect indexed addressing.
     ZeroPageIndirectIdxReadModifyWrite(MemoryModifyOperation, IndexRegister),
+
+    /// Executes a zero-page indirect indexed write instruction (e.g., STA ($12),Y).
     ZeroPageIndirectIdxWrite(RegisterMemoryOperation, IndexRegister),
 
+    /// Jumps to an address stored at the specified location (JMP ($1234)).
     AbsoluteIndirectJump,
 }
 
@@ -101,22 +164,22 @@ impl From<Instruction> for (InstructionSequenceMode, InstructionOp, IndexRegiste
             ),
             Instruction::Push(op) => (
                 InstructionSequenceMode::Push,
-                InstructionOp::from(op),
+                op.into(),
                 IndexRegister::default(),
             ),
             Instruction::Pull(op) => (
                 InstructionSequenceMode::Pull,
-                InstructionOp::from(op),
+                op.into(),
                 IndexRegister::default(),
             ),
             Instruction::Implied(op) => (
                 InstructionSequenceMode::Implied,
-                InstructionOp::from(op),
+                op.into(),
                 IndexRegister::default(),
             ),
             Instruction::Immediate(op) => (
                 InstructionSequenceMode::Immediate,
-                InstructionOp::from(op),
+                op.into(),
                 IndexRegister::default(),
             ),
             Instruction::AbsoluteJump => (
@@ -126,77 +189,69 @@ impl From<Instruction> for (InstructionSequenceMode, InstructionOp, IndexRegiste
             ),
             Instruction::Absolute(op) => (
                 InstructionSequenceMode::Absolute,
-                InstructionOp::from(op),
+                op.into(),
                 IndexRegister::default(),
             ),
             Instruction::AbsoluteReadModifyWrite(op) => (
                 InstructionSequenceMode::AbsoluteReadModifyWrite,
-                InstructionOp::from(op),
+                op.into(),
                 IndexRegister::default(),
             ),
             Instruction::ZeroPage(op) => (
                 InstructionSequenceMode::ZeroPage,
-                InstructionOp::from(op),
+                op.into(),
                 IndexRegister::default(),
             ),
             Instruction::ZeroPageReadModifyWrite(op) => (
                 InstructionSequenceMode::ZeroPageReadModifyWrite,
-                InstructionOp::from(op),
+                op.into(),
                 IndexRegister::default(),
             ),
-            Instruction::ZeroPageIdx(op, idx) => (
-                InstructionSequenceMode::ZeroPageIdx,
-                InstructionOp::from(op),
-                idx,
-            ),
+            Instruction::ZeroPageIdx(op, idx) => {
+                (InstructionSequenceMode::ZeroPageIdx, op.into(), idx)
+            }
             Instruction::ZeroPageIdxReadModifyWrite(op, idx) => (
                 InstructionSequenceMode::ZeroPageIdxReadModifyWrite,
-                InstructionOp::from(op),
+                op.into(),
                 idx,
             ),
-            Instruction::AbsoluteIdxRead(op, idx) => (
-                InstructionSequenceMode::AbsoluteIdxRead,
-                InstructionOp::from(op),
-                idx,
-            ),
+            Instruction::AbsoluteIdxRead(op, idx) => {
+                (InstructionSequenceMode::AbsoluteIdxRead, op.into(), idx)
+            }
             Instruction::AbsoluteIdxReadModifyWrite(op, idx) => (
                 InstructionSequenceMode::AbsoluteIdxReadModifyWrite,
-                InstructionOp::from(op),
+                op.into(),
                 idx,
             ),
-            Instruction::AbsoluteIdxWrite(op, idx) => (
-                InstructionSequenceMode::AbsoluteIdxWrite,
-                InstructionOp::from(op),
-                idx,
-            ),
+            Instruction::AbsoluteIdxWrite(op, idx) => {
+                (InstructionSequenceMode::AbsoluteIdxWrite, op.into(), idx)
+            }
             Instruction::Relative(op) => (
                 InstructionSequenceMode::Relative,
-                InstructionOp::from(op),
+                op.into(),
                 IndexRegister::default(),
             ),
-            Instruction::ZeroPageIdxIndirect(op, idx) => (
-                InstructionSequenceMode::ZeroPageIdxIndirect,
-                InstructionOp::from(op),
-                idx,
-            ),
+            Instruction::ZeroPageIdxIndirect(op, idx) => {
+                (InstructionSequenceMode::ZeroPageIdxIndirect, op.into(), idx)
+            }
             Instruction::ZeroPageIdxIndirectReadModifyWrite(op, idx) => (
                 InstructionSequenceMode::ZeroPageIdxIndirectReadModifyWrite,
-                InstructionOp::from(op),
+                op.into(),
                 idx,
             ),
             Instruction::ZeroPageIndirectIdxRead(op, idx) => (
                 InstructionSequenceMode::ZeroPageIndirectIdxRead,
-                InstructionOp::from(op),
+                op.into(),
                 idx,
             ),
             Instruction::ZeroPageIndirectIdxReadModifyWrite(op, idx) => (
                 InstructionSequenceMode::ZeroPageIndirectIdxReadModifyWrite,
-                InstructionOp::from(op),
+                op.into(),
                 idx,
             ),
             Instruction::ZeroPageIndirectIdxWrite(op, idx) => (
                 InstructionSequenceMode::ZeroPageIndirectIdxWrite,
-                InstructionOp::from(op),
+                op.into(),
                 idx,
             ),
             Instruction::AbsoluteIndirectJump => (
