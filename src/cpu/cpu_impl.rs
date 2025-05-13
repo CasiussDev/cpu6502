@@ -477,4 +477,26 @@ mod tests {
             "Waiting interrupt should be cleared after starting NMI"
         );
     }
+
+    #[test]
+    fn reset() {
+        let mut memory = [0; MEMORY_64K];
+        let mut cpu = setup_cpu(&mut memory);
+
+        // Initial Fetch
+        cpu.run(&mut memory);
+
+        // First cycle of INC zeropage
+        cpu.run(&mut memory);
+
+        // Reset CPU
+        cpu.reset();
+
+        // Check CPU state
+        assert_eq!(cpu.current_instruction, Instruction::Reset);
+        assert_eq!(cpu.current_instruction_step, 0);
+        assert_eq!(cpu.cycle_count_since_reset, 0);
+        assert_eq!(cpu.instr_count_since_reset, 0);
+        assert_eq!(cpu.regs.status.to_u8(), 0x24);
+    }
 }
