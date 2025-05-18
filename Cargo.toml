@@ -13,6 +13,7 @@ log = { version = "0.4", optional = true }
 simplelog = { version = "0.12.0", optional = true }
 disasm6502 = { version = "0.2.2", optional = true }
 enum-primitive-derive = {  version = "0.3.0", optional = true }
+num-traits = {  version = "0.2", optional = true }
 
 [features]
 default = []
@@ -20,5 +21,5 @@ decimal = []
 undoc_opcodes = []
 disassembly = ["dep:disasm6502"]
 logging = ["dep:log", "dep:simplelog"]
-decode_logic = ["dep:enum-primitive-derive"]
+decode_logic = ["dep:enum-primitive-derive", "dep:num-traits"]
 gen_write_cycle_query = []
