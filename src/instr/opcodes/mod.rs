@@ -1,3 +1,15 @@
+//! Module responsible for decoding 6502 CPU opcodes into instruction representations.
+//!
+//! This module provides functionality to decode raw 6502 instruction opcodes into their
+//! corresponding instruction types and addressing modes. It supports two different
+//! decoding implementations that can be selected via the "decode_logic" feature flag:
+//!
+//! - When "decode_logic" is enabled, it uses the decode_logic implementation
+//! - When disabled, it falls back to the decode_switch implementation
+//!
+//! The module exposes a single `decode` function that handles converting an 8-bit opcode
+//! into the appropriate instruction representation.
+
 #[cfg(not(feature = "decode_logic"))]
 mod decode_switch;
 

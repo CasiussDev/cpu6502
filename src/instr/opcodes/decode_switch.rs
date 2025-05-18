@@ -11,6 +11,23 @@ use crate::instr::Instruction::*;
 use crate::registers::IndexRegister::X;
 use crate::registers::IndexRegister::Y;
 
+/// Decodes a raw 6502 opcode byte into the corresponding instruction
+///
+/// This is an alternative implementation of the instruction decoder that uses
+/// a match expression instead of logical grouping. The function is auto-generated
+/// by gen_decode_switch to ensure complete coverage of all possible opcodes.
+///
+/// # Arguments
+/// * `opcode` - The raw opcode byte to decode (0x00-0xFF)
+///
+/// # Returns
+/// A decoded `Instruction` enum value representing the instruction. Invalid or
+/// undocumented opcodes are decoded as `FetchInstr`, which acts as a NOP.
+///
+/// # Implementation Notes
+/// - All 256 possible opcode values are explicitly handled
+/// - Generated from the canonical decoder implementation
+/// - Provides the same behavior as decode_logic::decode
 pub fn decode(opcode: u8) -> Instruction {
     match opcode {
         0x00 => Break,

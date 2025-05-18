@@ -3,6 +3,18 @@
 use crate::instr::InstructionSequenceMode;
 use crate::instr::InstructionSequenceMode::*;
 
+/// Determines if the given instruction performs a memory write at the specified step.
+///
+/// # Arguments
+///
+/// * `instr` - The instruction being executed
+/// * `step` - The current execution step of the instruction
+///
+/// # Returns
+///
+/// * `true` if the instruction performs a memory write at this step
+/// * `false` otherwise
+///
 pub fn write_cycle_query(instr: InstructionSequenceMode, step: u8) -> bool {
     match (instr, step) {
         (FetchInstr, 0) => false,

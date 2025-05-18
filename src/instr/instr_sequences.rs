@@ -264,6 +264,27 @@ impl From<Instruction> for (InstructionSequenceMode, InstructionOp, IndexRegiste
 }
 
 impl Instruction {
+    /// Creates a new instruction with the specified mode, operation, and optional index register.
+    ///
+    /// This function creates an appropriate instruction variant based on the provided addressing mode,
+    /// converting the generic `InstructionOp` to the specific operation type required by that
+    /// instruction variant (e.g., `RegisterMemoryOperation`, `ImplicitOperation`, etc.).
+    ///
+    /// # Arguments
+    ///
+    /// * `mode` - The addressing mode for the instruction, which determines how operands are accessed
+    /// * `operation` - The operation to perform (e.g., load, store, add, branch)
+    /// * `index` - Optional index register (X or Y) for indexed addressing modes
+    ///
+    /// # Returns
+    ///
+    /// A new `Instruction` variant corresponding to the specified mode and operation
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if:
+    /// - The provided operation cannot be converted to the type required by the specified mode
+    /// - An index register is required for the mode but not provided
     pub fn new(
         mode: InstructionSequenceMode,
         operation: InstructionOp,

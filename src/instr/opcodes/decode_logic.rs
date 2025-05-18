@@ -1,12 +1,30 @@
+//! # 6502 CPU Instruction Decoder
+//!
+//! This module implements the instruction decoding logic for the 6502 CPU.
+//! It handles converting raw opcode bytes into decoded instructions by:
+//! 1. Identifying the instruction group (Groups 1-3 or special instructions)
+//! 2. Extracting the operation and addressing mode
+//! 3. Determining the instruction sequence mode and index register usage
+//!
+//! The 6502's opcodes are organized into several groups:
+//! - Group 1: Basic operations (ORA, AND, EOR, ADC, STA, LDA, CMP, SBC)
+//! - Group 2: Shift/rotate and increment/decrement operations
+//! - Group 3: Bit operations, jumps, and load/store operations
+//! - Special instructions: Branches, subroutines, and single-byte operations
+
 use crate::instr::{Instruction, InstructionOp, InstructionSequenceMode};
 use crate::num_traits::FromPrimitive;
 use crate::registers::IndexRegister;
 
+/// Mask to extract the opcode group (bits 0-1)
 const OPCODE_GROUP_MASK: u8 = 0b_0000_0011;
 
+/// Mask to extract the operation type for groups 1-3 (bits 0-1 and 5-7)
 const OPCODE_G123_OP_MASK: u8 = 0b_1110_0011;
+/// Mask to extract the addressing mode for groups 1-3 (bits 2-4)
 const OPCODE_G123_ADDR_MASK: u8 = 0b_0001_1100;
 
+/// Group 1 operations - Basic arithmetic and logic operations
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Primitive)]
 pub enum OpsG1 {
     ORA = 0x01,
@@ -19,6 +37,16 @@ pub enum OpsG1 {
     SBC = 0xE1,
 }
 
+/// Addressing modes for Group 1 instructions
+///
+/// These modes determine how the operand address is calculated:
+/// - Indexed indirect: Address is fetched from zero page location indexed by X
+/// - Zero page: Direct zero-page address
+/// - Immediate: Value is directly in instruction
+/// - Absolute: Full 16-bit address
+/// - Indirect indexed: Zero-page address contains base, Y register adds offset
+/// - Zero page indexed: Zero-page address offset by index register
+/// - Absolute indexed: Full address offset by X or Y register
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Primitive)]
 pub enum AddrModeG1 {
     ZeroPageIndxIndirect = 0x00,
@@ -31,6 +59,13 @@ pub enum AddrModeG1 {
     AbsoluteIdxX = 0x1C,
 }
 
+/// Group 2 operations - Shifts, rotates, and memory operations
+///
+/// These instructions handle:
+/// - Arithmetic/logical shifts (ASL, LSR)
+/// - Rotates through carry (ROL, ROR)
+/// - X register operations (STX, LDX)
+/// - Memory increment/decrement (INC, DEC)
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Primitive)]
 pub enum OpsG2 {
     ASL = 0x02,
@@ -43,6 +78,12 @@ pub enum OpsG2 {
     INC = 0xE2,
 }
 
+/// Addressing modes for Group 2 instructions
+///
+/// Similar to Group 1 modes but with some differences:
+/// - Includes accumulator mode for shift/rotate operations
+/// - Some modes are unused/illegal
+/// - Indexed operations use different registers based on instruction
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Primitive)]
 pub enum AddrModeG2 {
     Immediate = 0x00,
@@ -55,6 +96,13 @@ pub enum AddrModeG2 {
     AbsoluteIdxX = 0x1C,
 }
 
+/// Group 3 operations - Tests, jumps and Y register operations
+///
+/// These instructions include:
+/// - Bit test operations (BIT)
+/// - Jump operations (JMP, indirect JMP)
+/// - Y register operations (STY, LDY)
+/// - Compare operations (CPY, CPX)
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Primitive)]
 pub enum OpsG3 {
     Unused = 0x00,
@@ -67,6 +115,12 @@ pub enum OpsG3 {
     CPX = 0xE0,
 }
 
+/// Addressing modes for Group 3 instructions
+///
+/// Similar to Group 2 modes but with differences:
+/// - No accumulator mode
+/// - Different unused/illegal combinations
+/// - Limited indexed operations
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Primitive)]
 pub enum AddrModeG3 {
     Immediate = 0x00,
@@ -79,6 +133,13 @@ pub enum AddrModeG3 {
     AbsoluteIdxX = 0x1C,
 }
 
+/// Comparison and branch operations
+///
+/// These conditional branch instructions test processor status flags:
+/// - BPL/BMI: Tests negative flag
+/// - BVC/BVS: Tests overflow flag
+/// - BCC/BCS: Tests carry flag
+/// - BNE/BEQ: Tests zero flag
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Primitive)]
 pub enum OpsCompBranch {
     BPL = 0x10,
@@ -91,6 +152,13 @@ pub enum OpsCompBranch {
     BEQ = 0xF0,
 }
 
+/// Subroutine and interrupt operations
+///
+/// These instructions handle subroutine calls and interrupts:
+/// - BRK: Software interrupt
+/// - JSR: Jump to subroutine
+/// - RTI: Return from interrupt
+/// - RTS: Return from subroutine
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Primitive)]
 pub enum OpsSubroutine {
     BRK = 0x00,
@@ -99,6 +167,13 @@ pub enum OpsSubroutine {
     RTS = 0x60,
 }
 
+/// Single byte instructions using addressing mode 0
+///
+/// These instructions require no operands and include:
+/// - Stack operations (PHP, PLP, PHA, PLA)
+/// - Register transfers (TAY, TYA)
+/// - Register operations (DEY, INY, INX)
+/// - Status flag operations (CLC, SEC, CLI, SEI, CLV, CLD, SED)
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Primitive)]
 pub enum OpsSingleByte0 {
     PHP = 0x08,
@@ -119,6 +194,12 @@ pub enum OpsSingleByte0 {
     SED = 0xF8,
 }
 
+/// Single byte instructions using addressing mode 2
+///
+/// These instructions require no operands and include:
+/// - Register transfers (TXA, TXS, TAX, TSX)
+/// - X register operations (DEX)
+/// - No operation (NOP)
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Primitive)]
 pub enum OpsSingleByte2 {
     TXA = 0x8A,
@@ -129,6 +210,10 @@ pub enum OpsSingleByte2 {
     NOP = 0xEA,
 }
 
+/// Converts a Group 1 operation into its corresponding instruction operation
+///
+/// # Arguments
+/// * `op` - The Group 1 operation to convert
 fn instr_op_g1(op: OpsG1) -> InstructionOp {
     match op {
         OpsG1::ORA => InstructionOp::Or,
@@ -142,6 +227,11 @@ fn instr_op_g1(op: OpsG1) -> InstructionOp {
     }
 }
 
+/// Converts a Group 2 operation into its corresponding instruction operation
+///
+/// # Arguments
+/// * `op` - The Group 2 operation to convert
+/// * `addr_mode` - The addressing mode, needed for accumulator vs memory operations
 fn instr_op_g2(op: OpsG2, addr_mode: AddrModeG2) -> InstructionOp {
     match op {
         OpsG2::ASL => match addr_mode {
@@ -167,6 +257,14 @@ fn instr_op_g2(op: OpsG2, addr_mode: AddrModeG2) -> InstructionOp {
     }
 }
 
+/// Converts a Group 3 operation into its corresponding instruction operation
+///
+/// # Arguments
+/// * `op` - The Group 3 operation to convert
+/// * `addr_mode` - The addressing mode, needed to distinguish between immediate and memory BIT operations
+///
+/// # Returns
+/// The appropriate instruction operation for the Group 3 operation
 fn instr_op_g3(op: OpsG3, addr_mode: AddrModeG3) -> InstructionOp {
     match op {
         OpsG3::Unused => InstructionOp::Nop,
@@ -186,6 +284,13 @@ fn instr_op_g3(op: OpsG3, addr_mode: AddrModeG3) -> InstructionOp {
     }
 }
 
+/// Converts a conditional branch operation into its corresponding instruction operation
+///
+/// # Arguments
+/// * `op` - The conditional branch operation to convert
+///
+/// # Returns
+/// The appropriate branch instruction operation
 fn instr_op_cond_branch(op: OpsCompBranch) -> InstructionOp {
     match op {
         OpsCompBranch::BPL => InstructionOp::BranchPlus,
@@ -199,6 +304,13 @@ fn instr_op_cond_branch(op: OpsCompBranch) -> InstructionOp {
     }
 }
 
+/// Converts a single byte mode 0 operation into its corresponding instruction operation
+///
+/// # Arguments
+/// * `op` - The single byte mode 0 operation to convert
+///
+/// # Returns
+/// The appropriate instruction operation for stack, register transfer, and flag operations
 fn instr_op_single_byte0(op: OpsSingleByte0) -> InstructionOp {
     match op {
         OpsSingleByte0::PHP => InstructionOp::PushStatus,
@@ -220,6 +332,13 @@ fn instr_op_single_byte0(op: OpsSingleByte0) -> InstructionOp {
     }
 }
 
+/// Converts a single byte mode 2 operation into its corresponding instruction operation
+///
+/// # Arguments
+/// * `op` - The single byte mode 2 operation to convert
+///
+/// # Returns
+/// The appropriate instruction operation for register transfers and NOP
 fn instr_op_single_byte2(op: OpsSingleByte2) -> InstructionOp {
     match op {
         OpsSingleByte2::TXA => InstructionOp::TransferXToAccumulator,
@@ -231,6 +350,14 @@ fn instr_op_single_byte2(op: OpsSingleByte2) -> InstructionOp {
     }
 }
 
+/// Determines the sequence mode for Group 1 instructions based on operation and addressing mode
+///
+/// # Arguments
+/// * `op` - The Group 1 operation
+/// * `addr_mode` - The addressing mode
+///
+/// # Returns
+/// The appropriate instruction sequence mode for executing the instruction
 fn sequence_mode_g1(op: OpsG1, addr_mode: AddrModeG1) -> InstructionSequenceMode {
     match addr_mode {
         AddrModeG1::ZeroPage => InstructionSequenceMode::ZeroPage,
@@ -261,6 +388,15 @@ fn sequence_mode_g1(op: OpsG1, addr_mode: AddrModeG1) -> InstructionSequenceMode
     }
 }
 
+/// Determines the sequence mode for Group 2 instructions based on operation and addressing mode
+///
+/// # Arguments
+/// * `op` - The Group 2 operation
+/// * `addr_mode` - The addressing mode
+///
+/// # Returns
+/// The appropriate instruction sequence mode for executing the instruction, handling
+/// read-modify-write operations differently from regular reads/writes
 fn sequence_mode_g2(op: OpsG2, addr_mode: AddrModeG2) -> InstructionSequenceMode {
     match op {
         OpsG2::ASL | OpsG2::ROL | OpsG2::LSR | OpsG2::ROR | OpsG2::DEC | OpsG2::INC => {
@@ -294,6 +430,15 @@ fn sequence_mode_g2(op: OpsG2, addr_mode: AddrModeG2) -> InstructionSequenceMode
     }
 }
 
+/// Determines the sequence mode for Group 3 instructions based on operation and addressing mode
+///
+/// # Arguments
+/// * `op` - The Group 3 operation
+/// * `addr_mode` - The addressing mode
+///
+/// # Returns
+/// The appropriate instruction sequence mode for executing the instruction, with
+/// special handling for jump operations
 fn sequence_mode_g3(op: OpsG3, addr_mode: AddrModeG3) -> InstructionSequenceMode {
     match op {
         OpsG3::JMP => InstructionSequenceMode::AbsoluteJump,
@@ -311,6 +456,14 @@ fn sequence_mode_g3(op: OpsG3, addr_mode: AddrModeG3) -> InstructionSequenceMode
     }
 }
 
+/// Determines the sequence mode for subroutine and interrupt instructions
+///
+/// # Arguments
+/// * `op` - The subroutine operation (BRK, JSR, RTI, RTS)
+///
+/// # Returns
+/// The appropriate instruction sequence mode for handling stack operations
+/// and program counter modifications
 fn sequence_mode_subroutine(op: OpsSubroutine) -> InstructionSequenceMode {
     match op {
         OpsSubroutine::BRK => InstructionSequenceMode::Break,
@@ -320,6 +473,14 @@ fn sequence_mode_subroutine(op: OpsSubroutine) -> InstructionSequenceMode {
     }
 }
 
+/// Determines the sequence mode for single byte mode 0 instructions
+///
+/// # Arguments
+/// * `op` - The single byte mode 0 operation
+///
+/// # Returns
+/// The appropriate instruction sequence mode, distinguishing between
+/// stack operations and implied addressing instructions
 fn sequence_mode_single_byte0(op: OpsSingleByte0) -> InstructionSequenceMode {
     match op {
         OpsSingleByte0::PHP | OpsSingleByte0::PHA => InstructionSequenceMode::Push,
@@ -328,6 +489,13 @@ fn sequence_mode_single_byte0(op: OpsSingleByte0) -> InstructionSequenceMode {
     }
 }
 
+/// Gets the index register used by a Group 1 instruction
+///
+/// # Arguments
+/// * `addr_mode` - The addressing mode
+///
+/// # Returns
+/// Some(IndexRegister) if the instruction uses indexing, None otherwise
 fn index_reg_g1(addr_mode: AddrModeG1) -> Option<IndexRegister> {
     match addr_mode {
         AddrModeG1::ZeroPageIdx | AddrModeG1::ZeroPageIndxIndirect | AddrModeG1::AbsoluteIdxX => {
@@ -338,6 +506,15 @@ fn index_reg_g1(addr_mode: AddrModeG1) -> Option<IndexRegister> {
     }
 }
 
+/// Gets the index register used by a Group 2 instruction
+///
+/// # Arguments
+/// * `op` - The Group 2 operation
+/// * `addr_mode` - The addressing mode
+///
+/// # Returns
+/// Some(IndexRegister) if the instruction uses indexing, None otherwise.
+/// Note that STX/LDX use Y register while other operations use X register.
 fn index_reg_g2(op: OpsG2, addr_mode: AddrModeG2) -> Option<IndexRegister> {
     match addr_mode {
         AddrModeG2::ZeroPageIdx => {
@@ -358,6 +535,14 @@ fn index_reg_g2(op: OpsG2, addr_mode: AddrModeG2) -> Option<IndexRegister> {
     }
 }
 
+/// Gets the index register used by a Group 3 instruction
+///
+/// # Arguments
+/// * `addr_mode` - The addressing mode
+///
+/// # Returns
+/// Some(IndexRegister::X) for zero page indexed or absolute indexed modes,
+/// None otherwise
 fn index_reg_g3(addr_mode: AddrModeG3) -> Option<IndexRegister> {
     if matches!(
         addr_mode,
@@ -369,10 +554,27 @@ fn index_reg_g3(addr_mode: AddrModeG3) -> Option<IndexRegister> {
     }
 }
 
+/// Checks if a Group 1 instruction combination is illegal
+///
+/// # Arguments
+/// * `op` - The Group 1 operation
+/// * `addr_mode` - The addressing mode
+///
+/// # Returns
+/// true if the combination is illegal, false otherwise
 fn illegal_instruction_g1(op: OpsG1, addr_mode: AddrModeG1) -> bool {
     (op == OpsG1::STA) && (addr_mode == AddrModeG1::Immediate)
 }
 
+/// Checks if a Group 2 instruction combination is illegal
+///
+/// # Arguments
+/// * `op` - The Group 2 operation
+/// * `addr_mode` - The addressing mode
+///
+/// # Returns
+/// true if the combination is illegal according to the 6502 specification,
+/// false otherwise
 fn illegal_instruction_g2(op: OpsG2, addr_mode: AddrModeG2) -> bool {
     ((op == OpsG2::STX) && (addr_mode == AddrModeG2::AbsoluteIdxX))
         || ((op != OpsG2::LDX) && (addr_mode == AddrModeG2::Immediate))
@@ -381,6 +583,15 @@ fn illegal_instruction_g2(op: OpsG2, addr_mode: AddrModeG2) -> bool {
         || matches!(addr_mode, AddrModeG2::Unused1 | AddrModeG2::Unused2)
 }
 
+/// Checks if a Group 3 instruction combination is illegal
+///
+/// # Arguments
+/// * `op` - The Group 3 operation
+/// * `addr_mode` - The addressing mode
+///
+/// # Returns
+/// true if the combination is illegal according to the 6502 specification,
+/// false otherwise
 fn illegal_instruction_g3(op: OpsG3, addr_mode: AddrModeG3) -> bool {
     (op == OpsG3::Unused)
         || matches!(
@@ -394,6 +605,15 @@ fn illegal_instruction_g3(op: OpsG3, addr_mode: AddrModeG3) -> bool {
         || ((addr_mode == AddrModeG3::ZeroPageIdx) && !matches!(op, OpsG3::STY | OpsG3::LDY))
 }
 
+/// Decodes a raw opcode byte into a fully specified instruction
+///
+/// # Arguments
+/// * `opcode` - The raw opcode byte to decode
+///
+/// # Returns
+/// A decoded `Instruction` containing the operation type, addressing mode,
+/// and any required index registers. Returns a NOP instruction for illegal opcodes
+/// unless undocumented opcodes are enabled.
 pub fn decode(opcode: u8) -> Instruction {
     let mut decoded_instruction = Instruction::default();
     match opcode & OPCODE_GROUP_MASK {

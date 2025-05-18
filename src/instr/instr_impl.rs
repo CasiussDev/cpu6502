@@ -6,7 +6,8 @@ use super::{
     PushStackOperation, RegisterMemoryOperation,
 };
 use crate::cpu::interrupt::{InterruptVector, InterruptVectorAddrBytePos};
-use crate::registers::{IndexRegister, RegisterFile, SelectedRegister8, StatusRegFlags};
+use crate::memory::STACK_PAGE;
+use crate::registers::{IndexRegister, RegisterFile, StatusRegFlags};
 use crate::{alu, MemorySpace};
 #[cfg(feature = "logging")]
 use log::trace;
@@ -67,8 +68,7 @@ pub enum FixAddressResult {
 ///
 /// * The 8-bit value contained in the specified index register
 fn get_index_value(regs: &mut RegisterFile, idx: IndexRegister) -> u8 {
-    let index_reg = regs.copy_selected_register8(idx.into());
-    index_reg.to_u8()
+    regs.index_register_u8(idx)
 }
 
 /// Sets the address register to point to the current stack location.
@@ -85,7 +85,7 @@ fn get_index_value(regs: &mut RegisterFile, idx: IndexRegister) -> u8 {
 ///
 /// * `regs` - A mutable reference to the CPU's register file
 fn set_stack_address(regs: &mut RegisterFile) {
-    let addr_high = SelectedRegister8::StackPage as u8;
+    let addr_high = STACK_PAGE;
     regs.addr.set_high_u8(addr_high);
 
     let addr_low = regs.sp.to_u8();
@@ -2277,7 +2277,6 @@ fn absolute_indirect_jump(
 /// * `ClockEndStatus::Continue` - If more cycles are needed to complete the instruction
 /// * `ClockEndStatus::EndInstruction` - If the instruction has completed and the CPU should fetch the next instruction
 /// * `ClockEndStatus::EndInstructionNextFetched` - If the instruction has completed and the next opcode has already been fetched
-#[allow(dead_code)]
 pub fn execute(
     instr: Instruction,
     step: u8,

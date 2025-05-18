@@ -1,5 +1,13 @@
 use std::convert::TryFrom;
 
+/// Represents operations that use implicit addressing mode.
+///
+/// Implicit operations perform actions using registers or processor status flags
+/// without requiring additional memory operands. These operations typically work directly
+/// with CPU internal components like registers, status flags, or the stack pointer.
+///
+/// This enum serves as a comprehensive collection of all implicit addressing operations
+/// in the 6502 instruction set, which are executed by the `execute_implicit_op` function.
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Default)]
 pub enum ImplicitOperation {
     #[default]

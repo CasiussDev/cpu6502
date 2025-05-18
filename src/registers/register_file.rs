@@ -2,81 +2,52 @@ use super::StatusReg;
 use super::{Reg16, Reg8};
 use std::fmt;
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub enum SelectedRegister8 {
-    A = 0xF0,
-    X,
-    Y,
-    SP,
-    Status,
-    IR,
-    Tmp,
-    PCHigh,
-    PCLow,
-    AddrHigh,
-    AddrLow,
-
-    // "virtual" registers
-    StackPage = 0x01,
-}
-
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Default)]
 pub enum IndexRegister {
     #[default]
-    X = SelectedRegister8::X as isize,
-    Y = SelectedRegister8::Y as isize,
-}
-
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub enum ReferenceableRegister8 {
-    A = SelectedRegister8::A as isize,
     X,
     Y,
-    Tmp,
 }
 
-impl From<IndexRegister> for SelectedRegister8 {
-    fn from(index_reg: IndexRegister) -> Self {
-        match index_reg {
-            IndexRegister::X => SelectedRegister8::X,
-            IndexRegister::Y => SelectedRegister8::Y,
-        }
-    }
-}
-
-impl From<ReferenceableRegister8> for SelectedRegister8 {
-    fn from(index_reg: ReferenceableRegister8) -> Self {
-        match index_reg {
-            ReferenceableRegister8::A => SelectedRegister8::A,
-            ReferenceableRegister8::X => SelectedRegister8::X,
-            ReferenceableRegister8::Y => SelectedRegister8::Y,
-            ReferenceableRegister8::Tmp => SelectedRegister8::Tmp,
-        }
-    }
-}
-
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub enum SelectedRegister16 {
-    PC,
-    Addr,
-}
-
+/// Represents the complete set of registers for the 6502 CPU.
+///
+/// This structure holds all registers used by the 6502 processor, including:
+/// - General purpose registers: A (accumulator), X and Y (index registers)
+/// - Special purpose registers: SP (stack pointer), PC (program counter)
+/// - Status register: contains processor status flags (carry, zero, etc.)
+/// - Implementation-specific internal registers used during instruction execution
+///
+/// The register file serves as the core state of the CPU, maintaining all the
+/// necessary data for instruction execution, memory addressing, and program flow control.
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub struct RegisterFile {
+    /// Accumulator register (A): primary register for arithmetic and logical operations
     pub a: Reg8,
+    /// X index register: used for indexed addressing and as a counter
     pub x: Reg8,
+    /// Y index register: used for indexed addressing and as a counter
     pub y: Reg8,
+    /// Stack pointer (SP): points to the next available location on the stack (in page 1)
     pub sp: Reg8,
+    /// Program counter (PC): holds the address of the next instruction to execute
     pub pc: Reg16,
+    /// Processor status register: contains flag bits indicating CPU state
     pub status: StatusReg,
 
     // implementation non-visible registers
+    /// Instruction register (IR): holds the opcode of the current instruction
     pub ir: Reg8,
+    /// Temporary register: used internally during instruction execution
     pub tmp: Reg8,
+    /// Address register: holds memory addresses during instruction execution
     pub addr: Reg16,
 }
 
 impl RegisterFile {
+    /// Resets all registers to their default values.
+    ///
+    /// This method resets the state of the CPU registers to a clean default state,
+    /// which is useful for initialization or when simulating a CPU reset.
     pub fn reset(&mut self) {
         self.a.reset();
         self.x.reset();
@@ -89,77 +60,37 @@ impl RegisterFile {
         self.addr.set_u16(0x00FF);
     }
 
-    pub fn copy_selected_register16(&self, selection: SelectedRegister16) -> Reg16 {
-        match selection {
-            SelectedRegister16::Addr => self.addr,
-            SelectedRegister16::PC => self.pc,
+    /// Retrieves the value of a specified index register as an 8-bit unsigned integer.
+    ///
+    /// This method allows access to the values of the X and Y index registers,
+    /// which are used for indexed addressing modes and as counters in various instructions.
+    ///
+    /// # Arguments
+    ///
+    /// * `index_reg` - The index register to retrieve (X or Y)
+    ///
+    /// # Returns
+    ///
+    /// The value of the specified index register as an 8-bit unsigned integer
+    pub fn index_register_u8(&self, index_reg: IndexRegister) -> u8 {
+        match index_reg {
+            IndexRegister::X => self.x.to_u8(),
+            IndexRegister::Y => self.y.to_u8(),
         }
     }
 
-    pub fn selected_register16(&mut self, selection: SelectedRegister16) -> &mut Reg16 {
-        match selection {
-            SelectedRegister16::Addr => &mut self.addr,
-            SelectedRegister16::PC => &mut self.pc,
-        }
-    }
-
-    pub fn selected_register8(&mut self, selection: ReferenceableRegister8) -> &mut Reg8 {
-        match selection {
-            ReferenceableRegister8::A => &mut self.a,
-            ReferenceableRegister8::X => &mut self.x,
-            ReferenceableRegister8::Y => &mut self.y,
-            ReferenceableRegister8::Tmp => &mut self.tmp,
-        }
-    }
-
-    pub fn copy_selected_register8(&self, selection: SelectedRegister8) -> Reg8 {
-        match selection {
-            SelectedRegister8::A => self.a,
-            SelectedRegister8::X => self.x,
-            SelectedRegister8::Y => self.y,
-            SelectedRegister8::SP => self.sp,
-            SelectedRegister8::Status => Reg8::new(self.status.to_u8()),
-            SelectedRegister8::IR => self.ir,
-            SelectedRegister8::Tmp => self.tmp,
-            SelectedRegister8::PCHigh => Reg8::new(self.pc.high_u8()),
-            SelectedRegister8::PCLow => Reg8::new(self.pc.low_u8()),
-            SelectedRegister8::AddrHigh => Reg8::new(self.addr.high_u8()),
-            SelectedRegister8::AddrLow => Reg8::new(self.addr.low_u8()),
-            SelectedRegister8::StackPage => Reg8::new(SelectedRegister8::StackPage as u8),
-        }
-    }
-
-    pub fn set_selected_register16(&mut self, selection: SelectedRegister16, reg: Reg16) {
-        match selection {
-            SelectedRegister16::Addr => self.addr = reg,
-            SelectedRegister16::PC => self.pc = reg,
-        }
-    }
-
-    pub fn set_selected_register8(&mut self, selection: SelectedRegister8, value: u8) {
-        debug_assert_ne!(
-            selection,
-            SelectedRegister8::StackPage,
-            "Attempting to write a read only register"
-        );
-
-        let reg = Reg8::new(value);
-        match selection {
-            SelectedRegister8::A => self.a = reg,
-            SelectedRegister8::X => self.x = reg,
-            SelectedRegister8::Y => self.y = reg,
-            SelectedRegister8::SP => self.sp = reg,
-            SelectedRegister8::Status => self.status.set_u8(value),
-            SelectedRegister8::IR => self.ir = reg,
-            SelectedRegister8::Tmp => self.tmp = reg,
-            SelectedRegister8::PCHigh => self.pc.set_high_u8(value),
-            SelectedRegister8::PCLow => self.pc.set_low_u8(value),
-            SelectedRegister8::AddrHigh => self.addr.set_high_u8(value),
-            SelectedRegister8::AddrLow => self.addr.set_low_u8(value),
-            SelectedRegister8::StackPage => (),
-        };
-    }
-
+    /// Generates a text representation of the current state of all registers.
+    ///
+    /// This method formats the current state of all the main CPU registers
+    /// (accumulator, index registers, stack pointer, program counter, and status register)
+    /// into a readable text string to facilitate logging or debugging.
+    ///
+    /// This method is only available when the "logging" or "disassembly" features
+    /// are enabled.
+    ///
+    /// # Returns
+    ///
+    /// A text string containing the values of all register
     #[cfg(any(feature = "logging", feature = "disassembly"))]
     pub fn as_log_line(&self) -> String {
         format!(
@@ -185,27 +116,5 @@ impl fmt::Debug for RegisterFile {
         writeln!(f)?;
         write!(f, "\tStatus: {:?}", self.status)?;
         writeln!(f)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::registers::{RegisterFile, SelectedRegister8};
-
-    #[test]
-    fn registerfile_sethighlowbytes_pccontainscorrectaddress() {
-        // GIVEN
-        let mut register_file = RegisterFile::default();
-
-        // WHEN
-        register_file.set_selected_register8(SelectedRegister8::PCHigh, 0xCA);
-        register_file.set_selected_register8(SelectedRegister8::PCLow, 0xFE);
-
-        register_file.set_selected_register8(SelectedRegister8::AddrHigh, 0xFA);
-        register_file.set_selected_register8(SelectedRegister8::AddrLow, 0xCE);
-
-        // THEN
-        assert_eq!(register_file.pc.to_u16(), 0xCAFE);
-        assert_eq!(register_file.addr.to_u16(), 0xFACE);
     }
 }
