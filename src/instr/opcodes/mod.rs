@@ -57,12 +57,12 @@ mod tests {
             let opcode = i << 2;
             let decoded = decode(opcode);
             let (sequence, operation, _) = decoded.into();
-            if sequence != instr::InstructionSequenceMode::Relative
+            if sequence != InstructionSequenceMode::Relative
                 && (operation != instr::InstructionOp::Nop)
                 || matches!(
                     sequence,
-                    instr::InstructionSequenceMode::AbsoluteJump
-                        | instr::InstructionSequenceMode::AbsoluteIndirectJump
+                    InstructionSequenceMode::AbsoluteJump
+                        | InstructionSequenceMode::AbsoluteIndirectJump
                 )
             {
                 println!("\t{:#04X}\t{:?}", opcode, decoded);
@@ -92,10 +92,10 @@ mod tests {
             let sequence: InstructionSequenceMode = decoded.into();
             if matches!(
                 sequence,
-                instr::InstructionSequenceMode::Break
-                    | instr::InstructionSequenceMode::ReturnSubroutine
-                    | instr::InstructionSequenceMode::ReturnInterrupt
-                    | instr::InstructionSequenceMode::JumpSubroutine
+                InstructionSequenceMode::Break
+                    | InstructionSequenceMode::ReturnSubroutine
+                    | InstructionSequenceMode::ReturnInterrupt
+                    | InstructionSequenceMode::JumpSubroutine
             ) {
                 println!("\t{:#04X}\t{:?}", opcode, decoded);
             }

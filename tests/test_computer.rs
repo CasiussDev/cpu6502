@@ -7,15 +7,15 @@
 use std::io::{Read, Seek, SeekFrom};
 use std::{fs, io};
 
-pub const START_PROG_ADDR_HIGH: u8 = 0xC0;
-pub const START_PROG_ADDR_LOW: u8 = 0x00;
-pub const START_PROG_PTR_HIGH: usize = 0xFFFD;
-pub const START_PROG_PTR_LOW: usize = 0xFFFC;
+const START_PROG_ADDR_HIGH: u8 = 0xC0;
+const START_PROG_ADDR_LOW: u8 = 0x00;
+const START_PROG_PTR_HIGH: usize = 0xFFFD;
+const START_PROG_PTR_LOW: usize = 0xFFFC;
 
-pub const NUM_ROM_BYTES: usize = 0x4000;
-pub const ROM_OFFSET: usize = 0x0010;
+const NUM_ROM_BYTES: usize = 0x4000;
+const ROM_OFFSET: usize = 0x0010;
 
-pub const ROM_DESTINATION: usize = 0x8000;
+const ROM_DESTINATION: usize = 0x8000;
 
 pub const MEMORY_64K: usize = (u16::MAX as usize) + 1;
 
