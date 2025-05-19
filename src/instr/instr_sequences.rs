@@ -1,3 +1,38 @@
+//! Module defining the instruction execution sequences for the 6502 CPU.
+//!
+//! This module provides the core instruction sequencing logic through two key enums:
+//!
+//! - `Instruction`: Represents complete instruction sequences including their operations
+//!   and addressing modes. Each variant captures the full context needed to execute
+//!   an instruction over multiple clock cycles.
+//!
+//! - `InstructionSequenceMode`: Generated via `EnumDiscriminants`, this represents just
+//!   the addressing mode/sequence type without the associated operation data.
+//!
+//! # Instruction Sequences
+//!
+//! Each instruction in the 6502 requires multiple clock cycles to complete. The sequence
+//! of operations performed in each cycle depends on both the operation (what to do) and
+//! the addressing mode (how to get the operands). For example:
+//!
+//! - Implied instructions (CLC, INX): 2 cycles
+//! - Immediate instructions (LDA #$00): 2 cycles
+//! - Zero page instructions (LDA $00): 3 cycles
+//! - Absolute instructions (LDA $1234): 4 cycles
+//! - Indexed instructions: 4-5 cycles depending on page crossing
+//!
+//! # Usage
+//!
+//! The instruction decoder creates `Instruction` variants based on opcodes, which are then
+//! executed cycle-by-cycle by the CPU core. The `Instruction` enum provides methods to:
+//!
+//! - Create new instructions via `Instruction::new()`
+//! - Convert between different operation types
+//! - Query instruction properties for cycle-accurate timing
+//!
+//! The sequences defined here ensure that instructions follow the exact cycle timing
+//! of the original 6502 hardware, which is critical for accurate emulation.
+
 use crate::registers::IndexRegister;
 use strum_macros::EnumDiscriminants;
 

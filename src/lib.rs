@@ -11,10 +11,15 @@
 //! - `memory`: Memory space abstractions.
 //! - `registers`: CPU register file and register types.
 
+#[warn(missing_docs)]
 mod alu;
+#[warn(missing_docs)]
 mod cpu;
+#[warn(missing_docs)]
 pub mod instr;
+#[warn(missing_docs)]
 mod memory;
+#[warn(missing_docs)]
 mod registers;
 
 #[cfg(feature = "gen_write_cycle_query")]

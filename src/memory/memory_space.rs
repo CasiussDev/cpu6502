@@ -68,6 +68,14 @@ impl MemorySpace for BasicRam {
     }
 }
 
+/// Creates a new instance of basic RAM with 64KB of memory.
+///
+/// This function initializes a 64KB array with all bytes set to zero,
+/// providing a clean memory state for the 6502 emulator to work with.
+///
+/// # Returns
+///
+/// A zero-initialized 64KB array implementing the `MemorySpace` trait
 pub fn new_basic_ram() -> BasicRam {
     [0; MEMORY_64K]
 }

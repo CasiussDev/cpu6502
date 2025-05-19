@@ -1,3 +1,20 @@
+//! Module containing all 6502 CPU instruction operation types and conversion logic.
+//!
+//! This module defines the various operation types that can be performed by the 6502 CPU,
+//! organized into several categories:
+//!
+//! - `ImplicitOperation`: Operations that work only with registers (TAX, DEY, etc.)
+//! - `BranchOperation`: Conditional branch operations (BEQ, BNE, etc.)
+//! - `MemoryModifyOperation`: Read-modify-write operations on memory (INC, ASL, etc.)
+//! - `RegisterMemoryOperation`: Operations between registers and memory (LDA, STA, etc.)
+//! - `PushStackOperation`: Operations that push values to the stack (PHA, PHP)
+//! - `PullStackOperation`: Operations that pull values from the stack (PLA, PLP)
+//! - `InstructionOp`: A comprehensive enum containing all possible operations
+//!
+//! The module also provides conversion implementations between these operation types
+//! through the `From` and `TryFrom` traits, allowing for flexible operation type handling
+//! in the instruction decoder and executor.
+
 use std::convert::TryFrom;
 
 /// Represents operations that use implicit addressing mode.

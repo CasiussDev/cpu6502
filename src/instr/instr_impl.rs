@@ -1,3 +1,35 @@
+//! Implementation of all 6502 CPU instruction execution logic.
+//!
+//! This module contains the cycle-accurate implementation of each 6502 instruction type.
+//! The 6502 uses a multi-cycle execution model where each instruction requires several
+//! clock cycles to complete. Each cycle performs a specific operation such as:
+//! - Reading from memory
+//! - Writing to memory
+//! - Performing internal calculations
+//! - Updating registers and flags
+//!
+//! # Addressing Modes
+//!
+//! The module implements all standard 6502 addressing modes:
+//! - Implied/Implicit
+//! - Immediate
+//! - Absolute
+//! - Zero Page
+//! - Indexed (with X or Y registers)
+//! - Indirect
+//! - Relative (for branch instructions)
+//!
+//! # Timing
+//!
+//! Each instruction maintains cycle-accurate timing matching the original 6502.
+//! The execution functions return a `ClockEndStatus` indicating whether more cycles
+//! are needed or the instruction has completed.
+//!
+//! # Page Boundary Crossing
+//!
+//! The module properly handles the special timing cases when indexed addressing
+//! crosses page boundaries, adding extra cycles as needed per the original hardware.
+
 #[cfg(test)]
 mod tests;
 
@@ -33,7 +65,10 @@ pub enum ClockEndStatus {
     /// The current instruction has completed, and the next opcode has already been fetched.
     /// This is an optimization used by branch instructions when the branch is not taken.
     /// The CPU can skip the fetch cycle and use the pre-fetched opcode from the specified address.
-    EndInstructionNextFetched { opcode_addr: u16 },
+    EndInstructionNextFetched {
+        /// The memory address from which the next opcode was pre-fetched
+        opcode_addr: u16,
+    },
 }
 
 /// Indicates whether an address required adjustment when adding an index value.
