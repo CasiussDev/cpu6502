@@ -1,6 +1,10 @@
 use super::StatusReg;
 use super::{Reg16, Reg8};
+#[cfg(feature = "logging")]
+use arrayvec::ArrayString;
 use std::fmt;
+#[cfg(feature = "logging")]
+use std::fmt::Write;
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Default)]
 pub enum IndexRegister {
@@ -85,15 +89,21 @@ impl RegisterFile {
     /// (accumulator, index registers, stack pointer, program counter, and status register)
     /// into a readable text string to facilitate logging or debugging.
     ///
-    /// This method is only available when the "logging" or "disassembly" features
-    /// are enabled.
+    /// # Arguments
+    /// * `dst` - An ArrayString buffer where the formatted output will be stored
     ///
     /// # Returns
+    /// A fmt::Result indicating whether the formatting succeeded
     ///
-    /// A text string containing the values of all register
-    #[cfg(any(feature = "logging", feature = "disassembly"))]
-    pub fn as_log_line(&self) -> String {
-        format!(
+    /// # Format
+    /// The output has the format: `A:XX X:XX Y:XX P:XX SP:XX`
+    ///
+    /// This method is only available when the "logging" feature
+    /// is enabled.
+    #[cfg(feature = "logging")]
+    pub fn as_log_line(&self, dst: &mut ArrayString<32>) -> fmt::Result {
+        write!(
+            dst,
             "\t\tA:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
             self.a.to_u8(),
             self.x.to_u8(),

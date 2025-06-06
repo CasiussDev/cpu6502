@@ -3,17 +3,17 @@
 //! This test runs the CPU with a test ROM, logs the executed instructions, and compares
 //! the output against a reference log to verify correctness.
 
+#[cfg(feature = "logging")]
 mod test_computer;
 
-#[cfg(feature = "disassembly")]
+#[cfg(feature = "logging")]
 mod inner {
     use crate::test_computer::TestComputer;
-    use std::io::{BufRead, Write};
+    use std::io::BufRead;
+    use std::path::Path;
     use std::{fs, io};
 
     extern crate disasm6502;
-
-    #[cfg(feature = "logging")]
     extern crate simplelog;
 
     /// Path to the reference instruction trace log.
@@ -28,12 +28,6 @@ mod inner {
     /// * `computer` - The test computer containing the CPU and memory.
     /// * `num_cycles` - The number of cycles to execute.
     fn run(computer: &mut TestComputer, num_cycles: u128) {
-        // Create the output log file.
-        let log_file = fs::File::create(OUTPUT_FILE).expect("cannot open output log file");
-        let mut log_file = io::BufWriter::new(log_file);
-
-        let mut instr_log;
-
         // Reset the CPU before starting execution.
         computer.cpu.reset();
 
@@ -41,34 +35,7 @@ mod inner {
         while computer.cpu.cycle_count_since_reset() < num_cycles {
             // Execute one instruction cycle.
             computer.cpu.run(&mut computer.memory);
-
-            // If an instruction was fetched, disassemble and log it.
-            if let Some(addr) = computer.cpu.fetched_instr_addr() {
-                // Disassemble up to 6 bytes from the current address.
-                let instructions = disasm6502::from_addr_array(
-                    &computer.memory[(addr as usize)..(addr as usize + 6)],
-                    addr,
-                )
-                .expect("could not decode instr");
-                let decoded = instructions.first().expect("empty instr vector");
-
-                // Format the instruction log line.
-                instr_log = format!("{:04X} {} {}", addr, decoded.as_hex_str(), decoded.as_str());
-
-                // Write the instruction and CPU state to the log file.
-                writeln!(
-                    log_file,
-                    "{:<25}{} CYC:{}",
-                    instr_log,
-                    computer.cpu.regs_as_log_line(),
-                    computer.cpu.cycle_count_since_reset()
-                )
-                .expect("cannot write to file");
-            }
         }
-
-        // Ensure all data is written to disk.
-        log_file.flush().expect("could not flush file writer");
     }
 
     /// Compares the generated output log with the reference log line by line.
@@ -105,29 +72,18 @@ mod inner {
     /// Runs the NES ROM integration test, logging instructions and comparing with the reference.
     #[test]
     fn nes_rom_test() {
-        #[cfg(feature = "logging")]
         {
-            // Configure logging to a trace file if the logging feature is enabled.
-            let log_config = simplelog::ConfigBuilder::new()
-                .set_max_level(log::LevelFilter::Off)
-                .set_time_level(log::LevelFilter::Off)
-                .set_thread_level(log::LevelFilter::Off)
-                .set_target_level(log::LevelFilter::Off)
-                .set_location_level(log::LevelFilter::Off)
-                .build();
+            // Initialize the test computer and load the NES ROM.
+            let mut computer = TestComputer::new();
+            computer
+                .cpu
+                .init_logging_debug(Path::new("testdata/output.6502log"));
+            computer.load_rom();
 
-            let trace_file =
-                fs::File::create("testdata/trace.log.txt").expect("cannot open trace file");
-            simplelog::WriteLogger::init(log::LevelFilter::Trace, log_config, trace_file)
-                .expect("WriteLogger::init error");
+            // Run the CPU for 14575 cycles and log instructions.
+            run(&mut computer, 14575);
+            // Dropping the computer here ensures the log file is flushed and closed.
         }
-
-        // Initialize the test computer and load the NES ROM.
-        let mut computer = TestComputer::new();
-        computer.load_rom();
-
-        // Run the CPU for 14575 cycles and log instructions.
-        run(&mut computer, 14575);
 
         // Compare the output log with the reference log.
         check_results();

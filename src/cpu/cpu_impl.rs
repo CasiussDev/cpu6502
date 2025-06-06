@@ -1,16 +1,18 @@
 use crate::cpu::interrupt::{waiting_interrupt, InterruptType, Interrupts};
+#[cfg(feature = "logging")]
+use crate::cpu::logging_memory::LoggingMemory;
+#[cfg(not(feature = "gen_write_cycle_query"))]
+use crate::cpu::write_cycle_query::write_cycle_query;
 use crate::instr::{instr_impl, Instruction};
 use crate::registers::RegisterFile;
 use crate::{instr, MemorySpace};
-
-#[cfg(feature = "disassembly")]
-extern crate disasm6502;
-
 #[cfg(feature = "logging")]
-use crate::cpu::logging_memory::LoggingMemory;
-
-#[cfg(not(feature = "gen_write_cycle_query"))]
-use crate::cpu::write_cycle_query::write_cycle_query;
+use arrayvec::ArrayString;
+#[cfg(feature = "logging")]
+use log::log_enabled;
+#[cfg(feature = "logging")]
+use std::fs;
+use std::path::Path;
 
 /// A 6502 CPU implementation
 ///
@@ -46,9 +48,20 @@ pub struct Cpu {
     /// Number of instructions executed since the CPU was last reset
     instr_count_since_reset: u128,
 
-    /// Address of the last fetched instruction, only when disassembly feature is enabled
-    #[cfg(feature = "disassembly")]
+    /// Address of the last fetched instruction, only when the logging feature is enabled
+    #[cfg(feature = "logging")]
     fetched_instr_addr: Option<u16>,
+
+    /// Flag to indicate if logging has been initialized
+    #[cfg(feature = "logging")]
+    logging_inited: bool,
+}
+
+#[cfg(feature = "logging")]
+impl Drop for Cpu {
+    fn drop(&mut self) {
+        log::logger().flush();
+    }
 }
 
 impl Cpu {
@@ -84,10 +97,84 @@ impl Cpu {
         self.cycle_count_since_reset = 0;
         self.instr_count_since_reset = 0;
 
-        #[cfg(feature = "disassembly")]
+        #[cfg(feature = "logging")]
         {
             self.fetched_instr_addr = None;
         }
+    }
+
+    /// Initializes logging with the specified log level.
+    ///
+    /// Internal helper function that sets up the logging configuration with the provided level.
+    /// Logging is only initialized once, subsequent calls will have no effect.
+    ///
+    /// # Parameters
+    /// * `level` - The log level filter to use for logging
+    #[cfg(feature = "logging")]
+    fn init_logging(&mut self, level: log::LevelFilter, path: &Path) {
+        if !self.logging_inited {
+            let log_config = simplelog::ConfigBuilder::new()
+                .set_max_level(log::LevelFilter::Off)
+                .set_time_level(log::LevelFilter::Off)
+                .set_thread_level(log::LevelFilter::Off)
+                .set_target_level(log::LevelFilter::Off)
+                .set_location_level(log::LevelFilter::Off)
+                .build();
+
+            let log_file = fs::File::create(path).expect("cannot open trace file");
+            simplelog::WriteLogger::init(level, log_config, log_file)
+                .expect("WriteLogger::init error");
+
+            self.logging_inited = true;
+        }
+    }
+
+    /// Initializes logging at the TRACE level.
+    ///
+    /// This enables the most detailed level of logging, showing all CPU operations.
+    /// The logs will be written to the specified file path.
+    ///
+    /// # Parameters
+    /// * `path` - The path to the log file where CPU traces will be written
+    ///
+    /// # Example
+    /// ```
+    /// use cpu6502::Cpu;
+    /// use std::path::Path;
+    ///
+    /// let mut cpu = Cpu::new();
+    /// cpu.init_logging_trace(Path::new("cpu_trace.log"));
+    /// # std::fs::remove_file(Path::new("cpu_trace.log")).unwrap(); // Remove the log file after running the example
+    /// ```
+    ///
+    /// This method is only available when the "logging" feature is enabled.
+    pub fn init_logging_trace(&mut self, _path: &Path) {
+        #[cfg(feature = "logging")]
+        self.init_logging(log::LevelFilter::Trace, _path);
+    }
+
+    /// Initializes logging at the DEBUG level.
+    ///
+    /// This enables detailed logging but with less verbosity than TRACE level.
+    /// The logs will be written to the specified file path.
+    ///
+    /// # Parameters
+    /// * `path` - The path to the log file where CPU traces will be written
+    ///
+    /// # Example
+    /// ```
+    /// use cpu6502::Cpu;
+    /// use std::path::Path;
+    ///
+    /// let mut cpu = Cpu::new();
+    /// cpu.init_logging_debug(Path::new("cpu_debug.log"));
+    /// # std::fs::remove_file(Path::new("cpu_debug.log")).unwrap(); // Remove the log file after running the example
+    /// ```
+    ///
+    /// This method is only available when the "logging" feature is enabled.
+    pub fn init_logging_debug(&mut self, _path: &Path) {
+        #[cfg(feature = "logging")]
+        self.init_logging(log::LevelFilter::Debug, _path);
     }
 
     /// Executes a single CPU cycle with memory logging enabled.
@@ -100,6 +187,20 @@ impl Cpu {
     pub fn run(&mut self, memory: &mut impl MemorySpace) {
         let mut memory = LoggingMemory::new(memory);
         self.run_inner(&mut memory);
+
+        if log_enabled!(log::Level::Debug) {
+            if let Some(addr) = self.fetched_instr_addr {
+                // Log the current state of the CPU registers after running the cycle
+                let mut log_line = ArrayString::<128>::new();
+                let result =
+                    instr::disassemble::disassemble(addr, &mut memory, self, &mut log_line);
+                if let Err(e) = result {
+                    log::error!("Failed to disassemble instruction: {}", e);
+                } else {
+                    log::debug!("{}", log_line);
+                }
+            }
+        }
     }
 
     /// Executes a single CPU cycle.
@@ -191,24 +292,28 @@ impl Cpu {
 
     /// Returns the address of the last fetched instruction.
     ///
-    /// This method is only available when the "disassembly" feature is enabled.
+    /// This is useful for disassembly and CPU execution logging.
+    /// The value is set when an instruction completes and the address
+    /// of the next instruction to be loaded is stored.
+    ///
+    /// This method is only available when the "logging" feature is enabled.
     ///
     /// # Returns
     /// The address of the last fetched instruction, or None if no instruction has been fetched
-    #[cfg(feature = "disassembly")]
+    #[cfg(feature = "logging")]
     pub fn fetched_instr_addr(&self) -> Option<u16> {
         self.fetched_instr_addr
     }
 
     /// Returns a formatted string representation of the CPU registers.
     ///
-    /// This method is only available when either the "disassembly" or "logging" feature is enabled.
+    /// This method is only available when either the "logging" feature is enabled.
     ///
     /// # Returns
     /// A string representing the current state of all CPU registers
-    #[cfg(any(feature = "disassembly", feature = "logging"))]
-    pub fn regs_as_log_line(&self) -> String {
-        self.regs.as_log_line()
+    #[cfg(feature = "logging")]
+    pub fn regs_as_log_line(&self, dst: &mut ArrayString<32>) -> std::fmt::Result {
+        self.regs.as_log_line(dst)
     }
 
     /// Internal implementation of the CPU cycle execution.
@@ -219,8 +324,8 @@ impl Cpu {
     /// # Parameters
     /// * `memory` - Memory space implementation that the CPU will interact with
     fn run_inner(&mut self, memory: &mut impl MemorySpace) {
-        // Reset the instruction address tracking when disassembly is enabled
-        #[cfg(feature = "disassembly")]
+        // Reset the instruction address tracking when logging is enabled
+        #[cfg(feature = "logging")]
         {
             self.fetched_instr_addr = None;
         }
@@ -265,7 +370,7 @@ impl Cpu {
                 opcode_addr: _opcode_addr,
             } => {
                 // Instruction is complete and the next opcode has already been fetched
-                #[cfg(feature = "disassembly")]
+                #[cfg(feature = "logging")]
                 {
                     // Store the address of the fetched instruction for disassembly
                     self.fetched_instr_addr = Some(_opcode_addr);

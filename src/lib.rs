@@ -10,6 +10,13 @@
 //! - `instr`: Instruction set and decoding.
 //! - `memory`: Memory space abstractions.
 //! - `registers`: CPU register file and register types.
+//!
+//! ## Feature Flags
+//! - `logging`: Enables instruction disassembly and execution logging.
+//! - `decimal`: Enables decimal mode arithmetic (not fully implemented).
+//! - `undoc_opcodes`: Enables support for undocumented opcodes.
+//! - `decode_logic`: Provides the canonical instruction decoder implementation.
+//! - `gen_write_cycle_query`: Enables generation of write cycle detection logic.
 
 #![warn(missing_docs)]
 
@@ -31,6 +38,12 @@ extern crate enum_primitive_derive;
 #[cfg(feature = "decode_logic")]
 extern crate num_traits;
 
+#[cfg(feature = "logging")]
+extern crate arrayvec;
+
+#[cfg(feature = "logging")]
+extern crate disasm6502;
+
 pub use cpu::Cpu;
 pub use memory::memory_space::new_basic_ram;
 pub use memory::MemorySpace;
@@ -39,5 +52,5 @@ pub use memory::MemorySpace;
 extern crate log;
 
 pub use instr::opcodes::decode;
-#[cfg(feature = "disassembly")]
+#[cfg(feature = "logging")]
 pub use instr::InstructionOp;

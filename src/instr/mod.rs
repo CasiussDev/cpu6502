@@ -7,6 +7,7 @@
 //! - Instruction execution sequences (how instructions are executed over multiple cycles)
 //! - Opcode mapping and decoding (translating binary opcodes to executable instructions)
 //! - Instruction implementation (the cycle-by-cycle execution logic)
+//! - Instruction disassembly (converting binary instructions to human-readable assembly)
 //!
 //! ## Module Structure
 //!
@@ -14,10 +15,13 @@
 //! - `instr_sequences`: Defines the instruction execution sequences for different addressing modes
 //! - `opcodes`: Maps binary opcodes to instruction operations and addressing modes
 //! - `instr_impl`: Implements the cycle-by-cycle execution of all instructions
+//! - `disassemble`: Provides functionality to disassemble and log executed instructions (only available with the `logging` feature)
 //!
 //! The design separates the operation (what is done) from the addressing mode (how operands
 //! are accessed), which matches how the actual 6502 architecture works.
 
+#[cfg(feature = "logging")]
+pub mod disassemble;
 pub mod instr_impl;
 pub mod instr_operation;
 pub mod instr_sequences;

@@ -16,7 +16,6 @@
 //! The module supports several compile-time features:
 //!
 //! - `logging`: Enables memory access logging for debugging
-//! - `disassembly`: Adds support for disassembling instructions during execution
 //! - `gen_write_cycle_query`: Controls the implementation of write cycle detection
 //!
 //! # Example

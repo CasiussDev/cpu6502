@@ -22,12 +22,14 @@ use crate::registers::IndexRegister::Y;
 ///
 /// # Returns
 /// A decoded `Instruction` enum value representing the instruction. Invalid or
-/// undocumented opcodes are decoded as `FetchInstr`, which acts as a NOP.
+/// undocumented opcodes are typically decoded as `FetchInstr`, which acts as a NOP,
+/// unless the `undoc_opcodes` feature is enabled.
 ///
 /// # Implementation Notes
 /// - All 256 possible opcode values are explicitly handled
-/// - Generated from the canonical decoder implementation
+/// - Generated from the canonical decoder implementation in decode_logic.rs
 /// - Provides the same behavior as decode_logic::decode
+/// - The handling of undocumented opcodes depends on the `undoc_opcodes` feature
 pub fn decode(opcode: u8) -> Instruction {
     match opcode {
         0x00 => Break,
