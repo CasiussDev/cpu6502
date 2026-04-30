@@ -11,7 +11,7 @@
 
 use crate::MemorySpace;
 use arrayvec::ArrayString;
-use std::fmt::Write;
+use core::fmt::Write;
 
 /// Disassembles and formats a 6502 instruction with CPU state information
 ///
@@ -25,7 +25,7 @@ use std::fmt::Write;
 /// * `dst` - The destination string buffer where the formatted output will be written
 ///
 /// # Returns
-/// A `std::fmt::Result` indicating whether the formatting succeeded
+/// A `core::fmt::Result` indicating whether the formatting succeeded
 ///
 /// # Format
 /// The output format is: `ADDR BYTES MNEMONIC  REGISTERS CYC:N`
@@ -39,7 +39,7 @@ pub fn disassemble(
     memory: &mut impl MemorySpace,
     cpu: &mut crate::cpu::Cpu,
     dst: &mut ArrayString<128>,
-) -> std::fmt::Result {
+) -> core::fmt::Result {
     // Read up to 6 bytes from the current address in memory.
     let mut assembly = [0u8; 6];
     memory.read_array(addr, &mut assembly);

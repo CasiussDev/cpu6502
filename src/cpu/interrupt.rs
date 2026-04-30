@@ -28,7 +28,9 @@ pub struct Interrupts {
 /// - `Interrupt`: Standard interrupt that can be disabled by setting the interrupt disable flag
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum InterruptType {
+    /// Non-maskable hardware interrupt.
     NonMaskableInterrupt,
+    /// Maskable hardware interrupt.
     Interrupt,
 }
 

@@ -451,13 +451,9 @@ fn execute_op(op: RegisterMemoryOperation, regs: &mut RegisterFile, memory: &mut
         RegisterMemoryOperation::Bit => {
             regs.tmp.set_u8(memory.read(regs.addr.to_u16()));
             alu::bit_compare(regs.a, regs.tmp, &mut regs.status);
-            regs.status
-                .update_flags(StatusRegFlags::OVERFLOW, (regs.tmp.to_u8() & 0x40) != 0);
-            regs.status
-                .update_flags(StatusRegFlags::NEGATIVE, (regs.tmp.to_u8() & 0x80) != 0);
         }
         RegisterMemoryOperation::BitImmediate => {
-            alu::bit_compare(regs.a, regs.tmp, &mut regs.status);
+            alu::bit_compare_imm(regs.a, regs.tmp, &mut regs.status);
         }
     }
 }

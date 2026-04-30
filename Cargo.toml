@@ -3,24 +3,28 @@ name = "cpu6502"
 version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "A cycle-accurate 6502 CPU emulator library."
+repository = "https://github.com/example/cpu6502"
+readme = "README.md"
+keywords = ["cpu6502", "emulator", "cpu", "nes", "mos6502"]
+categories = ["emulators", "no-std"]
 
 [dependencies]
 bitflags = "2.4"
-strum = "0.27"
+strum = { version = "0.27", default-features = false, features = ["derive"] }
 strum_macros = "0.27"
 log = { version = "0.4", optional = true }
 simplelog = { version = "0.12.0", optional = true }
 disasm6502 = { version = "0.2.2", optional = true }
 enum-primitive-derive = {  version = "0.3.0", optional = true }
-num-traits = {  version = "0.2", optional = true }
-arrayvec = { version = "0.7", optional = true }
+num-traits = {  version = "0.2", default-features = false, optional = true }
+arrayvec = { version = "0.7", default-features = false, optional = true }
 
 [features]
-default = []
+default = ["std"]
+std = ["strum/std"]
 decimal = []
 undoc_opcodes = []
-logging = ["dep:log", "dep:simplelog", "dep:disasm6502", "dep:arrayvec"]
+logging = ["std", "dep:log", "dep:simplelog", "dep:disasm6502", "dep:arrayvec"]
 decode_logic = ["dep:enum-primitive-derive", "dep:num-traits"]
-gen_write_cycle_query = []
+gen_write_cycle_query = ["std", "strum/derive"]

@@ -15,7 +15,7 @@
 //! through the `From` and `TryFrom` traits, allowing for flexible operation type handling
 //! in the instruction decoder and executor.
 
-use std::convert::TryFrom;
+use core::convert::TryFrom;
 
 /// Represents operations that use implicit addressing mode.
 ///

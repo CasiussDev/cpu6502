@@ -2,14 +2,17 @@ use super::StatusReg;
 use super::{Reg16, Reg8};
 #[cfg(feature = "logging")]
 use arrayvec::ArrayString;
-use std::fmt;
+use core::fmt;
 #[cfg(feature = "logging")]
-use std::fmt::Write;
+use core::fmt::Write;
 
+/// Identifies which index register is being used.
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Default)]
 pub enum IndexRegister {
+    /// The X index register.
     #[default]
     X,
+    /// The Y index register.
     Y,
 }
 

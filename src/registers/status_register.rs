@@ -1,7 +1,8 @@
 use bitflags::bitflags;
-use std::fmt;
+use core::fmt;
 
 bitflags! {
+    /// Represents the different flags in the 6502 status register.
     #[derive(Default, Copy, Clone, PartialEq, Eq, Debug)]
     pub struct StatusRegFlags: u8 {
         /// Carry flag (bit 0) - Set if operation produced a carry or if A >= M in comparison

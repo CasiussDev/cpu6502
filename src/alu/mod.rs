@@ -447,4 +447,26 @@ pub fn xor(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusR
 pub fn bit_compare(accumulator: Reg8, operand: Reg8, status_register: &mut StatusReg) {
     let and = accumulator.to_u8() & operand.to_u8();
     status_register.update_flags(StatusRegFlags::ZERO, and == 0);
+    status_register.update_flags(StatusRegFlags::NEGATIVE, (operand.to_u8() & 0x80) != 0);
+    status_register.update_flags(StatusRegFlags::OVERFLOW, (operand.to_u8() & 0x40) != 0);
+}
+
+/// Tests bits in an immediate value against the accumulator (BIT immediate instruction)
+///
+/// This is used for the BIT immediate instruction (65C02 extension).
+/// Unlike BIT with other addressing modes, BIT immediate only updates the Z flag.
+///
+/// # Arguments
+///
+/// * `accumulator` - The A register (not modified)
+/// * `operand` - The immediate value to test against the accumulator
+/// * `status_register` - The processor status register to update
+///
+/// # Effects
+///
+/// * Sets the Z flag if the result of A & operand is zero
+/// * Does NOT modify N or V flags
+pub fn bit_compare_imm(accumulator: Reg8, operand: Reg8, status_register: &mut StatusReg) {
+    let and = accumulator.to_u8() & operand.to_u8();
+    status_register.update_flags(StatusRegFlags::ZERO, and == 0);
 }

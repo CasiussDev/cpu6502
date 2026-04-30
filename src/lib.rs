@@ -18,7 +18,12 @@
 //! - `decode_logic`: Provides the canonical instruction decoder implementation.
 //! - `gen_write_cycle_query`: Enables generation of write cycle detection logic.
 
+#![no_std]
 #![warn(missing_docs)]
+
+#[cfg(any(feature = "std", test))]
+#[macro_use]
+extern crate std;
 
 mod alu;
 mod cpu;
@@ -26,31 +31,10 @@ pub mod instr;
 mod memory;
 mod registers;
 
-#[cfg(feature = "gen_write_cycle_query")]
-pub use crate::instr::instr_impl::execute;
-#[cfg(feature = "gen_write_cycle_query")]
-pub use crate::registers::RegisterFile;
-
-#[cfg(feature = "decode_logic")]
-#[macro_use]
-extern crate enum_primitive_derive;
-
-#[cfg(feature = "decode_logic")]
-extern crate num_traits;
-
-#[cfg(feature = "logging")]
-extern crate arrayvec;
-
-#[cfg(feature = "logging")]
-extern crate disasm6502;
-
-pub use cpu::Cpu;
-pub use memory::memory_space::new_basic_ram;
-pub use memory::MemorySpace;
-
-#[cfg(feature = "logging")]
-extern crate log;
-
-pub use instr::opcodes::decode;
-#[cfg(feature = "logging")]
-pub use instr::InstructionOp;
+pub use alu::*;
+pub use cpu::{interrupt::InterruptType, Cpu};
+pub use instr::{
+    instr_operation::*, instr_sequences::Instruction, opcodes::decode, InstructionOp,
+};
+pub use memory::{memory_space::new_basic_ram, MemorySpace};
+pub use registers::{IndexRegister, RegisterFile, StatusReg, StatusRegFlags};

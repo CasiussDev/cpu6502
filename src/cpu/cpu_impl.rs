@@ -10,8 +10,8 @@ use crate::{instr, MemorySpace};
 use arrayvec::ArrayString;
 #[cfg(feature = "logging")]
 use log::log_enabled;
-#[cfg(feature = "logging")]
-use std::fs;
+
+#[cfg(feature = "std")]
 use std::path::Path;
 
 /// A 6502 CPU implementation
@@ -110,8 +110,8 @@ impl Cpu {
     ///
     /// # Parameters
     /// * `level` - The log level filter to use for logging
-    #[cfg(feature = "logging")]
-    fn init_logging(&mut self, level: log::LevelFilter, path: &Path) {
+    #[cfg(all(feature = "logging", feature = "std"))]
+    fn init_logging(&mut self, level: log::LevelFilter, path: &std::path::Path) {
         if !self.logging_inited {
             let log_config = simplelog::ConfigBuilder::new()
                 .set_max_level(log::LevelFilter::Off)
@@ -121,7 +121,7 @@ impl Cpu {
                 .set_location_level(log::LevelFilter::Off)
                 .build();
 
-            let log_file = fs::File::create(path).expect("cannot open trace file");
+            let log_file = std::fs::File::create(path).expect("cannot open trace file");
             simplelog::WriteLogger::init(level, log_config, log_file)
                 .expect("WriteLogger::init error");
 
@@ -138,16 +138,16 @@ impl Cpu {
     /// * `path` - The path to the log file where CPU traces will be written
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use cpu6502::Cpu;
     /// use std::path::Path;
     ///
     /// let mut cpu = Cpu::new();
     /// cpu.init_logging_trace(Path::new("cpu_trace.log"));
-    /// # std::fs::remove_file(Path::new("cpu_trace.log")).unwrap(); // Remove the log file after running the example
     /// ```
     ///
-    /// This method is only available when the "logging" feature is enabled.
+    /// This method is only available when the "logging" feature and "std" feature are enabled.
+    #[cfg(feature = "std")]
     pub fn init_logging_trace(&mut self, _path: &Path) {
         #[cfg(feature = "logging")]
         self.init_logging(log::LevelFilter::Trace, _path);
@@ -162,16 +162,16 @@ impl Cpu {
     /// * `path` - The path to the log file where CPU traces will be written
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use cpu6502::Cpu;
     /// use std::path::Path;
     ///
     /// let mut cpu = Cpu::new();
     /// cpu.init_logging_debug(Path::new("cpu_debug.log"));
-    /// # std::fs::remove_file(Path::new("cpu_debug.log")).unwrap(); // Remove the log file after running the example
     /// ```
     ///
-    /// This method is only available when the "logging" feature is enabled.
+    /// This method is only available when the "logging" feature and "std" feature are enabled.
+    #[cfg(feature = "std")]
     pub fn init_logging_debug(&mut self, _path: &Path) {
         #[cfg(feature = "logging")]
         self.init_logging(log::LevelFilter::Debug, _path);
@@ -312,7 +312,7 @@ impl Cpu {
     /// # Returns
     /// A string representing the current state of all CPU registers
     #[cfg(feature = "logging")]
-    pub fn regs_as_log_line(&self, dst: &mut ArrayString<32>) -> std::fmt::Result {
+    pub fn regs_as_log_line(&self, dst: &mut ArrayString<32>) -> core::fmt::Result {
         self.regs.as_log_line(dst)
     }
 

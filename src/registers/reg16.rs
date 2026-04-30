@@ -1,5 +1,5 @@
-use std::fmt;
-use std::fmt::Formatter;
+use core::fmt;
+use core::fmt::Formatter;
 
 /// Represents a 16-bit CPU register.
 ///

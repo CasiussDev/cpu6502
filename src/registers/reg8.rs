@@ -1,5 +1,5 @@
-use std::fmt;
-use std::fmt::Formatter;
+use core::fmt;
+use core::fmt::Formatter;
 
 /// Represents an 8-bit register in the 6502 CPU.
 ///
