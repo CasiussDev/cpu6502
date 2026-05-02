@@ -33,8 +33,6 @@ mod registers;
 
 pub use alu::*;
 pub use cpu::{interrupt::InterruptType, Cpu};
-pub use instr::{
-    instr_operation::*, instr_sequences::Instruction, opcodes::decode, InstructionOp,
-};
+pub use instr::{instr_operation::*, instr_sequences::Instruction, opcodes::decode, InstructionOp};
 pub use memory::{memory_space::new_basic_ram, MemorySpace};
 pub use registers::{IndexRegister, RegisterFile, StatusReg, StatusRegFlags};

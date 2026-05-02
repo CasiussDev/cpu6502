@@ -46,7 +46,11 @@ where
     fn read_array(&mut self, addr: u16, out: &mut [u8]) {
         self.inner.read_array(addr, out);
         for (i, &data) in out.iter().enumerate() {
-            trace!("\t\t\tRead Array Memory[{:04X}] = {:02X}", addr.wrapping_add(i as u16), data);
+            trace!(
+                "\t\t\tRead Array Memory[{:04X}] = {:02X}",
+                addr.wrapping_add(i as u16),
+                data
+            );
         }
     }
 }
