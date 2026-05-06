@@ -1,0 +1,5 @@
+[build]
+rustflags = ["-C", "target-cpu=native", "-Cllvm-args=--inline-threshold=1000"]
+
+[profile.release]
+split-debuginfo = "off"

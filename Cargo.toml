@@ -28,3 +28,9 @@ undoc_opcodes = []
 logging = ["std", "dep:log", "dep:simplelog", "dep:disasm6502", "dep:arrayvec"]
 decode_logic = ["dep:enum-primitive-derive", "dep:num-traits"]
 gen_write_cycle_query = ["std", "strum/derive"]
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+strip = true
+panic = "abort"
