@@ -323,6 +323,7 @@ impl Cpu {
     ///
     /// # Parameters
     /// * `memory` - Memory space implementation that the CPU will interact with
+    #[inline(always)]
     fn run_inner(&mut self, memory: &mut impl MemorySpace) {
         // Reset the instruction address tracking when logging is enabled
         #[cfg(feature = "logging")]

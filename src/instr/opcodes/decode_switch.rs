@@ -30,6 +30,7 @@ use crate::registers::IndexRegister::Y;
 /// - Generated from the canonical decoder implementation in decode_logic.rs
 /// - Provides the same behavior as decode_logic::decode
 /// - The handling of undocumented opcodes depends on the `undoc_opcodes` feature
+#[inline]
 pub fn decode(opcode: u8) -> Instruction {
     match opcode {
         0x00 => Break,

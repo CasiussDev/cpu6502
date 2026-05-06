@@ -102,6 +102,7 @@ pub enum FixAddressResult {
 /// # Returns
 ///
 /// * The 8-bit value contained in the specified index register
+#[inline]
 fn get_index_value(regs: &mut RegisterFile, idx: IndexRegister) -> u8 {
     regs.index_register_u8(idx)
 }
@@ -119,6 +120,7 @@ fn get_index_value(regs: &mut RegisterFile, idx: IndexRegister) -> u8 {
 /// # Arguments
 ///
 /// * `regs` - A mutable reference to the CPU's register file
+#[inline]
 fn set_stack_address(regs: &mut RegisterFile) {
     let addr_high = STACK_PAGE;
     regs.addr.set_high_u8(addr_high);
@@ -141,6 +143,7 @@ fn set_stack_address(regs: &mut RegisterFile) {
 ///
 /// * `regs` - A mutable reference to the CPU's register file
 /// * `idx` - The index register (X or Y) whose value should be added to the address
+#[inline]
 fn add_index_to_address(regs: &mut RegisterFile, idx: IndexRegister) {
     let index_value = get_index_value(regs, idx);
 
@@ -164,6 +167,7 @@ fn add_index_to_address(regs: &mut RegisterFile, idx: IndexRegister) {
 ///
 /// * `FixAddressResult::Fixed` - If the high byte needed to be incremented (page boundary crossed)
 /// * `FixAddressResult::Untouched` - If no page boundary was crossed
+#[inline]
 fn fix_addr(regs: &mut RegisterFile, index_value: u8) -> FixAddressResult {
     let addr_low = regs.addr.low_u8();
     if index_value > addr_low {
@@ -505,6 +509,7 @@ fn execute_memory_modify_op(op: MemoryModifyOperation, regs: &mut RegisterFile) 
 /// # Returns
 ///
 /// * The byte value at the memory location pointed to by the program counter
+#[inline]
 fn read_pc(regs: &mut RegisterFile, memory: &mut impl MemorySpace) -> u8 {
     memory.read(regs.pc.to_u16())
 }
@@ -522,6 +527,7 @@ fn read_pc(regs: &mut RegisterFile, memory: &mut impl MemorySpace) -> u8 {
 /// # Returns
 ///
 /// * The byte value at the memory location pointed to by the program counter before incrementing
+#[inline]
 fn read_pc_inc(regs: &mut RegisterFile, memory: &mut impl MemorySpace) -> u8 {
     let pc = memory.read(regs.pc.to_u16());
     regs.pc.inc();

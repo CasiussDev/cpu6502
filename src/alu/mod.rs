@@ -36,6 +36,7 @@ use crate::registers::{Reg8, StatusReg, StatusRegFlags};
 ///
 /// * Sets the NEGATIVE flag if `result` is negative (bit 7 is set)
 /// * Sets the ZERO flag if `result` is zero
+#[inline]
 pub fn update_status_nz(result: i8, status_register: &mut StatusReg) {
     if result < 0 {
         status_register.set_flags(StatusRegFlags::NEGATIVE);
@@ -56,6 +57,7 @@ pub fn update_status_nz(result: i8, status_register: &mut StatusReg) {
 /// # Effects
 ///
 /// * Sets the CARRY flag if `carry` is true
+#[inline]
 pub fn update_status_carry_add(carry: bool, status_register: &mut StatusReg) {
     status_register.update_flags(StatusRegFlags::CARRY, carry);
 }
@@ -74,6 +76,7 @@ pub fn update_status_carry_add(carry: bool, status_register: &mut StatusReg) {
 ///
 /// * Sets the CARRY flag if NO borrow occurred (`carry` is false)
 /// * Clears the CARRY flag if a borrow occurred (`carry` is true)
+#[inline]
 pub fn update_status_carry_sub(carry: bool, status_register: &mut StatusReg) {
     status_register.update_flags(StatusRegFlags::CARRY, !carry);
 }
