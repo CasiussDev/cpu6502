@@ -27,7 +27,7 @@ mod inner {
     ///
     /// * `computer` - The test computer containing the CPU and memory.
     /// * `num_cycles` - The number of cycles to execute.
-    fn run(computer: &mut TestComputer, num_cycles: u128) {
+    fn run(computer: &mut TestComputer, num_cycles: u64) {
         // Reset the CPU before starting execution.
         computer.cpu.reset();
 

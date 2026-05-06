@@ -5,9 +5,9 @@ mod test_computer;
 mod inner {
     use super::test_computer::TestComputer;
 
-    const NES_CLOCKS_SECOND: u128 = 1789773;
+    const NES_CLOCKS_SECOND: u64 = 1789773;
 
-    fn run(computer: &mut TestComputer, num_cycles: u128) {
+    fn run(computer: &mut TestComputer, num_cycles: u64) {
         computer.cpu.reset();
 
         while computer.cpu.cycle_count_since_reset() < num_cycles {

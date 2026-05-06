@@ -44,9 +44,9 @@ pub struct Cpu {
     current_instruction_step: u8,
 
     /// Number of clock cycles executed since the CPU was last reset
-    cycle_count_since_reset: u128,
+    cycle_count_since_reset: u64,
     /// Number of instructions executed since the CPU was last reset
-    instr_count_since_reset: u128,
+    instr_count_since_reset: u64,
 
     /// Address of the last fetched instruction, only when the logging feature is enabled
     #[cfg(feature = "logging")]
@@ -218,16 +218,16 @@ impl Cpu {
     /// Returns the number of clock cycles executed since the last reset.
     ///
     /// # Returns
-    /// The cycle count as a 128-bit unsigned integer
-    pub fn cycle_count_since_reset(&self) -> u128 {
+    /// The cycle count as a 64-bit unsigned integer
+    pub fn cycle_count_since_reset(&self) -> u64 {
         self.cycle_count_since_reset
     }
 
     /// Returns the number of instructions executed since the last reset.
     ///
     /// # Returns
-    /// The instruction count as a 128-bit unsigned integer
-    pub fn instr_count_since_reset(&self) -> u128 {
+    /// The instruction count as a 64-bit unsigned integer
+    pub fn instr_count_since_reset(&self) -> u64 {
         self.instr_count_since_reset
     }
 
