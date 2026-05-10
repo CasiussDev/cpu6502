@@ -11,8 +11,8 @@ categories = ["emulators", "no-std"]
 
 [dependencies]
 bitflags = "2.4"
-strum = { version = "0.27", default-features = false, features = ["derive"] }
-strum_macros = "0.27"
+strum = { version = "0.28", default-features = false, features = ["derive"] }
+strum_macros = "0.28"
 log = { version = "0.4", optional = true }
 simplelog = { version = "0.12.0", optional = true }
 disasm6502 = { version = "0.2.2", optional = true }

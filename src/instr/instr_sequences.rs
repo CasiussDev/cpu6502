@@ -61,12 +61,10 @@ use strum_macros::EnumIter;
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Default, EnumDiscriminants)]
 #[cfg_attr(feature = "gen_write_cycle_query", derive(EnumIter))]
 #[strum_discriminants(name(InstructionSequenceMode))]
-#[strum_discriminants(derive(Default))]
 pub enum Instruction {
     /// Fetches the next instruction from memory. This is the starting point
     /// of every instruction execution cycle.
     #[default]
-    #[strum_discriminants(default)]
     FetchInstr,
 
     /// Handles the BRK instruction (software interrupt).
