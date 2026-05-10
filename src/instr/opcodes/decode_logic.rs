@@ -13,8 +13,9 @@
 //! - Special instructions: Branches, subroutines, and single-byte operations
 
 use crate::instr::{Instruction, InstructionOp, InstructionSequenceMode};
-use crate::num_traits::FromPrimitive;
 use crate::registers::IndexRegister;
+use enum_primitive_derive::Primitive;
+use num_traits::FromPrimitive;
 
 /// Mask to extract the opcode group (bits 0-1)
 const OPCODE_GROUP_MASK: u8 = 0b_0000_0011;
