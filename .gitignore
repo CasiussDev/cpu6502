@@ -1,4 +1,6 @@
+/.idea
 /target
 **/*.rs.bk
 Cargo.lock
 trace.log.txt
+*.nes
