@@ -15,7 +15,7 @@
 //! Most operations take registers as input and modify both the registers and status
 //! flags according to the 6502 specification. The implementation supports both
 //! binary and decimal mode arithmetic, though decimal mode is only enabled when
-//! the "decimal" feature is activated (not yet implemented).
+//! the "decimal" feature is activated *(not yet implemented)*.
 
 #[cfg(test)]
 mod tests;
@@ -113,7 +113,7 @@ pub fn update_status_v(overflow: bool, status_register: &mut StatusReg) {
 ///
 /// * Modifies the accumulator with the addition result
 /// * Updates the N, Z, C, and V flags based on the result
-/// * In decimal mode (when the "decimal" feature is enabled), performs BCD addition (not yet implemented)
+/// * In decimal mode (when the "decimal" feature is enabled), performs BCD addition *(not yet implemented)*
 pub fn add(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusReg) {
     if cfg!(feature = "decimal") && status_register.are_all_flags_set(StatusRegFlags::DECIMAL) {
         todo!();
@@ -177,7 +177,7 @@ pub fn cmp(accumulator: &Reg8, operand: &Reg8, status_register: &mut StatusReg) 
 ///
 /// * Modifies the accumulator with the subtraction result
 /// * Updates the N, Z, C, and V flags based on the result
-/// * In decimal mode (when the "decimal" feature is enabled), performs BCD subtraction (not yet implemented)
+/// * In decimal mode (when the "decimal" feature is enabled), performs BCD subtraction *(not yet implemented)*
 pub fn sub(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusReg) {
     if cfg!(feature = "decimal") && status_register.are_all_flags_set(StatusRegFlags::DECIMAL) {
         todo!();
@@ -214,7 +214,7 @@ pub fn sub(accumulator: &mut Reg8, operand: &Reg8, status_register: &mut StatusR
 ///
 /// * Increments the value in `src_dst`
 /// * Updates the N and Z flags based on the result
-/// * In decimal mode (when the "decimal" feature is enabled), performs BCD increment (not yet implemented)
+/// * In decimal mode (when the "decimal" feature is enabled), performs BCD increment *(not yet implemented)*
 pub fn inc(src_dst: &mut Reg8, status_register: &mut StatusReg) {
     if cfg!(feature = "decimal") && status_register.are_all_flags_set(StatusRegFlags::DECIMAL) {
         todo!();
@@ -240,7 +240,7 @@ pub fn inc(src_dst: &mut Reg8, status_register: &mut StatusReg) {
 ///
 /// * Decrements the value in `src_dst`
 /// * Updates the N and Z flags based on the result
-/// * In decimal mode (when the "decimal" feature is enabled), performs BCD decrement (not yet implemented)
+/// * In decimal mode (when the "decimal" feature is enabled), performs BCD decrement *(not yet implemented)*
 pub fn dec(src_dst: &mut Reg8, status_register: &mut StatusReg) {
     if cfg!(feature = "decimal") && status_register.are_all_flags_set(StatusRegFlags::DECIMAL) {
         todo!();

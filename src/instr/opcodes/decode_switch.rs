@@ -23,7 +23,7 @@ use crate::registers::IndexRegister::Y;
 /// # Returns
 /// A decoded `Instruction` enum value representing the instruction. Invalid or
 /// undocumented opcodes are typically decoded as `FetchInstr`, which acts as a NOP,
-/// unless the `undoc_opcodes` feature is enabled.
+/// unless the `undoc_opcodes` feature is enabled *(not yet implemented)*.
 ///
 /// # Implementation Notes
 /// - All 256 possible opcode values are explicitly handled

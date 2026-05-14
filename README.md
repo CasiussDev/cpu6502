@@ -6,9 +6,10 @@ A cycle-accurate 6502 CPU emulator library written in Rust (2021 edition). Desig
 - Fully cycle-accurate instruction execution with multi-cycle addressing modes
 - Optional instruction logging and disassembly for debugging
 - Code generators for opcode decoding and write-cycle detection
-- Support for decimal mode (BCD), undocumented opcodes, and custom memory implementations
+- Custom memory implementations and cycle-accurate timing
 - `no_std` compatible core with optional `std` features
 - Includes NES integration test (nestest) for validation
+- *(In development)* Decimal mode (BCD) and undocumented opcodes support
 
 **Quick facts:**
 - Each instruction takes 2-7 cycles depending on addressing mode and page boundary crossing
@@ -95,8 +96,8 @@ Enable features via `cargo build --features "feature_name"` or in Cargo.toml:
 |---------|---------|-------|
 | `std` (default) | Enables standard library | Required for most other features; can be disabled for `no_std` core |
 | `logging` | Instruction tracing and disassembly | Adds `Cpu::init_logging_*` methods and `LoggingMemory` wrapper; uses `log` crate |
-| `decimal` | Decimal (BCD) mode for ADC/SBC | For software that relies on BCD arithmetic |
-| `undoc_opcodes` | Undocumented 6502 opcodes | Includes illegal/undocumented instructions |
+| `decimal` | Decimal (BCD) mode for ADC/SBC | For software that relies on BCD arithmetic *(not yet implemented)* |
+| `undoc_opcodes` | Undocumented 6502 opcodes | Includes illegal/undocumented instructions *(not yet implemented)* |
 | `decode_logic` | Canonical opcode decoder | Enables `gen_decode_switch` generator binary |
 | `gen_write_cycle_query` | Write-cycle detection generator | Enables `gen_write_cycle_query` binary; changes CPU internals to use generated lookup |
 

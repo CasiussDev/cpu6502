@@ -13,8 +13,8 @@
 //!
 //! ## Feature Flags
 //! - `logging`: Enables instruction disassembly and execution logging.
-//! - `decimal`: Enables decimal mode arithmetic (not fully implemented).
-//! - `undoc_opcodes`: Enables support for undocumented opcodes.
+//! - `decimal`: Enables decimal mode arithmetic *(not yet implemented)*.
+//! - `undoc_opcodes`: Enables support for undocumented opcodes *(not yet implemented)*.
 //! - `decode_logic`: Provides the canonical instruction decoder implementation.
 //! - `gen_write_cycle_query`: Enables generation of write cycle detection logic.
 
