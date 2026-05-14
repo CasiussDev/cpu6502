@@ -4,6 +4,27 @@
 //! instruction set, memory, and register file implementations.
 //! It is designed for use in educational, experimental, and retrocomputing projects.
 //!
+//! ## Quick Start
+//!
+//! ```
+//! use cpu6502::{Cpu, new_basic_ram};
+//!
+//! let mut cpu = Cpu::new();
+//! let mut memory = new_basic_ram();
+//!
+//! // Init memory here (including code to execute and interrupt/reset vectors)
+//!
+//! // Run the CPU for 1000 cycles
+//! for _ in 0..1000 {
+//!     cpu.run(&mut memory);
+//! }
+//!
+//! // Check CPU state
+//! let cycles = cpu.cycle_count_since_reset();
+//! let instructions = cpu.instr_count_since_reset();
+//! println!("Executed {} cycles across {} instructions", cycles, instructions);
+//! ```
+//!
 //! ## Main Modules
 //! - `cpu`: The main CPU emulation logic.
 //! - `alu`: Arithmetic and logic unit operations.
@@ -20,6 +41,7 @@
 
 #![no_std]
 #![warn(missing_docs)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 #[cfg(any(feature = "std", test))]
 #[macro_use]

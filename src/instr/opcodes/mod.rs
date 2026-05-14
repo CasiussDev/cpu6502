@@ -10,15 +10,19 @@
 //! The module exposes a single `decode` function that handles converting an 8-bit opcode
 //! into the appropriate instruction representation.
 
+#[cfg_attr(docsrs, doc(cfg(not(feature = "decode_logic"))))]
 #[cfg(not(feature = "decode_logic"))]
 mod decode_switch;
 
+#[cfg_attr(docsrs, doc(cfg(feature = "decode_logic")))]
 #[cfg(feature = "decode_logic")]
 mod decode_logic;
 
+#[cfg_attr(docsrs, doc(cfg(not(feature = "decode_logic"))))]
 #[cfg(not(feature = "decode_logic"))]
 pub use decode_switch::decode;
 
+#[cfg_attr(docsrs, doc(cfg(feature = "decode_logic")))]
 #[cfg(feature = "decode_logic")]
 pub use decode_logic::decode;
 

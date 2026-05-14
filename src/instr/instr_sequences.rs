@@ -40,6 +40,7 @@ use crate::instr::{
     BranchOperation, ImplicitOperation, InstructionOp, MemoryModifyOperation, PullStackOperation,
     PushStackOperation, RegisterMemoryOperation,
 };
+#[cfg_attr(docsrs, doc(cfg(feature = "gen_write_cycle_query")))]
 #[cfg(feature = "gen_write_cycle_query")]
 use strum_macros::EnumIter;
 
@@ -59,6 +60,7 @@ use strum_macros::EnumIter;
 /// The enum is used both for execution and for features like cycle-accurate write access
 /// detection, which is important for emulating hardware effects precisely.
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Default, EnumDiscriminants)]
+#[cfg_attr(docsrs, doc(cfg(feature = "gen_write_cycle_query")))]
 #[cfg_attr(feature = "gen_write_cycle_query", derive(EnumIter))]
 #[strum_discriminants(name(InstructionSequenceMode))]
 pub enum Instruction {

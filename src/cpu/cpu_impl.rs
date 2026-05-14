@@ -24,10 +24,20 @@ use std::path::Path;
 ///
 /// # Example
 /// ```
-/// use cpu6502::Cpu;
+/// use cpu6502::{Cpu, new_basic_ram};
 ///
 /// let mut cpu = Cpu::new();
-/// // Now you can use the CPU with memory and run programs
+/// let mut memory = new_basic_ram(); // Initialize a 64KB RAM memory space
+///
+/// // Run the CPU for 1000 cycles
+/// for _ in 0..1000 {
+///     cpu.run(&mut memory);
+/// }
+///
+/// // Check CPU state
+/// let cycles = cpu.cycle_count_since_reset();
+/// let instructions = cpu.instr_count_since_reset();
+/// println!("Executed {} cycles across {} instructions", cycles, instructions);
 /// ```
 #[derive(Debug, Default)]
 pub struct Cpu {
@@ -147,6 +157,7 @@ impl Cpu {
     /// ```
     ///
     /// This method is only available when the "logging" feature and "std" feature are enabled.
+    #[cfg_attr(docsrs, doc(cfg(all(feature = "std", feature = "logging"))))]
     #[cfg(feature = "std")]
     pub fn init_logging_trace(&mut self, _path: &Path) {
         #[cfg(feature = "logging")]
@@ -171,6 +182,7 @@ impl Cpu {
     /// ```
     ///
     /// This method is only available when the "logging" feature and "std" feature are enabled.
+    #[cfg_attr(docsrs, doc(cfg(all(feature = "std", feature = "logging"))))]
     #[cfg(feature = "std")]
     pub fn init_logging_debug(&mut self, _path: &Path) {
         #[cfg(feature = "logging")]
@@ -179,7 +191,8 @@ impl Cpu {
 
     /// Executes a single CPU cycle with memory logging enabled.
     ///
-    /// This version is only available when the "logging" feature is enabled.
+    /// This function advances the CPU's state by one clock cycle, which may involve
+    /// reading from or writing to memory, while executing part of an instruction.
     ///
     /// # Parameters
     /// * `memory` - Memory space implementation that the CPU will interact with
@@ -282,6 +295,7 @@ impl Cpu {
     ///
     /// # Returns
     /// `true` if the current cycle is a write cycle, `false` otherwise
+    #[cfg_attr(docsrs, doc(cfg(not(feature = "gen_write_cycle_query"))))]
     #[cfg(not(feature = "gen_write_cycle_query"))]
     pub fn is_current_cycle_write(&self) -> bool {
         write_cycle_query(
@@ -300,6 +314,7 @@ impl Cpu {
     ///
     /// # Returns
     /// The address of the last fetched instruction, or None if no instruction has been fetched
+    #[cfg_attr(docsrs, doc(cfg(feature = "logging")))]
     #[cfg(feature = "logging")]
     pub fn fetched_instr_addr(&self) -> Option<u16> {
         self.fetched_instr_addr
@@ -311,6 +326,7 @@ impl Cpu {
     ///
     /// # Returns
     /// A string representing the current state of all CPU registers
+    #[cfg_attr(docsrs, doc(cfg(feature = "logging")))]
     #[cfg(feature = "logging")]
     pub fn regs_as_log_line(&self, dst: &mut ArrayString<32>) -> core::fmt::Result {
         self.regs.as_log_line(dst)

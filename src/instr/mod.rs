@@ -20,6 +20,7 @@
 //! The design separates the operation (what is done) from the addressing mode (how operands
 //! are accessed), which matches how the actual 6502 architecture works.
 
+#[cfg_attr(docsrs, doc(cfg(feature = "logging")))]
 #[cfg(feature = "logging")]
 pub mod disassemble;
 pub mod instr_impl;
@@ -27,6 +28,7 @@ pub mod instr_operation;
 pub mod instr_sequences;
 pub mod opcodes;
 
+#[cfg_attr(docsrs, doc(cfg(feature = "gen_write_cycle_query")))]
 #[cfg(feature = "gen_write_cycle_query")]
 pub use instr_impl::*;
 

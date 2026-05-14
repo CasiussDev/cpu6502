@@ -103,6 +103,7 @@ impl RegisterFile {
     ///
     /// This method is only available when the "logging" feature
     /// is enabled.
+    #[cfg_attr(docsrs, doc(cfg(feature = "logging")))]
     #[cfg(feature = "logging")]
     pub fn as_log_line(&self, dst: &mut ArrayString<32>) -> fmt::Result {
         write!(

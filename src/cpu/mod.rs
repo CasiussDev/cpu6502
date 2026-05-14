@@ -21,22 +21,32 @@
 //! # Example
 //!
 //! ```
-//! use cpu6502::{Cpu, MemorySpace};
+//! use cpu6502::{Cpu, new_basic_ram};
 //!
-//! // Create a CPU instance
 //! let mut cpu = Cpu::new();
+//! let mut memory = new_basic_ram();
 //!
-//! // Set up memory and execute one CPU cycle.
-//! // let mut memory = ...
-//! // cpu.run(&mut memory);
+//! // Init memory here (including code to execute and interrupt/reset vectors)
+//!
+//! // Run the CPU for 1000 cycles
+//! for _ in 0..1000 {
+//!     cpu.run(&mut memory);
+//! }
+//!
+//! // Check CPU state
+//! let cycles = cpu.cycle_count_since_reset();
+//! let instructions = cpu.instr_count_since_reset();
+//! println!("Executed {} cycles across {} instructions", cycles, instructions);
 //! ```
 
 mod cpu_impl;
 
+#[cfg_attr(docsrs, doc(cfg(feature = "logging")))]
 #[cfg(feature = "logging")]
 mod logging_memory;
 
 pub(crate) mod interrupt;
+#[cfg_attr(docsrs, doc(cfg(not(feature = "gen_write_cycle_query"))))]
 #[cfg(not(feature = "gen_write_cycle_query"))]
 mod write_cycle_query;
 
