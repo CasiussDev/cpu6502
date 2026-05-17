@@ -1,5 +1,9 @@
 # cpu6502
 
+[![Crates.io](https://img.shields.io/crates/v/cpu6502.svg)](https://crates.io/crates/cpu6502)
+[![Documentation](https://docs.rs/cpu6502/badge.svg)](https://docs.rs/cpu6502)
+[![License](https://img.shields.io/crates/l/cpu6502.svg)](https://github.com/CasiussDev/cpu6502/blob/main/LICENSE-APACHE)
+
 A cycle-accurate 6502 CPU emulator library written in Rust (2021 edition). Designed as a reusable, testable library for emulators, retro computing tools, and NES projects. It implements the complete 6502 instruction set with cycle-accurate timing and multi-cycle execution.
 
 **Features:**
